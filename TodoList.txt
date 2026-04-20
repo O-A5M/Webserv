@@ -1,0 +1,79 @@
+## Step 1 : Config file.
+
+# Documentation About Config file:
+The config parser is the brain settings of the server.
+Every decision the server makes comes from what you parsed.
+
+# My job is:
+- Open this file
+- Read it line by line
+- Understand what each line means
+- Store everything in C++ objects
+
+# Concepts You Need to Know First
+1- 📌 ifstream — Reading Files
+2- 📌 std::string Operations
+3- 📌 std::vector — Storing a List
+4- 📌 std::map — Storing Key/Value Pairs
+
+#  Implementation — Step by Step.
+1- Create Your Config File First
+2- Design Your Structs/Classes.
+3- Clean the Lines First
+4- Split a Line into Words
+5- The Parser Logic:
+    Read line by line:
+    ├── Empty line or comment (#) → skip
+    ├── "server {" → start new ServerConfig
+    ├── "location /path {" → start new LocationConfig
+    ├── "}" → close current block
+    └── "key value;" → store in current struct
+6- Test Your Parser
+
+
+
+## V1 Supported Syntax Contract (Freeze First)
+
+Reference file: configFile.conf
+
+1) Allowed blocks
+- server { ... }
+- location /path { ... } only inside a server block
+
+2) Allowed directives in server block
+- listen <port>;
+- server_name <name>;
+- root <path>;
+- index <file1> [file2 ...];
+- client_max_body_size <number>;
+- error_page <status_code> <path>;
+
+3) Allowed directives in location block
+- root <path>;
+- index <file1> [file2 ...];
+- autoindex on|off;
+- allow_methods <METHOD1> [METHOD2 ...];
+
+4) Syntax rules
+- Every directive must end with ';'
+- '{' opens a block, '}' closes a block
+- Comments start with '#' and are ignored
+- Empty lines are ignored
+
+5) Duplicate rules (V1)
+- listen, server_name, root, client_max_body_size: last value wins
+- index: replace old list with new list
+- error_page: one status code maps to one path, last value wins
+- allow_methods: replace old list with new list
+
+6) Validation rules (V1)
+- listen must be in range 1..65535
+- client_max_body_size must be positive
+- error_page status code must be 3 digits (for example: 404, 500)
+- autoindex only accepts on or off
+- allow_methods only accepts GET, POST, DELETE
+
+7) Not supported in V1
+- nested location blocks
+- unknown directives
+- blocks other than server and location
