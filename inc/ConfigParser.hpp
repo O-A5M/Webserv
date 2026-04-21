@@ -30,7 +30,7 @@ class ConfigParser
         // Line helpers
         std::string              trim(const std::string& s);
         std::string              removeSemicolon(const std::string& s);
-        std::vector<std::string> splitLine(const std::string& line);
+        std::vector<std::string> splitLine(const std::string& line, char delimiter);
 
         // Block parsers
         void parseServerLine(const std::string& key, const std::vector<std::string>& words, ServerConfig& server);

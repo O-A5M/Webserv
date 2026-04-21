@@ -34,13 +34,17 @@ std::string ConfigParser::removeSemicolon(const std::string& s)
     return s;
 }
 
-std::vector<std::string> ConfigParser::splitLine(const std::string& line)
+std::vector<std::string> ConfigParser::splitLine(const std::string& line, char delimiter)
 {
     std::vector<std::string> words;
     std::istringstream       iss(line);
     std::string              word;
-    while (iss >> word)
-        words.push_back(word);
+    
+    while (std::getline(iss, word, delimiter)) {
+        if (!word.empty()) {
+            words.push_back(word);
+        }
+    }
     return words;
 }
 
@@ -77,9 +81,7 @@ void ConfigParser::parseServerLine(const std::string& key,
 }
 
 // ─── Location Line Parser ───────────────────────────────────
-void ConfigParser::parseLocationLine(const std::string& key,
-                                     const std::vector<std::string>& words,
-                                     LocationConfig& location)
+void ConfigParser::parseLocationLine(const std::string& key, const std::vector<std::string>& words, LocationConfig& location)
 {
     if (key == "root" && words.size() >= 2)
         location.root = removeSemicolon(words[1]);
@@ -130,24 +132,24 @@ void ConfigParser::parse()
         if (line == "server {")
         {
             inServer      = true;
-            currentServer = ServerConfig();
+            currentServer = ServerConfig(); // reset to defaults for new server block
             continue;
         }
 
-        // ── location /path { ──────────────────────────────
+        // ── location /path { ────
         if (line.find("location") == 0 && line[line.size() - 1] == '{')
         {
             inLocation      = true;
             currentLocation = LocationConfig();
 
-            // Extract path between "location " and " {"
+            // fill path from "location /path {"
             std::string withoutKeyword = line.substr(9); // remove "location "
             size_t      bracePos       = withoutKeyword.rfind('{');
             currentLocation.path       = trim(withoutKeyword.substr(0, bracePos));
             continue;
         }
 
-        // ── closing } ─────────────────────────────────────
+        // ── closing } ────
         if (line == "}")
         {
             if (inLocation)
@@ -164,7 +166,7 @@ void ConfigParser::parse()
         }
 
         // ── key value pairs ───────────────────────────────
-        std::vector<std::string> words = splitLine(line);
+        std::vector<std::string> words = splitLine(line, ' ');
         if (words.empty())
             continue;
 
