@@ -29,8 +29,12 @@ $(TARGET): $(OBJS)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(OBJS) $(TARGET)
+	rm -f $(OBJS)
 	@echo "🧹 Cleaned"
+
+fclean:
+	rm -rf $(TARGET) $(OBJS)
+	@echo "🧹 Fully cleaned"
 
 re: clean all
 
