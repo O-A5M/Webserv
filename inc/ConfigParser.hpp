@@ -7,7 +7,9 @@
 #include <vector>
 #include <fstream>
 #include <sstream>
+#include <stdexcept>
 #include "ServerConfig.hpp"
+// include about trim and split lines
 
 class ConfigParser
 {
@@ -15,7 +17,7 @@ class ConfigParser
         // Constructor — takes the config file path
         ConfigParser(const std::string& filename);
 
-        // Call this to get all parsed servers
+        // Everyone calls this to get all parsed servers
         std::vector<ServerConfig> getServers() const;
 
     private:
