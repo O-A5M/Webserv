@@ -53,6 +53,8 @@ void ConfigParser::parseServerLine(const std::string& key,
                                    const std::vector<std::string>& words,
                                    ServerConfig& server)
 {
+    if (words[1].empty())
+        throw std::runtime_error("Empty line in server block");
     if (key == "listen" && words.size() >= 2)
         server.port = std::atoi(removeSemicolon(words[1]).c_str());
 
@@ -124,32 +126,39 @@ void ConfigParser::parse()
 
     while (std::getline(infile, line))
     {
-        // trim lines
         line = trim(line);
         if (line.empty() || line[0] == '#')
             continue;
 
-        if (line == "server {")
+        // Block server { ... }
+        if (line.find("server {") == 0)
         {
+            if (inServer)
+                throw std::runtime_error("Nested server blocks are not allowed");
             inServer      = true;
-            currentServer = ServerConfig(); // reset to defaults for new server block
+            currentServer = ServerConfig();
             continue;
         }
 
-        // ── location /path { ────
+        // Block location { ... }
         if (line.find("location") == 0 && line[line.size() - 1] == '{')
         {
+            if (!inServer)
+                throw std::runtime_error("Location block must be inside a server block");
             inLocation      = true;
             currentLocation = LocationConfig();
 
-            // fill path from "location /path {"
             std::string withoutKeyword = line.substr(9); // remove "location "
             size_t      bracePos       = withoutKeyword.rfind('{');
             currentLocation.path       = trim(withoutKeyword.substr(0, bracePos));
             continue;
         }
 
-        // ── closing } ────
+        // Unknown block
+        if (!line.empty() && line[line.size() - 1] == '{')
+            throw std::runtime_error("Unknown block type: " + line);
+
+        // closing brace } for server or location
         if (line == "}")
         {
             if (inLocation)
@@ -165,7 +174,7 @@ void ConfigParser::parse()
             continue;
         }
 
-        // ── key value pairs ───────────────────────────────
+        // parse key-value lines
         std::vector<std::string> words = splitLine(line, ' ');
         if (words.empty())
             continue;
@@ -177,4 +186,8 @@ void ConfigParser::parse()
         else if (inServer)
             parseServerLine(key, words, currentServer);
     }
+
+    // check if we ended while still inside a block
+    if (inLocation || inServer)
+        throw std::runtime_error("Config file ended before closing all blocks");
 }

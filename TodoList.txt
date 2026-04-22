@@ -35,14 +35,6 @@ Every decision the server makes comes from what you parsed.
 Edge cases about ConfigFile.
 
 Structure errors:
-# Opening a server inside a server
-→ you see "server {" but inServer is already true → ERROR
-# Opening a location outside a server
-→ you see "location" but inServer is false → ERROR
-# File ends but a block is still open
-→ after reading all lines, inServer or inLocation is still true → ERROR
-# Unknown block type
-→ a line ends with "{" but is neither "server" nor "location" → ERROR
 
 Directive errors:
 # Directive with no value
@@ -61,3 +53,12 @@ Value errors:
 → "location {" → no path between keyword and { → ERROR
 # No servers found after parsing
 → file was valid but empty → ERROR
+
+================================================================================
+
+## ALL edge cases.
+
+1/ Opening a server inside a server [ERROR valide].
+2/ Opening a location outside a server
+3/ File ends but a block is still open
+4/ Unknown block type

@@ -27,6 +27,9 @@ int main(int ac, char **av)
 			std::cout << "  root: " << server.root << std::endl;
 			std::cout << "  client_max_body_size: " << server.client_max_body_size << std::endl;
 			std::cout << "  locations: " << server.locations.size() << std::endl;
+			std::cout << "  error_pages: " << server.error_pages.size() << std::endl;
+			// display 1 code error pages
+			
 		}
 	}
 	catch (const std::exception &e)
