@@ -148,7 +148,7 @@ void ConfigParser::parse()
             inLocation      = true;
             currentLocation = LocationConfig();
 
-            std::string withoutKeyword = line.substr(9); // remove "location "
+            std::string withoutKeyword = line.substr(9);
             size_t      bracePos       = withoutKeyword.rfind('{');
             currentLocation.path       = trim(withoutKeyword.substr(0, bracePos));
             continue;
