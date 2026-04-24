@@ -1,37 +1,3 @@
-## Step 1 : Config file.
-
-# Documentation About Config file:
-The config parser is the brain settings of the server.
-Every decision the server makes comes from what you parsed.
-
-# My job is:
-- Open this file
-- Read it line by line
-- Understand what each line means
-- Store everything in C++ objects
-
-# Concepts You Need to Know First
-1- 📌 ifstream — Reading Files
-2- 📌 std::string Operations
-3- 📌 std::vector — Storing a List
-4- 📌 std::map — Storing Key/Value Pairs
-
-#  Implementation — Step by Step.
-1- Create Your Config File First
-2- Design Your Structs/Classes.
-3- Clean the Lines First
-4- Split a Line into Words
-5- The Parser Logic:
-    Read line by line:
-    ├── Empty line or comment (#) → skip
-    ├── "server {" → start new ServerConfig
-    ├── "location /path {" → start new LocationConfig
-    ├── "}" → close current block
-    └── "key value;" → store in current struct
-6- Test Your Parser
-
-
-
 Edge cases about ConfigFile.
 
 Structure errors:
@@ -62,3 +28,13 @@ Value errors:
 2/ Opening a location outside a server
 3/ File ends but a block is still open
 4/ Unknown block type
+
+
+
+Tokenization algo
+
+into tokens like:
+IDENT/ like {"location", "server", .....}
+LBRACE/ like ("{", "}")
+SEMICOLON/ like (";")
+EOF/ (end of file)
