@@ -1,9 +1,10 @@
 #include <string>
 #include <map>
+#include <vector>
 
-#define GET 0
-#define POST 1
-#define DELETE 2
+// #define GET 0
+// #define POST 1
+// #define DELETE 2
 
 typedef enum e_Methodes {
 	M_GET,
@@ -25,28 +26,31 @@ typedef enum e_Methodes {
 class	Request {
 
 private:
-	e_Methodes							Methodes;
+	e_Methodes							Method;
 	std::string							uri;
 	std::string							version;
 	std::string							query_string;
-	std::string							content_type;
-	int			 						content_size;
 	std::string							path;
 	std::map<std::string, std::string>	headers;
 	std::string							body;
 
 public:
+	void setMethod(e_Methodes method);
+	void setUri(const std::string &uri);
+	void setVersion(const std::string &version);
+	void setQuery(const std::string &query);
+	void setPath(const std::string &path);
+	void setBody(const std::string &body);
+
+	void setHeader(const std::string &key, const std::string &value);
+	void setHeaders(const std::map<std::string, std::string> &headers);
 	Request(void);
 	~Request(void);
-	e_Methodes	&getMethodes(void);
-	std::string	&getUri(void);
-	std::string	&getVersion(void);
-	std::string	&getQuery(void);
-	std::string	&getType(void);
-	int			getSize(void);
-	std::string	&getPath(void);
-	std::string	&getBody(void);
-	std::map
-	<std::string,
-	std::string>	&getHeaders(void);
+	const e_Methodes &getMethodes(void) const;
+	const std::string &getUri(void) const;
+	const std::string &getVersion(void) const;
+	const std::string &getQuery(void) const;
+	const std::string &getPath(void) const;
+	const std::string &getBody(void) const;
+	const std::map<std::string, std::string> &getHeaders(void) const;
 };

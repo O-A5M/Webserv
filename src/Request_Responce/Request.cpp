@@ -1,46 +1,14 @@
-#include <Request.hpp>
-#include <string>
+#include "Request.hpp"
 
-Request::Request(void) {
-	
-}
+std::string raw =
+		"GET /search?q=walid HTTP/1.1\r\n"
+		"Host: localhost\r\n"
+		"Content-Type: text/plain\r\n"
+		"Content-Length: 5\r\n"
+		"\r\n"
+		"hello";
 
-Request::~Request(void) {
-	
-}
+void parse_request(const std::string &raw, Request &req)
+{
 
-e_Methodes	&Request::getMethodes(void) {
-	return (Methodes);
-}
-
-std::string	&Request::getUri(void) {
-	return (uri);
-}
-
-std::string &Request::getVersion(void) {
-	return (version);
-}
-
-std::string	&Request::getQuery(void) {
-	return (query_string); 
-}
-
-std::string &Request::getType(void) {
-	return (content_type);
-}
-
-int Request::getSize(void) {
-	return (content_size);
-}
-
-std::string &Request::getPath(void) {
-	return (path);
-}
-
-std::string	&Request::getBody(void) {
-	return (body);
-}
-
-std::map<std::string, std::string>	&Request::getHeaders(void) {
-	return (headers);
 }
