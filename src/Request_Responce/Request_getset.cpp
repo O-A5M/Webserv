@@ -8,6 +8,18 @@ void Request::setMethod(e_Methodes method)
 	this->Method = method;
 }
 
+Request::Request(void) : Method(UNKNOWN),
+      uri(""),
+      version(""),
+      query_string(""),
+      path(""),
+      headers(),
+      body("")
+{
+}
+Request::~Request(void)
+{
+}
 void Request::setUri(const std::string &uri)
 {
 	this->uri = uri;

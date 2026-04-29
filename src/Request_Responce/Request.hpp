@@ -1,16 +1,18 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <iostream>
 
 // #define GET 0
 // #define POST 1
 // #define DELETE 2
 
-typedef enum e_Methodes {
-	M_GET,
-	M_POST,
-	M_DELETE
-} e_Methodes;
+enum e_Methodes {
+    UNKNOWN,
+    GET,
+    POST,
+    DELETE
+};
 
 // typedef  struct	s_Request {
 // 	e_Methodes							Methodes;
