@@ -18,6 +18,8 @@ int parse_request_line(std::string req_line , Request &req)
 		return -1;
 	for (size_t i = 0; i < req_line.size(); i++)
 	{
+		if (req_line[i] == '\r')
+			continue;
 		if (req_line[i] == ' ' && (i + 1 < req_line.size() && req_line[i + 1] == ' '))
 				return -1;
 		if (req_line[i] == ' '){
@@ -44,10 +46,16 @@ int parse_request_line(std::string req_line , Request &req)
 	else
 		req.setMethod(UNKNOWN);
 	req.setUri(uri);
+	size_t pos = uri.find("?");
+	if (pos != std::string::npos)
+		req.setQuery(uri.substr(pos + 1 , uri.size() - pos - 1));
+	req.setPath(uri.substr(0, pos));
 	req.setVersion(version);
 	std::cout << "method: " << req.getMethod() << std::endl;
 	std::cout << "uri: " << req.getUri() << std::endl;
 	std::cout << "version: " << req.getVersion() << std::endl;
+	std::cout << "query: " << req.getQuery() << std::endl;
+	std::cout << "path: " << req.getPath() << std::endl;
 	return 0;
 }
 
@@ -57,7 +65,7 @@ int parse_request_headers(std::string header, Request &req)
 	return 0;
 }
 
-		void parse_request(const std::string &raw, Request &req)
+	void parse_request(const std::string &raw, Request &req)
 {
 	size_t pos = raw.find("\r\n\r\n");
 	size_t pos_req_line = raw.find("\r\n");
