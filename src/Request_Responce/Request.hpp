@@ -48,11 +48,11 @@ public:
 	void setHeaders(const std::map<std::string, std::string> &headers);
 	Request(void);
 	~Request(void);
-	const e_Methodes &getMethodes(void) const;
+	const e_Methodes &getMethod(void) const;
 	const std::string &getUri(void) const;
 	const std::string &getVersion(void) const;
 	const std::string &getQuery(void) const;
 	const std::string &getPath(void) const;
 	const std::string &getBody(void) const;
 	const std::map<std::string, std::string> &getHeaders(void) const;
-};
+	};

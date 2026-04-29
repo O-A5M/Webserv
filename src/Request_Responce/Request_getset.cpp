@@ -54,7 +54,7 @@ void Request::setHeaders(const std::map<std::string, std::string> &headers)
 {
 	this->headers = headers;
 }
-const e_Methodes &Request::getMethodes(void) const
+const e_Methodes &Request::getMethod(void) const
 {
 	return this->Method;
 }
