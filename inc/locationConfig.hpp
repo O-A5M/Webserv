@@ -1,5 +1,5 @@
-#ifndef LOCATIONCONFIG_HPP
-#define LOCATIONCONFIG_HPP
+#ifndef LOCATION_CONFIG_HPP
+#define LOCATION_CONFIG_HPP
 
 #include <string>
 #include <vector>
@@ -20,4 +20,4 @@ struct LocationConfig
     LocationConfig();
 };
 
-#endif
+#endif // LOCATION_CONFIG_HPP

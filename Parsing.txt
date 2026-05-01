@@ -1,0 +1,90 @@
+// tokenize()
+// Goal: return a vector of tokens from the config file.
+// Keep words like "server", "listen", "80" as tokens.
+// Keep special symbols "{", "}", and ";" as separate tokens.
+// Ignore spaces, tabs, and comments after '#'.
+// Example:
+//   server { listen 80; }
+// becomes:
+//   ["server", "{", "listen", "80", ";", "}"]
+
+// parse()
+// Goal: read the token list produced by tokenize() and build ServerConfig and
+// LocationConfig objects.
+//
+// Base algorithm:
+// 1. Call tokenize() and keep the returned tokens in a vector.
+// 2. Use an index to walk through tokens from left to right.
+// 3. When token == "server", create a new ServerConfig.
+// 4. After "server", the next meaningful token must be "{".
+//    - If it is missing, raise a parse error.
+// 5. Read tokens inside the server block until you reach "}".
+// 6. If you see a directive like:
+//    - listen 80 ;
+//    - server_name example.com ;
+//    - root /var/www ;
+//    read the directive name, read its values, then stop at ";".
+// 7. If you see "location", create a LocationConfig.
+//    - read the location path
+//    - expect "{" after the path
+//    - parse directives inside the location block the same way
+//    - close the location when you reach "}"
+// 8. When the server block closes with "}", push the finished ServerConfig
+//    into _servers.
+// 9. Continue until all tokens are consumed.
+//
+// Small example:
+//   server {
+//       listen 80;
+//       server_name example.com;
+//       location /images {
+//           root /var/www/images;
+//       }
+//   }
+//
+// What parse() does here:
+//   - creates one server
+//   - sets port to 80
+//   - sets server_name to example.com
+//   - creates one location for /images
+//   - sets location root to /var/www/images
+//   - stores the server in _servers
+
+
+// Handling Multiple Servers
+// Goal: parse multiple server blocks from a single config file.
+//
+// Algorithm:
+// 1. After finishing the first server block (see the "}" and push to _servers),
+//    the index i is now past the first server's closing "}".
+// 2. Keep the outer while loop running: while (i < tokens.size()).
+// 3. When i points to the next token, it should be another "server" keyword.
+// 4. Repeat the same server block parsing logic for the second, third, etc. server.
+// 5. Each new ServerConfig is created fresh and pushed independently.
+// 6. Continue until all tokens are consumed (i >= tokens.size()).
+//
+// Example with 2 servers:
+//   server {
+//       listen 80;
+//       server_name example.com;
+//   }
+//   server {
+//       listen 8080;
+//       server_name test.com;
+//       location /api {
+//           root /api/v1;
+//       }
+//   }
+//
+// What parse() does:
+//   - finds first "server" at position 0
+//   - creates server1
+//   - sets port = 80, server_name = example.com
+//   - closes and pushes server1 to _servers
+//   - finds second "server" (loop continues)
+//   - creates server2
+//   - sets port = 8080, server_name = test.com
+//   - creates location /api with root /api/v1
+//   - closes and pushes server2 to _servers
+//   - reaches EOF, loop ends
+//   - _servers now contains 2 ServerConfig objects

@@ -7,9 +7,9 @@ SERVER_DIR = $(SRC_DIR)/Server
 INC_DIR = inc
 
 # Source files
-SRCS = $(SERVER_DIR)/ConfigParser.cpp \
-       $(SERVER_DIR)/ServerConfig.cpp \
-       $(SERVER_DIR)/LocationConfig.cpp \
+SRCS = $(SERVER_DIR)/configParser.cpp \
+       $(SERVER_DIR)/serverConfig.cpp \
+       $(SERVER_DIR)/locationConfig.cpp \
        $(SRC_DIR)/main.cpp
 
 # Object files

@@ -1,12 +1,12 @@
-#ifndef SERVERCONFIG_HPP
-#define SERVERCONFIG_HPP
+#ifndef SERVER_CONFIG_HPP
+#define SERVER_CONFIG_HPP
 
 #include <cstddef>
 #include <map>
 #include <string>
 #include <vector>
 
-#include "LocationConfig.hpp"
+#include "locationConfig.hpp"
 
 struct ServerConfig
 {
@@ -22,4 +22,4 @@ struct ServerConfig
 	ServerConfig();
 };
 
-#endif
+#endif // SERVER_CONFIG_HPP

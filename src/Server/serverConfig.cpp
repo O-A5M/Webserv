@@ -1,4 +1,4 @@
-#include "ServerConfig.hpp"
+#include "serverConfig.hpp"
 
 ServerConfig::ServerConfig()
     : host("0.0.0.0"),   // listen on all interfaces by default
