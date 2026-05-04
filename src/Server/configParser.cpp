@@ -180,12 +180,12 @@ void ConfigParser::parse()
         if (tokens[i] != "server")
             throw std::runtime_error("Expected 'server'");
 
-        ServerConfig server; // default constructor initializes everything
-        ++i; // move past "server"
+        ServerConfig server;
+        ++i;
 
-        if (i >= tokens.size() || tokens[i] != "{") // check for opening brace
+        if (i >= tokens.size() || tokens[i] != "{")
             throw std::runtime_error("Expected '{' after 'server'");
-        ++i; // 
+        ++i;
 
         while (i < tokens.size() && tokens[i] != "}")
         {
@@ -247,7 +247,8 @@ void ConfigParser::parse()
         if (i >= tokens.size() || tokens[i] != "}")
             throw std::runtime_error("Expected '}' to close server block");
         ++i;
-
         _servers.push_back(server);
+        // if (tokens[i] == "server")
+        //     std::cout << "another server" << std::endl;
     }
 }
