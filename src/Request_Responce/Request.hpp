@@ -1,26 +1,13 @@
-#include <string>
-#include <map>
+#ifndef REQUEST_HPP
+#define REQUEST_HPP
 
-#define GET 0
-#define POST 1
-#define DELETE 2
+#include "../../inc/include.hpp"
 
 typedef enum e_Methodes {
 	M_GET,
 	M_POST,
 	M_DELETE
 } e_Methodes;
-
-// typedef  struct	s_Request {
-// 	e_Methodes							Methodes;
-// 	std::string							uri;
-// 	std::string							version;
-// 	std::string							content_type;
-// 	std::string 						content_size;
-// 	std::string							path;
-// 	std::map<std::string, std::string>	headers;
-// 	std::string							body;
-// } s_Request;
 
 class	Request {
 
@@ -50,3 +37,4 @@ public:
 	<std::string,
 	std::string>	&getHeaders(void);
 };
+#endif

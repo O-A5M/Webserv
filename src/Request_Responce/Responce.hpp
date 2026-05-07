@@ -1,3 +1,6 @@
+#ifndef RESPONSE_HPP
+#define RESPONSE_HPP
+
 #include <string>
 #include <map>
 
@@ -11,3 +14,4 @@ public:
 	Responce(void);
 	~Responce(void);
 };
+#endif
