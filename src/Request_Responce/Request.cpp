@@ -1,13 +1,12 @@
 #include "Request.hpp"
 
-std::string raw =
-		"POST /search?q=walid HTTP/1.1\r\n"
-		"host:            www.google.com\r\n"
-		"ContEnt-Type:                 text/plain\r\n"
-		"Content-LenGth: 5\r\n"
-		"Content-LenGth: 5\r\n"
-		"\r\n"
-		"hello";
+std::string raw = 
+    "POST /api/save HTTP/1.1\r\n"
+    "Host: example.com\r\n"
+    "Content-Type: application/x-www-form-urlencoded\r\n"
+    "Content-Length: 13\r\n"
+    "\r\n"
+    "name=walid&id=1";
 
 int parse_request_line(std::string req_line , Request &req)
 {
@@ -151,6 +150,14 @@ int parse_request_headers(const std::string &header, Request &req)
 	}
 	return 0;
 }
+
+int parse_body(const std::string &body, Request &req)
+{
+	
+	return 0;
+}
+
+
 
 void parse_request(const std::string &raw, Request &req)
 {
