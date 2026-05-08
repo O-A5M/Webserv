@@ -1,4 +1,5 @@
 #include "Server.hpp"
+#include <sstream>
 
 Server::Server(const std::vector<ServerConfig>& servers)
 : _servers(servers)
@@ -7,6 +8,12 @@ Server::Server(const std::vector<ServerConfig>& servers)
 
 Server::~Server()
 {
+}
+
+static std::string intToString(int v) {
+    std::ostringstream oss;
+    oss << v;
+    return oss.str();
 }
 
 void Server::initialize_socket()
@@ -24,8 +31,8 @@ void Server::initialize_socket()
         std::string _host;
         if (!srv.host.empty())
             _host = srv.host;
-        // int statu = getaddrinfo(_host, srv.port, &hints, &res);
-        int status = getaddrinfo(_host.c_str(), std::to_string(srv.port).c_str(), &hints, &res);
+        std::string portStr = intToString(srv.port);
+        int status = getaddrinfo(_host.c_str(), portStr.c_str(), &hints, &res);
         if (status != 0)
             throw std::runtime_error("getaddrinfo failed!");
         for(struct addrinfo *p = res; p != NULL; p = p->ai_next)
@@ -59,6 +66,5 @@ void Server::initialize_socket()
             throw std::runtime_error("Failed to bind/listen");
         
         _pollfds.push_back(serverFd);
-        // print pollfd info
     }
 }
