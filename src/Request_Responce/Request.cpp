@@ -1,10 +1,11 @@
 #include "Request.hpp"
 
 std::string raw =
-		"GET /search?q=walid HTTP/1.1\r\n"
-		"Host: localhost\n"
-		"Content-Type: text/plain\n"
-		"Content-Length: 5\r\n"
+		"POST /search?q=walid HTTP/1.1\r\n"
+		"host: www.google.com\r\n"
+		"ContEnt-Type: text/plain\r\n"
+		"cOntEnt-Type: text/plain\r\n"
+		"Content-LenGth: 5\r\n"
 		"\r\n"
 		"hello";
 
@@ -59,31 +60,106 @@ int parse_request_line(std::string req_line , Request &req)
 	return 0;
 }
 
-int parse_request_headers(std::string header, Request &req)
-{
 
+int parse_request_headers_helper(std::string header)
+{
+	for (size_t i = 0; i < header.size(); i++)
+	{
+		if (header[i] == '\r' || header[i] == '\n')
+			return 0;
+		if (header[i] != ' ' && header[i] != '\t')
+			return 1;
+	}
 	return 0;
 }
 
-	void parse_request(const std::string &raw, Request &req)
+void skip_whitespace(const std::string &header, size_t &i)
+{
+	while (i < header.size() && (header[i] == ' ' || header[i] == '\t'))
+		i++;
+}
+int parse_request_headers(std::string header, Request &req)
+{
+	int flag = 0;
+	int space_flag = 0;
+	for (size_t i = 0; i < header.size(); i++)
+	{
+		if (header[i] == '\r')
+		{
+			flag = 1;
+			continue;
+		}
+		if (flag)
+		{
+			if (header[i] != '\n')
+				return -1;
+			flag = 0;
+			continue;
+		}
+		if (flag == 0)
+		{
+			std::string key;
+			while (i < header.size() && header[i] != ':' && header[i] != '\n' )
+			{
+				if (header[i] == ' ' || header[i] == '\t')
+					return -2;
+				key += std::tolower(header[i++]);
+			}
+			if (header[i] != ':') return -1;
+			i++;
+			std::string value;
+			skip_whitespace(header, i);
+			while (i < header.size() && header[i] != '\n')
+			{
+				if (header[i] == ' ' || header[i] == '\t' )
+				{
+					if (parse_request_headers_helper(header.substr(i)) == 0)
+					{
+						i++;
+						continue;
+					}
+				}
+				if (header[i] == '\r') { i++; continue; }
+				value += header[i++];
+			}
+			if (req.setHeader(key, value) == -1)
+				return -1;
+		}
+	}
+	if (req.getHeaders().find("host") == req.getHeaders().end())
+	{
+    	std::cout << "Host header does not exist" << std::endl;
+		return -3;
+	}
+	return 0;
+}
+
+void parse_request(const std::string &raw, Request &req)
 {
 	size_t pos = raw.find("\r\n\r\n");
 	size_t pos_req_line = raw.find("\r\n");
 	if(pos == std::string::npos)
 		std::cout << "error" << std::endl;
 	std::string request_line = raw.substr(0 , pos_req_line);
-	std::string header = raw.substr(pos_req_line + 1, pos - (pos_req_line + 1));
+	std::string header = raw.substr(pos_req_line + 2, pos - (pos_req_line + 2));
 	std::string body = raw.substr(pos + 4);
 	std::cout << "request line : " << request_line << std::endl;
-	std::cout << "------------------------ " << std::endl;
-	std::cout << "header: " << header << std::endl;
-	std::cout << "------------------------ " << std::endl;
 	int typeOfError = parse_request_line(request_line , req);
 	std::cout << "return value: " << typeOfError << std::endl;
+	std::cout << "------------------------ " << std::endl;
+	int typeOfError2 = parse_request_headers(header , req);
+	//std::cout << "header: " << header << std::endl;
+	if (typeOfError2 != -1)
+	std::cout << "headers: " << std::endl;
+	for (std::map<std::string, std::string>::const_iterator it = req.getHeaders().begin(); it != req.getHeaders().end(); ++it)
+	{
+		std::cout << it->first << ":" << it->second << std::endl;
+	}
+	std::cout << "return value: " << typeOfError2 << std::endl;
+	std::cout << "------------------------ " << std::endl;
 }
 int main()
 {
 	Request req;
-	std::cout << raw.size() << std::endl;
 	parse_request(raw , req);
 }

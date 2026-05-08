@@ -45,10 +45,53 @@ void Request::setBody(const std::string &body)
 	this->body = body;
 }
 
-void Request::setHeader(const std::string &key, const std::string &value)
-{
-	this->headers[key] = value;
+//void Request::setHeader(const std::string &key, const std::string &value)
+//{
+//	this->headers[key] = value;
+//}
+
+// Returns 0 on success, or -1 (or 400) if the request should be rejected
+int Request::setHeader(std::string key,std::string value) {
+    
+    // Check if the header already exists in our map
+    if (this->headers.find(key) != this->headers.end()) {
+        if (key == "host")
+            return -1; // Trigger 400 Bad Request
+        // EDGE CASE 2: The "Content-Length" Header
+        // ---------------------------------------------------------
+        if (key == "content-length") {
+            // If they are exactly the same, ignore the duplicate.
+            if (this->headers[key] == value) {
+                return 0;
+            }
+            return -1; // Trigger 400 Bad Request
+        }
+        if (key == "content-type") {
+            if (this->headers[key] == value) {
+                return 0;
+            }
+            return -1; // Trigger 400 Bad Request
+        }
+        // ---------------------------------------------------------
+        // STANDARD RULE: Combine with a comma
+        // ---------------------------------------------------------
+        // For Accept, Transfer-Encoding, etc.
+        this->headers[key] += ", " + value;
+        
+    } else {
+        // It's the first time we are seeing this header. Just insert it.
+        this->headers[key] = value;
+    }
+    
+    return 0;
 }
+
+
+
+
+
+
+
 
 void Request::setHeaders(const std::map<std::string, std::string> &headers)
 {

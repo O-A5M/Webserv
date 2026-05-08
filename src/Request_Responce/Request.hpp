@@ -2,6 +2,7 @@
 #include <map>
 #include <vector>
 #include <iostream>
+#include <cctype>
 
 // #define GET 0
 // #define POST 1
@@ -9,7 +10,7 @@
 
 enum e_Methodes {
     UNKNOWN,
-    GET,
+    GET,	
     POST,
     DELETE
 };
@@ -44,7 +45,7 @@ public:
 	void setPath(const std::string &path);
 	void setBody(const std::string &body);
 
-	void setHeader(const std::string &key, const std::string &value);
+	int setHeader(std::string key, std::string value);
 	void setHeaders(const std::map<std::string, std::string> &headers);
 	Request(void);
 	~Request(void);
