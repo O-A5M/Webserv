@@ -64,7 +64,7 @@ int Request::setHeader(std::string key,std::string value) {
             if (this->headers[key] == value) {
                 return 0;
             }
-            return -1; // Trigger 400 Bad Request
+            return -2; // Trigger 400 Bad Request
         }
         if (key == "content-type") {
             if (this->headers[key] == value) {
@@ -130,4 +130,8 @@ const std::string &Request::getBody(void) const
 const std::map<std::string, std::string> &Request::getHeaders(void) const
 {
 	return this->headers;
+}
+
+void Request::removeHeader(const std::string& key) {
+    this->headers.erase(key);
 }

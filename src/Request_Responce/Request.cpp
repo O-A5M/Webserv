@@ -2,9 +2,9 @@
 
 std::string raw =
 		"POST /search?q=walid HTTP/1.1\r\n"
-		"host: www.google.com\r\n"
-		"ContEnt-Type: text/plain\r\n"
-		"cOntEnt-Type: text/plain\r\n"
+		"host:            www.google.com\r\n"
+		"ContEnt-Type:                 text/plain\r\n"
+		"Content-LenGth: 5\r\n"
 		"Content-LenGth: 5\r\n"
 		"\r\n"
 		"hello";
@@ -61,9 +61,9 @@ int parse_request_line(std::string req_line , Request &req)
 }
 
 
-int parse_request_headers_helper(std::string header)
+int parse_request_headers_helper(const std::string &header , int startIndex)
 {
-	for (size_t i = 0; i < header.size(); i++)
+	for (size_t i = startIndex; i < header.size(); i++)
 	{
 		if (header[i] == '\r' || header[i] == '\n')
 			return 0;
@@ -78,10 +78,11 @@ void skip_whitespace(const std::string &header, size_t &i)
 	while (i < header.size() && (header[i] == ' ' || header[i] == '\t'))
 		i++;
 }
-int parse_request_headers(std::string header, Request &req)
+int parse_request_headers(const std::string &header, Request &req)
 {
 	int flag = 0;
-	int space_flag = 0;
+	int errorR = 0;
+	int colonFlag = 0;
 	for (size_t i = 0; i < header.size(); i++)
 	{
 		if (header[i] == '\r')
@@ -113,7 +114,7 @@ int parse_request_headers(std::string header, Request &req)
 			{
 				if (header[i] == ' ' || header[i] == '\t' )
 				{
-					if (parse_request_headers_helper(header.substr(i)) == 0)
+					if (parse_request_headers_helper(header , i) == 0)
 					{
 						i++;
 						continue;
@@ -122,14 +123,31 @@ int parse_request_headers(std::string header, Request &req)
 				if (header[i] == '\r') { i++; continue; }
 				value += header[i++];
 			}
-			if (req.setHeader(key, value) == -1)
-				return -1;
+			errorR = req.setHeader(key, value) ; 
+			if (errorR < 0) 
+			{
+				if (errorR == -2)
+					colonFlag = 1;
+				else
+					return -1;
+			}
 		}
 	}
 	if (req.getHeaders().find("host") == req.getHeaders().end())
 	{
     	std::cout << "Host header does not exist" << std::endl;
 		return -3;
+	}
+	if ((req.getHeaders().find("transfer-encoding") != req.getHeaders().end()))
+	{
+		if (req.getHeaders().find("content-length") != req.getHeaders().end())
+		{
+			req.removeHeader("content-length");
+		}		
+	}
+	else if (colonFlag)
+	{
+		return -1;
 	}
 	return 0;
 }
@@ -138,8 +156,10 @@ void parse_request(const std::string &raw, Request &req)
 {
 	size_t pos = raw.find("\r\n\r\n");
 	size_t pos_req_line = raw.find("\r\n");
-	if(pos == std::string::npos)
-		std::cout << "error" << std::endl;
+	if(pos_req_line == std::string::npos || pos == std::string::npos) {
+        std::cout << "400 Bad Request: Malformed HTTP" << std::endl;
+        return;
+    }
 	std::string request_line = raw.substr(0 , pos_req_line);
 	std::string header = raw.substr(pos_req_line + 2, pos - (pos_req_line + 2));
 	std::string body = raw.substr(pos + 4);

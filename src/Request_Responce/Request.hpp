@@ -56,4 +56,5 @@ public:
 	const std::string &getPath(void) const;
 	const std::string &getBody(void) const;
 	const std::map<std::string, std::string> &getHeaders(void) const;
-	};
+	void removeHeader(const std::string& key);
+};
