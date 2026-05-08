@@ -10,7 +10,8 @@ INC_DIR = inc
 SRCS = $(SERVER_DIR)/configParser.cpp \
        $(SERVER_DIR)/serverConfig.cpp \
        $(SERVER_DIR)/locationConfig.cpp \
-       $(SRC_DIR)/main.cpp
+       $(SRC_DIR)/main.cpp \
+	   $(SERVER_DIR)/Server.cpp 
 
 # Object files
 OBJS = $(SRCS:.cpp=.o)
