@@ -5,6 +5,7 @@ std::string raw =
     "Host: example.com\r\n"
     "Content-Type: application/x-www-form-urlencoded\r\n"
     "Content-Length: 13\r\n"
+    "Content-Length: 13\r\n"
     "\r\n"
     "name=walid&id=1";
 
@@ -144,6 +145,15 @@ int parse_request_headers(const std::string &header, Request &req)
 			req.removeHeader("content-length");
 		}		
 	}
+	else if ((req.getHeaders().find("content-length") != req.getHeaders().end()) && colonFlag == 0)
+	{
+		char *end;
+		long n = std::strtol(req.getHeaders().find("content-length")->second.c_str(), &end, 10);
+		if (*end == '\0')
+		    req.setHeader("content-length", std::to_string(n));
+		else
+			return -1;
+	}
 	else if (colonFlag)
 	{
 		return -1;
@@ -153,11 +163,12 @@ int parse_request_headers(const std::string &header, Request &req)
 
 int parse_body(const std::string &body, Request &req)
 {
-	
+	if (req.getHeaders().find("content-length") != req.getHeaders().end())
+	{
+				
+	}	
 	return 0;
 }
-
-
 
 void parse_request(const std::string &raw, Request &req)
 {
