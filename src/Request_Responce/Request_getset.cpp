@@ -135,3 +135,28 @@ const std::map<std::string, std::string> &Request::getHeaders(void) const
 void Request::removeHeader(const std::string& key) {
     this->headers.erase(key);
 }
+
+void Request::display(void) const
+{
+	std::cout << "===== REQUEST =====" << std::endl;
+
+	std::cout << "Method: " << this->Method << std::endl;
+	std::cout << "URI: " << this->uri << std::endl;
+	std::cout << "Version: " << this->version << std::endl;
+	std::cout << "Query String: " << this->query_string << std::endl;
+	std::cout << "Path: " << this->path << std::endl;
+
+	std::cout << "\n--- Headers ---" << std::endl;
+
+	std::map<std::string, std::string>::const_iterator it;
+
+	for (it = this->headers.begin(); it != this->headers.end(); ++it)
+	{
+		std::cout << it->first << ": " << it->second << std::endl;
+	}
+
+	std::cout << "\n--- Body ---" << std::endl;
+	std::cout << this->body << std::endl;
+
+	std::cout << "===================" << std::endl;
+}

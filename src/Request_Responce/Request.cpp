@@ -4,10 +4,23 @@ std::string raw =
     "POST /api/save HTTP/1.1\r\n"
     "Host: example.com\r\n"
     "Content-Type: application/x-www-form-urlencoded\r\n"
-    "Content-Length: 13\r\n"
-    "Content-Length: 13\r\n"
+    "Content-Length: 16\r\n"
+    "Content-Length: 16\r\n"
     "\r\n"
-    "name=walid&id=1";
+    "walid=walid&id=1"
+	"GET /api/save HTTP/1.1\r\n"
+    "Host: example.com\r\n"
+    "Content-Type: application/x-www-form-urlencoded\r\n"
+    "\r\n"
+	"GET /api/save HTTP/1.1\r\n"
+	"Host: example.com\r\n"
+	"Content-Type: application/x-www-form-urlencoded\r\n"
+	"Content-Length: 16\r\n"
+	"\r\n"
+	;
+
+
+
 
 int parse_request_line(std::string req_line , Request &req)
 {
@@ -52,11 +65,6 @@ int parse_request_line(std::string req_line , Request &req)
 		req.setQuery(uri.substr(pos + 1 , uri.size() - pos - 1));
 	req.setPath(uri.substr(0, pos));
 	req.setVersion(version);
-	std::cout << "method: " << req.getMethod() << std::endl;
-	std::cout << "uri: " << req.getUri() << std::endl;
-	std::cout << "version: " << req.getVersion() << std::endl;
-	std::cout << "query: " << req.getQuery() << std::endl;
-	std::cout << "path: " << req.getPath() << std::endl;
 	return 0;
 }
 
@@ -149,9 +157,7 @@ int parse_request_headers(const std::string &header, Request &req)
 	{
 		char *end;
 		long n = std::strtol(req.getHeaders().find("content-length")->second.c_str(), &end, 10);
-		if (*end == '\0')
-		    req.setHeader("content-length", std::to_string(n));
-		else
+		if (*end != '\0')
 			return -1;
 	}
 	else if (colonFlag)
@@ -163,41 +169,62 @@ int parse_request_headers(const std::string &header, Request &req)
 
 int parse_body(const std::string &body, Request &req)
 {
-	if (req.getHeaders().find("content-length") != req.getHeaders().end())
-	{
-				
-	}	
-	return 0;
+    if (req.getHeaders().find("content-length") != req.getHeaders().end())
+    {
+        size_t bSize = body.size();        
+        char *end;
+        size_t expected_size = std::strtoul(req.getHeaders().find("content-length")->second.c_str(), &end, 10);
+        
+        if (bSize < expected_size)
+        {
+            return 1; // 1 means "Incomplete, go back to poll/select and wait"
+        }
+        else if (bSize == expected_size)
+        {
+            req.setBody(body);
+            return 0; // 0 means "Perfect, request is ready!"
+        }
+        else
+        {
+            req.setBody(body.substr(0, expected_size));
+            return 0;
+        }
+    }
+    return 0;
 }
 
-void parse_request(const std::string &raw, Request &req)
+void parse_request(std::string &raw, Request &req)
 {
-	size_t pos = raw.find("\r\n\r\n");
-	size_t pos_req_line = raw.find("\r\n");
-	if(pos_req_line == std::string::npos || pos == std::string::npos) {
-        std::cout << "400 Bad Request: Malformed HTTP" << std::endl;
-        return;
-    }
-	std::string request_line = raw.substr(0 , pos_req_line);
-	std::string header = raw.substr(pos_req_line + 2, pos - (pos_req_line + 2));
-	std::string body = raw.substr(pos + 4);
-	std::cout << "request line : " << request_line << std::endl;
-	int typeOfError = parse_request_line(request_line , req);
-	std::cout << "return value: " << typeOfError << std::endl;
-	std::cout << "------------------------ " << std::endl;
-	int typeOfError2 = parse_request_headers(header , req);
-	//std::cout << "header: " << header << std::endl;
-	if (typeOfError2 != -1)
-	std::cout << "headers: " << std::endl;
-	for (std::map<std::string, std::string>::const_iterator it = req.getHeaders().begin(); it != req.getHeaders().end(); ++it)
-	{
-		std::cout << it->first << ":" << it->second << std::endl;
+	while (!raw.empty()) 
+    {
+		size_t pos = raw.find("\r\n\r\n");
+		size_t pos_req_line = raw.find("\r\n");
+		if(pos_req_line == std::string::npos || pos == std::string::npos) {
+    	    std::cout << "400 Bad Request: Malformed HTTP" << std::endl;
+    	    return;
+    	}
+		std::string request_line = raw.substr(0 , pos_req_line);
+		std::string header = raw.substr(pos_req_line + 2, pos - (pos_req_line + 2));
+		std::string body = raw.substr(pos + 4);
+		int typeOfError = parse_request_line(request_line , req);
+		int typeOfError2 = parse_request_headers(header , req);
+		int bodyParseResult = parse_body(body, req);
+		if (typeOfError < 0 || typeOfError2 < 0 || bodyParseResult < 0)
+		{
+			std::cout << "400 Bad Request: Malformed HTTP" << std::endl;
+			return;
+		}
+		if (bodyParseResult == 1)
+		{
+			std::cout << "Waiting for more data to complete the body..." << std::endl;
+			return;
+		}
 	}
-	std::cout << "return value: " << typeOfError2 << std::endl;
-	std::cout << "------------------------ " << std::endl;
+	//std::cout << "header: " << header << std::endl;
 }
 int main()
 {
 	Request req;
 	parse_request(raw , req);
+	req.display();
 }

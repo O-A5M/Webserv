@@ -57,4 +57,5 @@ public:
 	const std::string &getBody(void) const;
 	const std::map<std::string, std::string> &getHeaders(void) const;
 	void removeHeader(const std::string& key);
+	void display(void) const;
 };
