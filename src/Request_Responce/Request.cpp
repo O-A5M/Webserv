@@ -1,22 +1,34 @@
 #include "Request.hpp"
 
-std::string raw = 
-    "POST /api/life?walid=walid&id=1 HTTP/1.1\r\n"
-    "Host: google.com\r\n"
-    "Content-Type: application/json\r\n"
-    "Content-Length: 2\r\n"
-    "Content-Length: 2\r\n"
-    "\r\n"
-    "walid=walid&id=1"
-	"GET /api/save?walid=walid&id=3 HTTP/1.1\r\n"
-    "Host: facebook.com\r\n"
-    "Content-Type: application/html\r\n"
-    "\r\n"
-	"GET /api/knight?walid=walid&id=2 HTTP/1.1\r\n"
-	"Host: youtube.com\r\n"
-	"Content-Type: application/x-www-form-urlencoded\r\n"
-	"\r\n"
-	;
+std::string raw =
+		"POST /api/life?walid=walid&id=1 HTTP/1.1\r\n"
+		"Host: google.com\r\n"
+		"Content-Type: application/json\r\n"
+		"Content-Length: 16\r\n"
+		"Content-Length: 16\r\n"
+		"\r\n"
+		"walid=walid&id=1"
+		"GET /api/save?walid=walid&id=3 HTTP/1.1\r\n"
+		"Host: facebook.com\r\n"
+		"Content-Type: application/html\r\n"
+		"\r\n"
+		"GET /api/knight?walid=walid&id=2 HTTP/1.1\r\n"
+		"Host: youtube.com\r\n"
+		"Content-Type: application/x-www-form-urlencoded\r\n"
+		"\r\n"
+		"POST /api/upload HTTP/1.1\r\n"
+		"Host: example.com\r\n"
+		"Content-Type: text/plain\r\n"
+		"Transfer-Encoding: chunked\r\n"
+		"\r\n"
+		"1A\r\n"
+		"This is a chunked request."
+		"\r\n"
+		"11\r\n"
+		" It is very cool."
+		"\r\n"
+		"0\r\n"
+		"\r\n";
 
 int parse_request_line(std::string req_line , Request &req)
 {
@@ -63,7 +75,6 @@ int parse_request_line(std::string req_line , Request &req)
 	req.setVersion(version);
 	return 0;
 }
-
 
 int parse_request_headers_helper(const std::string &header , int startIndex)
 {
@@ -113,6 +124,7 @@ int parse_request_headers(const std::string &header, Request &req)
 			if (header[i] != ':') return -1;
 			i++;
 			std::string value;
+
 			skip_whitespace(header, i);
 			while (i < header.size() && header[i] != '\n')
 			{
@@ -127,8 +139,8 @@ int parse_request_headers(const std::string &header, Request &req)
 				if (header[i] == '\r') { i++; continue; }
 				value += header[i++];
 			}
-			errorR = req.setHeader(key, value) ; 
-			if (errorR < 0) 
+			errorR = req.setHeader(key, value) ;
+			if (errorR < 0)
 			{
 				if (errorR == -2)
 					colonFlag = 1;
@@ -147,7 +159,7 @@ int parse_request_headers(const std::string &header, Request &req)
 		if (req.getHeaders().find("content-length") != req.getHeaders().end())
 		{
 			req.removeHeader("content-length");
-		}		
+		}
 	}
 	else if ((req.getHeaders().find("content-length") != req.getHeaders().end()) && colonFlag == 0)
 	{
@@ -163,14 +175,32 @@ int parse_request_headers(const std::string &header, Request &req)
 	return 0;
 }
 
-int parse_body(std::string &body, Request &req)
+int convert_hex_to_dec(const std::string &hex)
+{
+	int result = 0;
+	for (size_t i = 0; i < hex.size(); i++)
+	{
+		char c = hex[i];
+		if (c >= '0' && c <= '9')
+			result = result * 16 + (c - '0');
+		else if (c >= 'a' && c <= 'f')
+			result = result * 16 + (c - 'a' + 10);
+		else if (c >= 'A' && c <= 'F')
+			result = result * 16 + (c - 'A' + 10);
+		else
+			return -1;
+	}
+	return result;
+}
+
+int parse_body(const std::string &body, Request &req, size_t &consumed_bytes)
 {
     if (req.getHeaders().find("content-length") != req.getHeaders().end())
     {
-        size_t bSize = body.size();        
+        size_t bSize = body.size();
         char *end;
         size_t expected_size = std::strtoul(req.getHeaders().find("content-length")->second.c_str(), &end, 10);
-        
+
         if (bSize < expected_size)
         {
             return 1; // 1 means "Incomplete, go back to poll/select and wait"
@@ -178,58 +208,87 @@ int parse_body(std::string &body, Request &req)
         else if (bSize == expected_size)
         {
             req.setBody(body);
+            consumed_bytes = expected_size;
             return 0; // 0 means "Perfect, request is ready!"
         }
         else
         {
             req.setBody(body.substr(0, expected_size));
+            consumed_bytes = expected_size;
             return 0;
         }
     }
-    return 0;
-}
+		else if (req.getHeaders().find("transfer-encoding") != req.getHeaders().end())
+		{
+			std::string chunked_body;
+			size_t pos = 0;
+			while (true)
+			{
+				size_t crlf_pos = body.find("\r\n", pos);
+				if (crlf_pos == std::string::npos)
+					return 1; // Incomplete chunk size line
+				std::string chunk_size_str = body.substr(pos, crlf_pos - pos);
+				int chunk_size = convert_hex_to_dec(chunk_size_str);
+				if (chunk_size < 0)
+					return -1; // Invalid chunk size
+				pos = crlf_pos + 2;
+				if (body.size() < pos + chunk_size + 2)
+					return 1; // Incomplete chunk data
+				chunked_body += body.substr(pos, chunk_size);
+				pos += chunk_size + 2; // Skip chunk data and trailing CRLF
+				if (chunk_size == 0)
+					break; // Last chunk
+			}
+			req.setBody(chunked_body);
+			consumed_bytes = pos;
+			return 0;
+		}
+		else
+		{
+				req.setBody("");
+				consumed_bytes = 0;
+				return 0; // No Content-Length or Transfer-Encoding, treat as complete
+		}
+		}
 
-void parse_request(std::string &raw, Request &req)
+int  parse_request(std::string &raw, Request &req)
 {
-	while (!raw.empty()) 
+	while (!raw.empty())
     {
 		size_t pos = raw.find("\r\n\r\n");
 		size_t pos_req_line = raw.find("\r\n");
 		if(pos_req_line == std::string::npos || pos == std::string::npos) {
-    	    std::cout << "400 Bad Request: Malformed HTTP" << std::endl;
-    	    return;
+			std::cout << "Waiting for the rest of the headers..." << std::endl;
+			return 1;
     	}
 		std::string request_line = raw.substr(0 , pos_req_line);
 		std::string header = raw.substr(pos_req_line + 2, pos - (pos_req_line + 2));
-		std::string body = raw.substr(pos + 4);
 		int typeOfError = parse_request_line(request_line , req);
 		int typeOfError2 = parse_request_headers(header , req);
-		int bodyParseResult = parse_body(body, req);
-		if (typeOfError < 0 || typeOfError2 < 0 || bodyParseResult < 0)
+		if (typeOfError < 0 || typeOfError2 < 0)
 		{
 			std::cout << "400 Bad Request: Malformed HTTP" << std::endl;
-			return;
+			return -1;
 		}
-		if (bodyParseResult == 1)
-		{
-			std::cout << "Waiting for more data to complete the body..." << std::endl;
-			return;
-		}
+		size_t consumed_body_bytes = 0;
+			std::string body = raw.substr(pos + 4);
+			int bodyParseResult = parse_body(body, req, consumed_body_bytes);
+			if (bodyParseResult < 0)
+			{
+				std::cout << "400 Bad Request: Malformed HTTP" << std::endl;
+				return -1;
+			}
+			if (bodyParseResult == 1)
+			{
+				std::cout << "Waiting for more data to complete the body..." << std::endl;
+				return 1;
+			}
 		req.display();
-		size_t body_len = 0;
-		//size_t consumed = pos + 4 + body_len;
-		//if (consumed > raw.size())
-		//{
-		//	std::cout << "400 Bad Request: Malformed HTTP" << std::endl;
-		//	return;
-		//}
-		//raw.erase(0, consumed);
-		size_t total_parsed_bytes = (pos + 4) + req.getBody().size();
+		size_t total_parsed_bytes = (pos + 4) + consumed_body_bytes;
         raw.erase(0, total_parsed_bytes);
 		req = Request();
 	}
-	//std::cout << "header: " << header << std::endl;
-	return;
+	return 0;
 }
 
 int main()

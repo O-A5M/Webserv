@@ -10,7 +10,7 @@
 
 enum e_Methodes {
     UNKNOWN,
-    GET,	
+    GET,
     POST,
     DELETE
 };
@@ -42,7 +42,7 @@ public:
 	void setUri(const std::string &uri);
 	void setVersion(const std::string &version);
 	void setQuery(const std::string &query);
-	void setPath(const std::string &path);
+	void setPath(const std::string &path);\
 	void setBody(const std::string &body);
 
 	int setHeader(std::string key, std::string value);
