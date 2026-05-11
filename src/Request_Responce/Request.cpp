@@ -1,26 +1,22 @@
 #include "Request.hpp"
 
 std::string raw = 
-    "POST /api/save HTTP/1.1\r\n"
-    "Host: example.com\r\n"
-    "Content-Type: application/x-www-form-urlencoded\r\n"
-    "Content-Length: 16\r\n"
-    "Content-Length: 16\r\n"
+    "POST /api/life?walid=walid&id=1 HTTP/1.1\r\n"
+    "Host: google.com\r\n"
+    "Content-Type: application/json\r\n"
+    "Content-Length: 2\r\n"
+    "Content-Length: 2\r\n"
     "\r\n"
     "walid=walid&id=1"
-	"GET /api/save HTTP/1.1\r\n"
-    "Host: example.com\r\n"
-    "Content-Type: application/x-www-form-urlencoded\r\n"
+	"GET /api/save?walid=walid&id=3 HTTP/1.1\r\n"
+    "Host: facebook.com\r\n"
+    "Content-Type: application/html\r\n"
     "\r\n"
-	"GET /api/save HTTP/1.1\r\n"
-	"Host: example.com\r\n"
+	"GET /api/knight?walid=walid&id=2 HTTP/1.1\r\n"
+	"Host: youtube.com\r\n"
 	"Content-Type: application/x-www-form-urlencoded\r\n"
-	"Content-Length: 16\r\n"
 	"\r\n"
 	;
-
-
-
 
 int parse_request_line(std::string req_line , Request &req)
 {
@@ -167,7 +163,7 @@ int parse_request_headers(const std::string &header, Request &req)
 	return 0;
 }
 
-int parse_body(const std::string &body, Request &req)
+int parse_body(std::string &body, Request &req)
 {
     if (req.getHeaders().find("content-length") != req.getHeaders().end())
     {
@@ -219,12 +215,26 @@ void parse_request(std::string &raw, Request &req)
 			std::cout << "Waiting for more data to complete the body..." << std::endl;
 			return;
 		}
+		req.display();
+		size_t body_len = 0;
+		//size_t consumed = pos + 4 + body_len;
+		//if (consumed > raw.size())
+		//{
+		//	std::cout << "400 Bad Request: Malformed HTTP" << std::endl;
+		//	return;
+		//}
+		//raw.erase(0, consumed);
+		size_t total_parsed_bytes = (pos + 4) + req.getBody().size();
+        raw.erase(0, total_parsed_bytes);
+		req = Request();
 	}
 	//std::cout << "header: " << header << std::endl;
+	return;
 }
+
 int main()
 {
 	Request req;
 	parse_request(raw , req);
-	req.display();
+	//	req.display();
 }

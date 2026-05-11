@@ -140,11 +140,11 @@ void Request::display(void) const
 {
 	std::cout << "===== REQUEST =====" << std::endl;
 
-	std::cout << "Method: " << this->Method << std::endl;
-	std::cout << "URI: " << this->uri << std::endl;
-	std::cout << "Version: " << this->version << std::endl;
-	std::cout << "Query String: " << this->query_string << std::endl;
-	std::cout << "Path: " << this->path << std::endl;
+	std::cout << "Method:" << this->Method << std::endl;
+	std::cout << "URI:" << this->uri << std::endl;
+	std::cout << "Version:" << this->version << std::endl;
+	std::cout << "Query String:" << this->query_string << std::endl;
+	std::cout << "Path:" << this->path << std::endl;
 
 	std::cout << "\n--- Headers ---" << std::endl;
 
@@ -152,7 +152,7 @@ void Request::display(void) const
 
 	for (it = this->headers.begin(); it != this->headers.end(); ++it)
 	{
-		std::cout << it->first << ": " << it->second << std::endl;
+		std::cout << it->first << ":" << it->second << std::endl;
 	}
 
 	std::cout << "\n--- Body ---" << std::endl;
