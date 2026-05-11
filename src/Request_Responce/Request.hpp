@@ -3,6 +3,7 @@
 #include <vector>
 #include <iostream>
 #include <cctype>
+#include <cstdlib>
 
 // #define GET 0
 // #define POST 1

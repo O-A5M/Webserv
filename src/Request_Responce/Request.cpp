@@ -164,8 +164,8 @@ int parse_request_headers(const std::string &header, Request &req)
 	else if ((req.getHeaders().find("content-length") != req.getHeaders().end()) && colonFlag == 0)
 	{
 		char *end;
-		long n = std::strtol(req.getHeaders().find("content-length")->second.c_str(), &end, 10);
-		if (*end != '\0')
+		long n = strtol(req.getHeaders().find("content-length")->second.c_str(), &end, 10);
+		if (*end != '\0' || n < 0)
 			return -1;
 	}
 	else if (colonFlag)
@@ -199,7 +199,7 @@ int parse_body(const std::string &body, Request &req, size_t &consumed_bytes)
     {
         size_t bSize = body.size();
         char *end;
-        size_t expected_size = std::strtoul(req.getHeaders().find("content-length")->second.c_str(), &end, 10);
+        size_t expected_size = strtoul(req.getHeaders().find("content-length")->second.c_str(), &end, 10);
 
         if (bSize < expected_size)
         {
