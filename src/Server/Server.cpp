@@ -28,11 +28,13 @@ void Server::initialize_socket()
         hints.ai_flags = AI_PASSIVE;
 
         struct addrinfo *res = NULL;
-        std::string _host;
+        const char *_host;
         if (!srv.host.empty())
-            _host = srv.host;
+            _host = srv.host.c_str();
+        else
+            _host = NULL;
         std::string portStr = intToString(srv.port);
-        int status = getaddrinfo(_host.c_str(), portStr.c_str(), &hints, &res);
+        int status = getaddrinfo(_host, portStr.c_str(), &hints, &res);
         if (status != 0)
             throw std::runtime_error("getaddrinfo failed!");
         for(struct addrinfo *p = res; p != NULL; p = p->ai_next)
