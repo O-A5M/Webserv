@@ -5,9 +5,10 @@
 #include <cctype>
 #include <cstdlib>
 
-// #define GET 0
-// #define POST 1
-// #define DELETE 2
+
+#define MAX_URI_LENGTH 8192
+#define Client_max_body_size 1000000
+#define MAX_HEADER_SIZE 8192
 
 enum e_Methodes {
     UNKNOWN,
