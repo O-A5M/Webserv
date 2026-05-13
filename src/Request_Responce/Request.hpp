@@ -4,6 +4,7 @@
 #include <iostream>
 #include <cctype>
 #include <cstdlib>
+#include <sys/stat.h>
 
 
 #define MAX_URI_LENGTH 8192

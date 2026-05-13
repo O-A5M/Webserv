@@ -232,7 +232,7 @@ int parse_body(const std::string &body, Request &req, size_t &consumed_bytes)
 	{
 		req.setBody("");
 		consumed_bytes = 0;
-		return 0; // No Content-Length or Transfer-Encoding, treat as complete
+		return 0;
 	}
 }
 
