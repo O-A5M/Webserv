@@ -15,8 +15,7 @@
 class Server {
 	private:
 		std::vector<ServerConfig>	_servers;
-		std::vector<int>			_pollfds;
-		int serverFd;
+		std::vector<int> 			_serverFds;
 	public:
 		Server(const std::vector<ServerConfig>& servers);
 		~Server();
