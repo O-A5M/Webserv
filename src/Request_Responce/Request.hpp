@@ -5,7 +5,8 @@
 #include <cctype>
 #include <cstdlib>
 #include <sys/stat.h>
-
+#include <fstream>
+#include <sstream>
 
 #define MAX_URI_LENGTH 8192
 #define Client_max_body_size 1000000

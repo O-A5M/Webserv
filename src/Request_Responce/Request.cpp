@@ -1,13 +1,10 @@
 #include "Request.hpp"
 
 std::string raw =
-	"POST /api/life?walid=walid&id=1 HTTP/1.1\r\n"
-	"Host: google.com\r\n"
-	"Content-Type: application/json\r\n"
-	"Content-Length: 16\r\n"
-	"Content-Length: 16\r\n"
-	"\r\n"
-	"walid=walid&id=1";
+	"GET /index.html HTTP/1.1\r\n"
+	"Host: ilyass\r\n"
+	"Content-Length: allo\r\n"
+	"\r\n";
 
 int parse_request_line(std::string req_line, Request &req)
 {
@@ -37,6 +34,7 @@ int parse_request_line(std::string req_line, Request &req)
 		else
 			return -1;
 	}
+
 	if (space_count != 2 || method_str.empty() || uri.empty() || version.empty())
 		return -1;
 	if (method_str == "GET")
@@ -73,6 +71,7 @@ void skip_whitespace(const std::string &header, size_t &i)
 	while (i < header.size() && (header[i] == ' ' || header[i] == '\t'))
 		i++;
 }
+
 int parse_request_headers(const std::string &header, Request &req)
 {
 	int flag = 0;
@@ -188,13 +187,13 @@ int parse_body(const std::string &body, Request &req, size_t &consumed_bytes)
 
 		if (bSize < expected_size)
 		{
-			return 1; // 1 means "Incomplete, go back to poll/select and wait"
+			return 1;
 		}
 		else if (bSize == expected_size)
 		{
 			req.setBody(body);
 			consumed_bytes = expected_size;
-			return 0; // 0 means "Perfect, request is ready!"
+			return 0;
 		}
 		else
 		{
@@ -211,7 +210,7 @@ int parse_body(const std::string &body, Request &req, size_t &consumed_bytes)
 		{
 			size_t crlf_pos = body.find("\r\n", pos);
 			if (crlf_pos == std::string::npos)
-				return 1; // Incomplete chunk size line
+				return 1;
 			std::string chunk_size_str = body.substr(pos, crlf_pos - pos);
 			int chunk_size = convert_hex_to_dec(chunk_size_str);
 			if (chunk_size < 0)
@@ -246,8 +245,35 @@ int validateRequest(Request &req)
 		return 414;
 	if (Client_max_body_size < req.getBody().size())
 		return 413;
+	if (req.getHeaders().find("host")->second.empty())
+		return 400;
 	return 200;
 }
+
+std::string build_local_path(const std::string &root, const std::string &req_path)
+{
+	std::string final_path = root;
+	if (!final_path.empty() && final_path[final_path.size() - 1] == '/')
+		final_path.erase(final_path.size() - 1);
+
+	if (!req_path.empty() && req_path[0] != '/')
+		final_path += "/";
+
+	final_path += req_path;
+	return final_path;
+}
+
+int check_resource(const std::string &local_path)
+{
+	struct stat file_info;
+	if (stat(local_path.c_str(), &file_info) != 0)
+		return 404; // Not Found
+	if (S_ISDIR(file_info.st_mode))
+		return 300; // D"
+	return 200; // F
+}
+
+
 
 int parse_request(std::string &raw, Request &req)
 {
@@ -264,7 +290,7 @@ int parse_request(std::string &raw, Request &req)
 		std::string header = raw.substr(pos_req_line + 2, pos - (pos_req_line + 2));
 		if (header.size() > MAX_HEADER_SIZE) {
         	std::cout << "431 Request Header Fields Too Large" << std::endl;
-        	return -1; 
+        	return -1;
     	}
 		int typeOfError = parse_request_line(request_line, req);
 		int typeOfError2 = parse_request_headers(header, req);
