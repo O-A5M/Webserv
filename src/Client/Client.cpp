@@ -26,11 +26,30 @@ void    ClientHandler::OnRead(void) {
     }
     readBuf.append(buff, nread);
 
-    // TODO: check if the request is complete then parse it
+    if (!IsRequestComplete())
+        return;
     // TODO: parse readBuf and build a response in writeBuf
 
     if (!writeBuf.empty())
         EnableWrite();
+}
+
+bool    ClientHandler::IsRequestComplete(void) {
+    size_t  HeaderEnd;
+    size_t  ContentLength = -1;
+
+    HeaderEnd  = readBuf.find("\r\n\r\n");
+    if (HeaderEnd == std::string::npos)
+        return false;
+
+    ContentLength = readBuf.find("Content-Length: ");
+    if (ContentLength == std::string::npos)
+        return true;
+
+    size_t BodySize = std::stoul(readBuf.substr(ContentLength + 15));
+    size_t ContentRecieved = readBuf.size() - (HeaderEnd + 4);
+
+    return (ContentRecieved >= BodySize);
 }
 
 void    ClientHandler::OnWrite(void) {
