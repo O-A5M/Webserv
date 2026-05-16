@@ -18,7 +18,7 @@ void    ClientHandler::OnRead(void) {
         OnError();
         return;
     }
-    if (n == -1 && errno != EAGAIN && errno != EWOULDBLOCK) {
+    if (nread == -1 && errno != EAGAIN && errno != EWOULDBLOCK) {
         std::cerr << "ClientHandler::OnRead() error: "
             << strerror(errno) << std::endl;
         OnError();
