@@ -1,10 +1,20 @@
 #include "Request.hpp"
 
 std::string raw =
-	"GET /index.html HTTP/1.1\r\n"
-	"Host: ilyass\r\n"
-	"Content-Length: allo\r\n"
-	"\r\n";
+		"POST /index.html HTTP/1.1\r\n"
+		" Host:     ilyass\r\n"
+		" Host:     ilyass\r\n"
+		"Content-Length: 16\r\n"
+		"\r\n"
+		"walid=walid&id=1\r\n"
+		"GET /api/save HTTP/1.1\r\n"
+		"Host: youtibe.com\r\n"
+		"Content-Type: application/x-www-form-urlencoded\r\n"
+		"\r\n"
+		"GET /api/save HTTP/1.1\r\n"
+		"Host: exampl.com\r\n"
+		"Content-Type: application/x-www-form-urlencoded\r\n"
+		"\r\n";
 
 int parse_request_line(std::string req_line, Request &req)
 {
@@ -267,13 +277,16 @@ int check_resource(const std::string &local_path)
 {
 	struct stat file_info;
 	if (stat(local_path.c_str(), &file_info) != 0)
-		return 404; // Not Found
+		return 404; // Not found
 	if (S_ISDIR(file_info.st_mode))
-		return 300; // D"
+		return 300; // D
 	return 200; // F
 }
 
+std::string execute_get()
+{
 
+}
 
 int parse_request(std::string &raw, Request &req)
 {
@@ -316,6 +329,7 @@ int parse_request(std::string &raw, Request &req)
 		std::cout << "Validation result: " << validateRequest(req) << std::endl;
 		size_t total_parsed_bytes = (pos + 4) + consumed_body_bytes;
 		raw.erase(0, total_parsed_bytes);
+
 		req = Request();
 	}
 	return 0;
@@ -325,6 +339,7 @@ int main()
 {
 	Request req;
 	parse_request(raw, req);
+
 	// std::cout << "Validation result: " << validateRequest(req) << std::endl;
 	//	req.display();
 }

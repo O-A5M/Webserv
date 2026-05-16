@@ -12,12 +12,12 @@
 #define Client_max_body_size 1000000
 #define MAX_HEADER_SIZE 8192
 
-enum e_Methodes {
-    UNKNOWN,
-    GET,
-    POST,
-    DELETE
-};
+		enum e_Methodes {
+			UNKNOWN,
+			GET,
+			POST,
+			DELETE
+		};
 
 // typedef  struct	s_Request {
 // 	e_Methodes							Methodes;
