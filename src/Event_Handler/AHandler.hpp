@@ -4,61 +4,58 @@
 #include <fcntl.h>
 #include <iostream>
 #include <unistd.h>
-#include <sys/epoll.h>
-
 #include "EventLoop.hpp"
 
 class AHandler {
 protected:
-    int         fd;
-    EventLoop   loop;
+    const int   fd;
+    EventLoop&  loop;
+
+private:
+    void    SetNonBlocking() const {
+        const int flags = fcntl(fd, F_GETFL);
+
+        if (flags == -1) {
+            std::cerr << "Webserv: fcntl(F_GETFL): "
+                      << strerror(errno) << "\n";
+            throw std::runtime_error("fcntl failed");
+        }
+
+        if (fcntl(fd, F_SETFL, flags | O_NONBLOCK | FD_CLOEXEC) == -1) {
+            std::cerr << "Webserv: fcntl(F_SETFL): "
+                      << strerror(errno) << "\n";
+            throw std::runtime_error("fcntl failed");
+        }
+    }
 
 public:
-    AHandler(const int fd, const EventLoop& loop)
+    AHandler(const int fd, EventLoop& loop)
         : fd(fd)
         , loop(loop) {
+
         if (fd == -1) {
-            std::cerr << "Webserv: " << strerror(errno) << "\n";
-            // TODO
+            std::cerr << "Webserv: invalid fd\n";
+            throw std::runtime_error("invalid fd");
         }
-        if (fcntl(fd, F_SETFD, O_NONBLOCK) == -1) {
-            std::cerr << "Webserv: " << strerror(errno) << "\n";
-            // TODO
-        }
-        if (epoll_create1(EPOLL_CLOEXEC) == -1) {
-            std::cerr << "Webserv: " << strerror(errno) << "\n";
-            // TODO
-        }
-    }
-    ~AHandler() {
-        close(fd);
-        // TODO
+
+        SetNonBlocking();
     }
 
-    virtual void    OnWrite() const = 0;
-    virtual void    OnRead() const = 0;
-    virtual void    OnError() const = 0;
+    virtual ~AHandler() {
+        if (fd != -1)
+            close(fd);
+    }
 
-    void    EnableWrite() const {
-        epoll_event ev;
-        ev.events = EPOLLIN | EPOLLOUT;
-        ev.data.fd = fd;
+    virtual void    OnRead() = 0;
+    virtual void    OnWrite() = 0;
+    virtual void    OnError() = 0;
 
-        if (epoll_ctl(fd, EPOLL_CTL_MOD, fd, &ev) == -1) {
-            std::cerr << "Webserv: " << strerror(errno) << "\n";
-            // TODO
-        }
+    void    EnableWrite() {
+        loop.ModHandler(this, EPOLLIN | EPOLLOUT);
     };
-    void    DisableWrite() const {
-        epoll_event ev;
-        ev.events = EPOLLIN;
-        ev.data.fd = fd;
-
-        if (epoll_ctl(fd, EPOLL_CTL_MOD, fd, &ev) == -1) {
-            std::cerr << "Webserv: " << strerror(errno) << "\n";
-            // TODO
-        }
-    }
+    void    DisableWrite() {
+        loop.ModHandler(this, EPOLLIN);
+    };
 
     int     GetFd() const {
         return fd;
