@@ -1,5 +1,7 @@
 #include "Server.hpp"
 #include <sstream>
+#include <map>
+#include <set>
 
 Server::Server(const std::vector<ServerConfig>& servers)
 : _servers(servers)
@@ -8,6 +10,13 @@ Server::Server(const std::vector<ServerConfig>& servers)
 
 Server::~Server()
 {
+    std::set<int> closed;
+    for (size_t i = 0; i < _serverFds.size(); ++i)
+    {
+        const int fd = _serverFds[i];
+        if (fd >= 0 && closed.insert(fd).second)
+            close(fd);
+    }
 }
 
 static std::string intToString(int v) {
@@ -18,11 +27,20 @@ static std::string intToString(int v) {
 
 void Server::initialize_socket()
 {
+	std::map<int, int> portToFd;
+
     for(size_t i = 0; i < _servers.size(); i++)
     {
-        int fd = -1;
-
         ServerConfig &srv = _servers[i];
+
+        std::map<int, int>::const_iterator it = portToFd.find(srv.port);
+        if (it != portToFd.end())
+        {
+            _serverFds.push_back(it->second);
+            continue;
+        }
+
+        int fd = -1;
 
         struct addrinfo hints;
         std::memset(&hints, 0, sizeof(hints));
@@ -73,7 +91,12 @@ void Server::initialize_socket()
 
         if(fd < 0)
             throw std::runtime_error("Failed to bind/listen");
-        
+
+        portToFd[srv.port] = fd;
         _serverFds.push_back(fd);
+    }
+    for (size_t i = 0; i < _serverFds.size(); ++i)
+    {
+        std::cout << "Server listening on port " << _servers[i].port << " with fd " << _serverFds[i] << std::endl;
     }
 }
