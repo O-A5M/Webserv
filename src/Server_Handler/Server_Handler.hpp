@@ -1,11 +1,11 @@
 #ifndef SERVER_HANDLER_HPP
 #define SERVER_HANDLER_HPP
 
-#include "AHandler.hpp"
-#include "ClientHandler.hpp"
-#include "EventLoop.hpp"
+#include "../Event_Handler/AHandler.hpp"
+#include "../Client/Client.hpp"
+#include "../Event_Loop/EventLoop.hpp"
 #include <sys/socket.h>
-#include "Client.hpp"
+#include <netinet/in.h>
 
 class ServerHandler : public AHandler {
 public:

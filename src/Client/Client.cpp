@@ -46,7 +46,8 @@ bool    ClientHandler::IsRequestComplete(void) {
     if (ContentLength == std::string::npos)
         return true;
 
-    size_t BodySize = std::stoul(readBuf.substr(ContentLength + 15));
+    size_t BodySize = std::strtoul(readBuf.substr(ContentLength + 15).c_str()
+        , 0, 10);
     size_t ContentRecieved = readBuf.size() - (HeaderEnd + 4);
 
     return (ContentRecieved >= BodySize);
