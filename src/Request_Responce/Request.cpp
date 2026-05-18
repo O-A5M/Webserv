@@ -1,20 +1,20 @@
 #include "Request.hpp"
+#include "Responce.hpp"
 
 std::string raw =
-		"POST /index.html HTTP/1.1\r\n"
-		" Host:     ilyass\r\n"
-		" Host:     ilyass\r\n"
-		"Content-Length: 16\r\n"
+		"GET /books/ HTTP/1.1\r\n"
+		"Host:  ilyass\r\n"
 		"\r\n"
-		"walid=walid&id=1\r\n"
-		"GET /api/save HTTP/1.1\r\n"
-		"Host: youtibe.com\r\n"
-		"Content-Type: application/x-www-form-urlencoded\r\n"
-		"\r\n"
-		"GET /api/save HTTP/1.1\r\n"
-		"Host: exampl.com\r\n"
-		"Content-Type: application/x-www-form-urlencoded\r\n"
-		"\r\n";
+		// "walid=walid&id=1\r\n"
+		// "GET /api/save HTTP/1.1\r\n"
+		// "Host: youtibe.com\r\n"
+		// "Content-Type: application/x-www-form-urlencoded\r\n"
+		// "\r\n"
+		// "GET /api/save HTTP/1.1\r\n"
+		// "Host: exampl.com\r\n"
+		// "Content-Type: application/x-www-form-urlencoded\r\n"
+		// "\r\n"
+		;
 
 int parse_request_line(std::string req_line, Request &req)
 {
@@ -260,80 +260,131 @@ int validateRequest(Request &req)
 	return 200;
 }
 
-std::string build_local_path(const std::string &root, const std::string &req_path)
-{
-	std::string final_path = root;
-	if (!final_path.empty() && final_path[final_path.size() - 1] == '/')
-		final_path.erase(final_path.size() - 1);
-
-	if (!req_path.empty() && req_path[0] != '/')
-		final_path += "/";
-
-	final_path += req_path;
-	return final_path;
-}
-
-int check_resource(const std::string &local_path)
-{
-	struct stat file_info;
-	if (stat(local_path.c_str(), &file_info) != 0)
-		return 404; // Not found
-	if (S_ISDIR(file_info.st_mode))
-		return 300; // D
-	return 200; // F
-}
-
-std::string execute_get()
-{
-
-}
-
 int parse_request(std::string &raw, Request &req)
 {
-	while (!raw.empty())
-	{
-		size_t pos = raw.find("\r\n\r\n");
-		size_t pos_req_line = raw.find("\r\n");
-		if (pos_req_line == std::string::npos || pos == std::string::npos)
-		{
-			std::cout << "Waiting for the rest of the headers..." << std::endl;
-			return 1;
-		}
-		std::string request_line = raw.substr(0, pos_req_line);
-		std::string header = raw.substr(pos_req_line + 2, pos - (pos_req_line + 2));
-		if (header.size() > MAX_HEADER_SIZE) {
-        	std::cout << "431 Request Header Fields Too Large" << std::endl;
-        	return -1;
-    	}
-		int typeOfError = parse_request_line(request_line, req);
-		int typeOfError2 = parse_request_headers(header, req);
-		if (typeOfError < 0 || typeOfError2 < 0)
-		{
-			std::cout << "400 Bad Request: Malformed HTTP" << std::endl;
-			return -1;
-		}
-		size_t consumed_body_bytes = 0;
-		std::string body = raw.substr(pos + 4);
-		int bodyParseResult = parse_body(body, req, consumed_body_bytes);
-		if (bodyParseResult < 0)
-		{
-			std::cout << "400 Bad Request: Malformed HTTP" << std::endl;
-			return -1;
-		}
-		if (bodyParseResult == 1)
-		{
-			std::cout << "Waiting for more data to complete the body..." << std::endl;
-			return 1;
-		}
-		req.display();
-		std::cout << "Validation result: " << validateRequest(req) << std::endl;
-		size_t total_parsed_bytes = (pos + 4) + consumed_body_bytes;
-		raw.erase(0, total_parsed_bytes);
+	// NO MORE WHILE LOOP. We only parse ONE request per call.
+	if (raw.empty())
+		return 1; // Waiting for data
 
-		req = Request();
-	}
-	return 0;
+	size_t pos = raw.find("\r\n\r\n");
+	size_t pos_req_line = raw.find("\r\n");
+
+	if (pos_req_line == std::string::npos || pos == std::string::npos)
+		return 1; // 1 means "Waiting for the rest of the headers..."
+
+	std::string request_line = raw.substr(0, pos_req_line);
+	std::string header = raw.substr(pos_req_line + 2, pos - (pos_req_line + 2));
+
+	if (header.size() > MAX_HEADER_SIZE)
+		return -1; // 431 Error
+
+	int typeOfError = parse_request_line(request_line, req);
+	int typeOfError2 = parse_request_headers(header, req);
+
+	if (typeOfError < 0 || typeOfError2 < 0)
+		return -1; // 400 Bad Request
+
+	size_t consumed_body_bytes = 0;
+	std::string body = raw.substr(pos + 4);
+	int bodyParseResult = parse_body(body, req, consumed_body_bytes);
+
+	if (bodyParseResult < 0)
+		return -1; // 400 Bad Request
+	if (bodyParseResult == 1)
+		return 1; // Waiting for more body data
+
+	// --- SUCCESS! WE HAVE PARSED EXACTLY ONE REQUEST ---
+	req.display();
+
+	// 1. Validate it
+	// int validation_status = validateRequest(req);
+	// (You can store this status inside the req object for the Response to use later)
+
+	// 2. Erase ONLY this one request from the raw string.
+	// If there are 2 more requests behind it, they stay in 'raw' for next time!
+	size_t total_parsed_bytes = (pos + 4) + consumed_body_bytes;
+	raw.erase(0, total_parsed_bytes);
+
+	return 0; // Tell the server: "I have 1 request ready to execute!"
 }
+
+// int parse_request(std::string &raw, Request &req)
+// {
+// 	while (!raw.empty())
+// 	{
+// 		size_t pos = raw.find("\r\n\r\n");
+// 		size_t pos_req_line = raw.find("\r\n");
+// 		if (pos_req_line == std::string::npos || pos == std::string::npos)
+// 		{
+// 			std::cout << "Waiting for the rest of the headers..." << std::endl;
+// 			return 1;
+// 		}
+// 		std::string request_line = raw.substr(0, pos_req_line);
+// 		std::string header = raw.substr(pos_req_line + 2, pos - (pos_req_line + 2));
+// 		if (header.size() > MAX_HEADER_SIZE)
+// 		{
+// 			std::cout << "431 Request Header Fields Too Large" << std::endl;
+// 			return -1;
+// 		}
+// 		int typeOfError = parse_request_line(request_line, req);
+// 		int typeOfError2 = parse_request_headers(header, req);
+// 		if (typeOfError < 0 || typeOfError2 < 0)
+// 		{
+// 			std::cout << "400 Bad Request: Malformed HTTP" << std::endl;
+// 			return -1;
+// 		}
+// 		size_t consumed_body_bytes = 0;
+// 		std::string body = raw.substr(pos + 4);
+// 		int bodyParseResult = parse_body(body, req, consumed_body_bytes);
+// 		if (bodyParseResult < 0)
+// 		{
+// 			std::cout << "400 Bad Request: Malformed HTTP" << std::endl;
+// 			return -1;
+// 		}
+// 		if (bodyParseResult == 1)
+// 		{
+// 			std::cout << "Waiting for more data to complete the body..." << std::endl;
+// 			return 1;
+// 		}
+// 		req.display();
+// 		int validation_status = validateRequest(req);
+// 		std::cout << "Validation result: " << validation_status << std::endl;
+// 		if (validation_status == 200 && req.getMethod() == GET)
+// 		{
+// 			std::string path = req.getPath();
+// 			if (path.empty())
+// 				path = "/";
+// 			std::string local_path = build_local_path("www/", path);
+// 			int resource_status = check_resource(local_path);
+// 			if (resource_status == 200)
+// 			{
+// 				std::string content = execute_get(local_path);
+// 				std::cout << content << std::endl;
+// 			}
+// 			else if (resource_status == 300)
+// 			{
+// 				if (path[path.size() - 1] != '/')
+// 					std::cout << "301 Moved Permanently" << std::endl;
+// 				else
+// 				{
+// 					// autoindexing logic not working yet :(
+// 					std::string index_path = build_local_path(local_path, "index.html");
+// 					if (check_resource(index_path) == 200)
+// 						std::cout << execute_get(index_path) << std::endl;
+// 					else
+// 						std::cout << "403 Forbidden" << std::endl;
+// 				}
+// 			}
+// 			else
+// 				std::cout << "404 Not Found" << std::endl;
+// 		}
+// 		size_t total_parsed_bytes = (pos + 4) + consumed_body_bytes;
+// 		raw.erase(0, total_parsed_bytes);
+// 		req = Request();
+// 	}
+// 	return 0;
+// }
+
 
 int main()
 {
