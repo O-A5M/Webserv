@@ -11,7 +11,7 @@ SRCS = $(SERVER_DIR)/configParser.cpp \
        $(SERVER_DIR)/serverConfig.cpp \
        $(SERVER_DIR)/locationConfig.cpp \
        $(SRC_DIR)/main.cpp \
-	   $(SERVER_DIR)/Server.cpp 
+	$(SERVER_DIR)/Server.cpp
 
 # Object files
 OBJS = $(SRCS:.cpp=.o)
@@ -28,12 +28,6 @@ $(TARGET): $(OBJS)
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
-
-
-nginx_t:
-	@echo "$(RED)Testing config file using nginx$(RESET)"
-	@docker compose run --rm web nginx -t
-
 
 clean:
 	rm -f $(OBJS)

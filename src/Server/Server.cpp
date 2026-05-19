@@ -67,7 +67,6 @@ void Server::initialize_socket()
             fd = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
             if (fd < 0)
             {
-                fd = -1;
                 continue;
             }
             
@@ -97,5 +96,9 @@ void Server::initialize_socket()
 
         portToFd[srv.port] = fd;
         _serverFds.push_back(fd);
+    }
+    for (size_t i = 0; i < _serverFds.size(); ++i)
+    {
+        std::cout << "Server listening on port " << _servers[i].port << " with fd " << _serverFds[i] << std::endl;
     }
 }
