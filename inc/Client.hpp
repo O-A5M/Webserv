@@ -16,8 +16,6 @@ private:
     struct sockaddr_in  addr;
     socklen_t           addrLen;
 
-    bool    IsRequestComplete();
-
 public:
     ClientHandler(int clientFd, EventLoop& loop,
                   const struct sockaddr_in &addr, socklen_t addrLen);

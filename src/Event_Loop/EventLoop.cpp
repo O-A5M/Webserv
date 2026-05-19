@@ -48,8 +48,9 @@ void EventLoop::RemoveHandler(AHandler* handler) const {
 }
 
 void EventLoop::Loop() {
+    int ready = 0;
     while (true) {
-        int ready = epoll_wait(fd,
+        ready = epoll_wait(fd,
                                events,
                                MAX_EVENTS,
                                -1);
@@ -59,6 +60,7 @@ void EventLoop::Loop() {
                 continue;
             std::cerr << "Webserv: epoll_wait: "
                       << strerror(errno) << "\n";
+            continue;
             // TODO: handle the error cleanly without stoping the server
         }
 
