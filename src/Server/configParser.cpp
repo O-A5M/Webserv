@@ -48,7 +48,10 @@ void ConfigParser::parseServerLine(const std::string& key, const std::vector<std
     if (key == "listen") {
         if (words.size() != 2)
             throw std::runtime_error("Invalid listen directive: " + key);
-        server.port = std::atoi(words[1].c_str());
+        int _port = std::atoi(words[1].c_str());
+        if (_port <= 0 || _port > 65535)
+            throw std::runtime_error("Invalid port number in listen directive: " + words[1]);
+        server.port = _port;
     }
     else if (key == "server_name") {
         if (words.size() != 2)
@@ -181,11 +184,11 @@ void ConfigParser::parse()
             throw std::runtime_error("Expected 'server'");
 
         ServerConfig server;
-        i++;
+        ++i;
 
         if (i >= tokens.size() || tokens[i] != "{")
             throw std::runtime_error("Expected '{' after 'server'");
-        i++;
+        ++i;
 
         while (i < tokens.size() && tokens[i] != "}")
         {
@@ -194,7 +197,7 @@ void ConfigParser::parse()
                 LocationConfig location;
                 std::vector<std::string> words;
 
-                i++;
+                ++i;
                 if (i >= tokens.size())
                     throw std::runtime_error("Unexpected end of file after 'location'");
 
@@ -202,7 +205,7 @@ void ConfigParser::parse()
 
                 if (i >= tokens.size() || tokens[i] != "{")
                     throw std::runtime_error("Expected '{' after 'location " + location.path + "'");
-                i++;
+                ++i;
 
                 while (i < tokens.size() && tokens[i] != "}")
                 {
@@ -217,12 +220,12 @@ void ConfigParser::parse()
 
                     if (i >= tokens.size() || tokens[i] != ";")
                         throw std::runtime_error("Expected ';' after location directive");
-                    i++;
+                    ++i;
                 }
 
                 if (i >= tokens.size() || tokens[i] != "}")
                     throw std::runtime_error("Expected '}' to close location block for path: " + location.path);
-                i++;
+                ++i;
 
                 server.locations.push_back(location);
             }
@@ -240,13 +243,15 @@ void ConfigParser::parse()
 
                 if (i >= tokens.size() || tokens[i] != ";")
                     throw std::runtime_error("Expected ';' after server directive");
-                i++;
+                ++i;
             }
         }
 
         if (i >= tokens.size() || tokens[i] != "}")
             throw std::runtime_error("Expected '}' to close server block");
-        i++;
+        ++i;
         _servers.push_back(server);
+        // if (tokens[i] == "server")
+        //     std::cout << "another server" << std::endl;
     }
 }

@@ -1,5 +1,6 @@
 #include "configParser.hpp"
 #include "serverConfig.hpp"
+#include "Server.hpp"
 
 #include <iostream>
 
@@ -15,6 +16,8 @@ int main(int ac, char **av)
 	{
 		ConfigParser parser(av[1]);
 		const std::vector<ServerConfig> servers = parser.getServers();
+		Server server(servers);
+		// server.initialize_socket();
 
 		for (std::size_t i = 0; i < servers.size(); ++i)
 		{
@@ -27,31 +30,25 @@ int main(int ac, char **av)
 			std::cout << "  root: " << server.root << std::endl;
 			std::cout << "  client_max_body_size: " << server.client_max_body_size << std::endl;
 			std::cout << "  error_pages: " << server.error_pages.size() << std::endl;
-			// display location configs
+		}
+		// location config print
+		for (std::size_t i = 0; i < servers.size(); ++i)
+		{
+			const ServerConfig &server = servers[i];
 			for (std::size_t j = 0; j < server.locations.size(); ++j)
 			{
 				const LocationConfig &location = server.locations[j];
-				std::cout << "    location[" << j << "]" << std::endl;
-				std::cout << "      path: " << location.path << std::endl;
-				std::cout << "      root: " << location.root << std::endl;
-				std::cout << "      client_max_body_size: " << location.client_max_body_size << std::endl;
-				std::cout << "      autoindex: " << (location.autoindex ? "on" : "off") << std::endl;
-				std::cout << "	  allow_methods: ";
-				for (std::size_t k = 0; k < location.allow_methods.size(); ++k)
+				std::cout << "  location[" << j << "]" << std::endl;
+				std::cout << "    path: " << location.path << std::endl;
+				std::cout << "    root: " << location.root << std::endl;
+				std::cout << "    autoindex: " << (location.autoindex ? "on" : "off") << std::endl;
+				std::cout << "    client_max_body_size: " << location.client_max_body_size << std::endl;
+				std::cout << "	allow_methods: ";
+				for (size_t k = 0; k < location.allow_methods.size(); ++k)
 				{
 					std::cout << location.allow_methods[k] << " ";
 				}
 				std::cout << std::endl;
-				std::cout << "      index: ";
-				for (std::size_t k = 0; k < location.index.size(); ++k)
-				{
-					std::cout << location.index[k] << " ";
-				}
-				std::cout << std::endl;
-				std::cout << "      cgi_extension: " << location.cgi_extension << std::endl;
-				std::cout << "      cgi_path: " << location.cgi_path << std::endl;
-				std::cout << "      upload_store: " << location.upload_store << std::endl;
-				std::cout << "      redirect: " << location.redirect << std::endl;
 			}
 		}
 	}
