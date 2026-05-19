@@ -1,13 +1,13 @@
 #ifndef CLIENT_HPP
 #define CLIENT_HPP
 
-#include "../Event_Loop/EventLoop.hpp"
+#include "EventLoop.hpp"
 #include <unistd.h>
 #include <sys/socket.h>
 #include <sys/epoll.h>
 #include <netinet/in.h>
 
-#include "../Event_Handler/AHandler.hpp"
+#include "AHandler.hpp"
 
 class ClientHandler : public AHandler {
 private:

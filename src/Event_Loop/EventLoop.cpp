@@ -1,7 +1,6 @@
-#include "EventLoop.hpp"
-#include "../Event_Handler/AHandler.hpp"
+#include "../../inc/EventLoop.hpp"
 
-void EventLoop::AddHandler(AHandler* handler, uint32_t flags) {
+void EventLoop::AddHandler(AHandler* handler, uint32_t flags) const {
     epoll_event ev;
 
     ev.events = flags;
@@ -19,7 +18,7 @@ void EventLoop::AddHandler(AHandler* handler, uint32_t flags) {
     }
 }
 
-void EventLoop::ModHandler(AHandler* handler, uint32_t flags) {
+void EventLoop::ModHandler(AHandler* handler, uint32_t flags) const {
     epoll_event ev;
 
     ev.events = flags;
@@ -37,7 +36,7 @@ void EventLoop::ModHandler(AHandler* handler, uint32_t flags) {
     }
 }
 
-void EventLoop::RemoveHandler(AHandler* handler) {
+void EventLoop::RemoveHandler(AHandler* handler) const {
     if (epoll_ctl(fd,
                   EPOLL_CTL_DEL,
                   handler->GetFd(),

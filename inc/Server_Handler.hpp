@@ -1,9 +1,9 @@
 #ifndef SERVER_HANDLER_HPP
 #define SERVER_HANDLER_HPP
 
-#include "../Event_Handler/AHandler.hpp"
-#include "../Client/Client.hpp"
-#include "../Event_Loop/EventLoop.hpp"
+#include "AHandler.hpp"
+#include "Client.hpp"
+#include "EventLoop.hpp"
 #include <sys/socket.h>
 #include <netinet/in.h>
 

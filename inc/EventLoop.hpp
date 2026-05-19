@@ -4,7 +4,7 @@
 #include <iostream>
 #include <cstring>
 #include <cerrno>
-
+#include "AHandler.hpp"
 #include <unistd.h>
 #include <sys/epoll.h>
 
@@ -38,9 +38,9 @@ public:
         return fd;
     }
 
-    void AddHandler(AHandler* handler, uint32_t flags);
-    void ModHandler(AHandler* handler, uint32_t flags);
-    void RemoveHandler(AHandler* handler);
+    void AddHandler(AHandler* handler, uint32_t flags) const;
+    void ModHandler(AHandler* handler, uint32_t flags) const;
+    void RemoveHandler(AHandler* handler) const;
 
     void Loop();
 };
