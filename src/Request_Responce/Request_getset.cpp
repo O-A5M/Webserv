@@ -1,7 +1,5 @@
 // Implementation of Request member functions
-#include "Request.hpp"
-#include <string>
-#include <map>
+#include "../../inc/Request.hpp"
 
 void Request::setMethod(e_Methodes method)
 {

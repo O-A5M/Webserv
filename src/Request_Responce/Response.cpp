@@ -1,6 +1,4 @@
-#include "Responce.hpp"
-#include <fstream>
-#include <sstream>
+#include "../../inc/Response.hpp"
 
 std::string build_local_path(const std::string &root, const std::string &req_path)
 {
@@ -25,7 +23,7 @@ int check_resource(const std::string &local_path)
 	return 200;
 }
 
-std::string execute_get(const std::string &real_file_path)
+void Response::handleGet(const Request &req)
 {
 	std::ifstream file(real_file_path.c_str(), std::ios::in | std::ios::binary);
 	if (!file.is_open())
@@ -33,4 +31,19 @@ std::string execute_get(const std::string &real_file_path)
 	std::stringstream buffer;
 	buffer << file.rdbuf();
 	return buffer.str();
+}
+
+
+void Response::handleRequest(const Request &req)
+{
+	if (req.getMethod() == GET)
+		handleGet(req);
+	else if (req.getMethod() == POST)
+		handlePost(req);
+
+	else if (req.getMethod() == DELETE)
+		handleDelete(req);
+
+	else
+		generateErrorResponse(405);
 }

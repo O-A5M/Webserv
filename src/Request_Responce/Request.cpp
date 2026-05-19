@@ -1,22 +1,20 @@
-#include "Request.hpp"
-#include "Responce.hpp"
+#include "../../inc/Request.hpp"
+#include "../../inc/Response.hpp"
 
 std::string raw =
-		"GET /books/ HTTP/1.1\r\n"
-		"Host:  ilyass\r\n"
+		"POST / HTTP/1.1\r\n"
+		"Host: localhost:8080\r\n"
+		"Transfer-Encoding: chunked\r\n"
+		"Content-Type: text/plain\r\n"
 		"\r\n"
-		// "walid=walid&id=1\r\n"
-		// "GET /api/save HTTP/1.1\r\n"
-		// "Host: youtibe.com\r\n"
-		// "Content-Type: application/x-www-form-urlencoded\r\n"
-		// "\r\n"
-		// "GET /api/save HTTP/1.1\r\n"
-		// "Host: exampl.com\r\n"
-		// "Content-Type: application/x-www-form-urlencoded\r\n"
-		// "\r\n"
-		;
+		"5\r\n"
+		"Hello\r\n"
+		"a\r\n"
+		", webserv!\r\n"
+		"0\r\n"
+		"\r\n";
 
-int parse_request_line(std::string req_line, Request &req)
+int Request::parse_request_line(const std::string &req_line)
 {
 	std::string method_str;
 	std::string uri;
@@ -48,23 +46,23 @@ int parse_request_line(std::string req_line, Request &req)
 	if (space_count != 2 || method_str.empty() || uri.empty() || version.empty())
 		return -1;
 	if (method_str == "GET")
-		req.setMethod(GET);
+		this->setMethod(GET);
 	else if (method_str == "POST")
-		req.setMethod(POST);
+		this->setMethod(POST);
 	else if (method_str == "DELETE")
-		req.setMethod(DELETE);
+		this->setMethod(DELETE);
 	else
-		req.setMethod(UNKNOWN);
-	req.setUri(uri);
+		this->setMethod(UNKNOWN);
+	this->setUri(uri);
 	size_t pos = uri.find("?");
 	if (pos != std::string::npos)
-		req.setQuery(uri.substr(pos + 1, uri.size() - pos - 1));
-	req.setPath(uri.substr(0, pos));
-	req.setVersion(version);
+		this->setQuery(uri.substr(pos + 1, uri.size() - pos - 1));
+	this->setPath(uri.substr(0, pos));
+	this->setVersion(version);
 	return 0;
 }
 
-int parse_request_headers_helper(const std::string &header, int startIndex)
+int Request::parse_request_headers_helper(const std::string &header, size_t startIndex)
 {
 	for (size_t i = startIndex; i < header.size(); i++)
 	{
@@ -76,13 +74,13 @@ int parse_request_headers_helper(const std::string &header, int startIndex)
 	return 0;
 }
 
-void skip_whitespace(const std::string &header, size_t &i)
+void Request::skip_whitespace(const std::string &header, size_t &i)
 {
 	while (i < header.size() && (header[i] == ' ' || header[i] == '\t'))
 		i++;
 }
 
-int parse_request_headers(const std::string &header, Request &req)
+int Request::parse_request_headers(const std::string &header)
 {
 	int flag = 0;
 	int errorR = 0;
@@ -133,7 +131,7 @@ int parse_request_headers(const std::string &header, Request &req)
 				}
 				value += header[i++];
 			}
-			errorR = req.setHeader(key, value);
+			errorR = this->setHeader(key, value);
 			if (errorR < 0)
 			{
 				if (errorR == -2)
@@ -143,22 +141,22 @@ int parse_request_headers(const std::string &header, Request &req)
 			}
 		}
 	}
-	if (req.getHeaders().find("host") == req.getHeaders().end())
+	if (this->getHeaders().find("host") == this->getHeaders().end())
 	{
 		std::cout << "Host header does not exist" << std::endl;
 		return -3;
 	}
-	if ((req.getHeaders().find("transfer-encoding") != req.getHeaders().end()))
+	if ((this->getHeaders().find("transfer-encoding") != this->getHeaders().end()))
 	{
-		if (req.getHeaders().find("content-length") != req.getHeaders().end())
+		if (this->getHeaders().find("content-length") != this->getHeaders().end())
 		{
-			req.removeHeader("content-length");
+			this->removeHeader("content-length");
 		}
 	}
-	else if ((req.getHeaders().find("content-length") != req.getHeaders().end()) && colonFlag == 0)
+	else if ((this->getHeaders().find("content-length") != this->getHeaders().end()) && colonFlag == 0)
 	{
 		char *end;
-		long n = strtol(req.getHeaders().find("content-length")->second.c_str(), &end, 10);
+		long n = strtol(this->getHeaders().find("content-length")->second.c_str(), &end, 10);
 		if (*end != '\0' || n < 0)
 			return -1;
 	}
@@ -169,7 +167,7 @@ int parse_request_headers(const std::string &header, Request &req)
 	return 0;
 }
 
-int convert_hex_to_dec(const std::string &hex)
+int Request::convert_hex_to_dec(const std::string &hex)
 {
 	int result = 0;
 	for (size_t i = 0; i < hex.size(); i++)
@@ -187,13 +185,13 @@ int convert_hex_to_dec(const std::string &hex)
 	return result;
 }
 
-int parse_body(const std::string &body, Request &req, size_t &consumed_bytes)
+int Request::parse_body(const std::string &body, size_t &consumed_bytes)
 {
-	if (req.getHeaders().find("content-length") != req.getHeaders().end())
+	if (this->getHeaders().find("content-length") != this->getHeaders().end())
 	{
 		size_t bSize = body.size();
 		char *end;
-		size_t expected_size = strtoul(req.getHeaders().find("content-length")->second.c_str(), &end, 10);
+		size_t expected_size = strtoul(this->getHeaders().find("content-length")->second.c_str(), &end, 10);
 
 		if (bSize < expected_size)
 		{
@@ -201,18 +199,18 @@ int parse_body(const std::string &body, Request &req, size_t &consumed_bytes)
 		}
 		else if (bSize == expected_size)
 		{
-			req.setBody(body);
+			this->setBody(body);
 			consumed_bytes = expected_size;
 			return 0;
 		}
 		else
 		{
-			req.setBody(body.substr(0, expected_size));
+			this->setBody(body.substr(0, expected_size));
 			consumed_bytes = expected_size;
 			return 0;
 		}
 	}
-	else if (req.getHeaders().find("transfer-encoding") != req.getHeaders().end())
+	else if (this->getHeaders().find("transfer-encoding") != this->getHeaders().end())
 	{
 		std::string chunked_body;
 		size_t pos = 0;
@@ -233,34 +231,34 @@ int parse_body(const std::string &body, Request &req, size_t &consumed_bytes)
 			if (chunk_size == 0)
 				break; // Last chunk
 		}
-		req.setBody(chunked_body);
+		this->setBody(chunked_body);
 		consumed_bytes = pos;
 		return 0;
 	}
 	else
 	{
-		req.setBody("");
+		this->setBody("");
 		consumed_bytes = 0;
 		return 0;
 	}
 }
 
-int validateRequest(Request &req)
+int Request::validateRequest(void)
 {
-	if (req.getVersion() != "HTTP/1.1")
+	if (this->getVersion() != "HTTP/1.1")
 		return 505;
-	if (req.getMethod() == UNKNOWN)
+	if (this->getMethod() == UNKNOWN)
 		return 501;
-	if (req.getUri().size() > MAX_URI_LENGTH)
+	if (this->getUri().size() > MAX_URI_LENGTH)
 		return 414;
-	if (Client_max_body_size < req.getBody().size())
+	if (Client_max_body_size < this->getBody().size())
 		return 413;
-	if (req.getHeaders().find("host")->second.empty())
+	if (this->getHeaders().find("host")->second.empty())
 		return 400;
 	return 200;
 }
 
-int parse_request(std::string &raw, Request &req)
+int Request::parse_request(std::string &raw)
 {
 	// NO MORE WHILE LOOP. We only parse ONE request per call.
 	if (raw.empty())
@@ -278,33 +276,30 @@ int parse_request(std::string &raw, Request &req)
 	if (header.size() > MAX_HEADER_SIZE)
 		return -1; // 431 Error
 
-	int typeOfError = parse_request_line(request_line, req);
-	int typeOfError2 = parse_request_headers(header, req);
+	int typeOfError = this->parse_request_line(request_line);
+	int typeOfError2 = this->parse_request_headers(header);
 
 	if (typeOfError < 0 || typeOfError2 < 0)
 		return -1; // 400 Bad Request
 
 	size_t consumed_body_bytes = 0;
 	std::string body = raw.substr(pos + 4);
-	int bodyParseResult = parse_body(body, req, consumed_body_bytes);
+	int bodyParseResult = this->parse_body(body, consumed_body_bytes);
 
 	if (bodyParseResult < 0)
 		return -1; // 400 Bad Request
 	if (bodyParseResult == 1)
 		return 1; // Waiting for more body data
-
 	// --- SUCCESS! WE HAVE PARSED EXACTLY ONE REQUEST ---
-	req.display();
-
+	this->display();
 	// 1. Validate it
-	// int validation_status = validateRequest(req);
+	// int validation_status = this->validateRequest();
 	// (You can store this status inside the req object for the Response to use later)
 
 	// 2. Erase ONLY this one request from the raw string.
 	// If there are 2 more requests behind it, they stay in 'raw' for next time!
 	size_t total_parsed_bytes = (pos + 4) + consumed_body_bytes;
 	raw.erase(0, total_parsed_bytes);
-
 	return 0; // Tell the server: "I have 1 request ready to execute!"
 }
 
@@ -385,11 +380,24 @@ int parse_request(std::string &raw, Request &req)
 // 	return 0;
 // }
 
-
 int main()
 {
 	Request req;
-	parse_request(raw, req);
+	int result = req.parse_request(raw);
+	Response res;
+	res.handleRequest(req);
+
+	// 	if ( result == -1)
+	// 		return -1;
+	// 	else if (result == 1)
+	// 	{
+	// 	std::cout << "Waiting for more data to complete the request..." << std::endl;
+	// }
+
+	// if (req.getMethod() == GET)
+	// {
+	// 	res.get()
+	// }
 
 	// std::cout << "Validation result: " << validateRequest(req) << std::endl;
 	//	req.display();
