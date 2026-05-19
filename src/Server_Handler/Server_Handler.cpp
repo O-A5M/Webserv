@@ -1,5 +1,6 @@
 #include "../../inc/Server_Handler.hpp"
 
+// SERVER HANDLER
 ServerHandler::ServerHandler(int fd, EventLoop &loop)
     : AHandler(fd, loop) {
     loop.AddHandler(this, EPOLLIN);

@@ -1,5 +1,6 @@
 #include "../../inc/EventLoop.hpp"
 
+// EVENT LOOP 
 void EventLoop::AddHandler(AHandler* handler, uint32_t flags) const {
     epoll_event ev;
 

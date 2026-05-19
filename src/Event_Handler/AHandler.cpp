@@ -1,5 +1,6 @@
 #include "../../inc/AHandler.hpp"
 
+// EVENT HANDLER BASE CLASS
 AHandler::AHandler(const int fd, EventLoop& loop)
     : fd(fd)
     , loop(loop) {
