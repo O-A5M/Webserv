@@ -4,20 +4,14 @@
 #include <set>
 
 Server::Server(ServerConfig& servers)
-: _servers(servers)
+: _servers(servers), _serverFds(-1)
 {
 }
 
 Server::~Server()
 {
-    // std::set<int> closed;
-    // for (size_t i = 0; i < _serverFds.size(); ++i)
-    // {
-    //     const int fd = _serverFds[i];
-    //     if (fd >= 0 && closed.insert(fd).second)
-    //         close(fd);
-    // }
-    close (_serverFds);
+    if (_serverFds >= 0)
+        close (_serverFds);
 }
 
 void    Server::SetNonBlocking() const {
@@ -50,16 +44,8 @@ static std::string intToString(int v) {
 
 void Server::initialize_socket()
 {
-	//std::map<int, int> portToFd;
-    ServerConfig &srv = _servers;
-
-        // std::map<int, int>::const_iterator it = portToFd.find(srv.port);
-        // if (it != portToFd.end())
-        // {
-        //     _serverFds.push_back(it->second);
-        //     continue;
-        // }
     int fd = -1;
+    ServerConfig &srv = _servers;
     struct addrinfo hints = {};
     hints.ai_family = AF_INET; // IPv4
     hints.ai_socktype = SOCK_STREAM; // TCP
@@ -79,16 +65,19 @@ void Server::initialize_socket()
     if (status != 0)
         throw std::runtime_error("getaddrinfo failed!");
 
-    for(struct addrinfo *p = res; p != NULL; p = p->ai_next)
+    for (struct addrinfo *p = res; p != NULL; p = p->ai_next)
     {
         fd = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
         if (fd < 0)
+            continue;
+
+        int opt = 1;
+        if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
         {
+            close(fd);
+            fd = -1;
             continue;
         }
-            
-        int opt = 1;
-        setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
         if (bind(fd, p->ai_addr, p->ai_addrlen) < 0)
         {
@@ -103,6 +92,7 @@ void Server::initialize_socket()
             fd = -1;
             continue;
         }
+
         break;
     }
 
@@ -111,10 +101,8 @@ void Server::initialize_socket()
     if(fd < 0)
         throw std::runtime_error("Failed to bind/listen");
 
-    //portToFd[srv.port] = fd;
     _serverFds = fd;
     SetNonBlocking();
-
 
     std::cout << "Server listening on port " << _servers.port << " with fd " << _serverFds << std::endl;
 }
