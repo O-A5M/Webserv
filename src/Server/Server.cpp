@@ -21,16 +21,22 @@ Server::~Server()
 }
 
 void    Server::SetNonBlocking() const {
-    const int flags = fcntl(_serverFds, F_GETFL);
+    const int fdflags = fcntl(_serverFds, F_GETFD);
+    const int flflags = fcntl(_serverFds, F_GETFL);
 
-    if (flags == -1) {
-        std::cerr << "Webserv: fcntl(F_GETFL): "
+    if (fdflags == -1 || flflags == -1) {
+        std::cerr << "Webserv: fcntl(): "
                   << strerror(errno) << "\n";
         throw std::runtime_error("fcntl failed");
     }
 
-    if (fcntl(_serverFds, F_SETFL, flags | O_NONBLOCK | FD_CLOEXEC) == -1) {
-        std::cerr << "Webserv: fcntl(F_SETFL): "
+    if (fcntl(_serverFds, F_SETFL, flflags | O_NONBLOCK) == -1) {
+        std::cerr << "Webserv: fcntl(): "
+                  << strerror(errno) << "\n";
+        throw std::runtime_error("fcntl failed");
+    }
+    if (fcntl(_serverFds, F_SETFD, fdflags | FD_CLOEXEC) == -1) {
+        std::cerr << "Webserv: fcntl(): "
                   << strerror(errno) << "\n";
         throw std::runtime_error("fcntl failed");
     }

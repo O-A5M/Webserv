@@ -6,7 +6,6 @@ ClientHandler::ClientHandler(int fd, ServerConfig &config
         : AHandler(fd, config, loop)
         , addr(addr)
         , addrLen(addrLen) {
-    this->fd = fd;
     loop.AddHandler(this, EPOLLIN);
 }
 
@@ -27,7 +26,7 @@ void    ClientHandler::OnRead(void) {
         return ;
     }
     readBuf.append(buff, nread);
-
+    std::cout << "ClientHandler::OnRead() " << readBuf << std::endl;
     // TODO: check if the request is complete
     // TODO: parse readBuf and build a response in writeBuf
 

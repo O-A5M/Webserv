@@ -23,23 +23,16 @@ int main(int ac, char **av)
 
 		// Starting the multiplexer
 		EventLoop	loop;
-		std::vector<ServerHandler>	Handlers;
-		Handlers.reserve(serverConf.size());
 
 		// Starting the connection for the servers
 		std::vector<Server>	servers;
 		servers.reserve(serverConf.size());
 		for (int i = 0; i < static_cast<int>(serverConf.size()); i++) {
-			Server server(serverConf[i]);
-
-			servers.push_back(server);
+			servers.push_back(Server(serverConf[i]));
 			servers[i].initialize_socket();
-
-			ServerHandler handler(server.GetFd(), server.GetConfig(), loop);
-
-			Handlers.push_back(handler);
+			new ServerHandler(servers[i].GetFd(), servers[i].GetConfig(), loop);
 		}
-
+		loop.Loop();
 		// for (std::size_t i = 0; i < servers.size(); ++i)
 		// {
 		// 	const ServerConfig &server = servers[i];

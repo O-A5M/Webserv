@@ -5,7 +5,7 @@ AHandler::AHandler(int fd, ServerConfig &config, EventLoop& loop)
     : fd(fd)
     , serverConf(config)
     , loop(loop) {
-
+    SetNonBlocking();
     // if (fd == -1) {
     //     std::cerr << "Webserv: invalid fd\n";
     //     throw std::runtime_error("invalid fd");
@@ -13,8 +13,8 @@ AHandler::AHandler(int fd, ServerConfig &config, EventLoop& loop)
 }
 
 AHandler::~AHandler(void) {
-    if (fd != -1)
-        close(fd);
+    // if (fd != -1)
+    //     close(fd);
 }
 
 void    AHandler::EnableWrite(void) {
@@ -33,18 +33,24 @@ ServerConfig    &AHandler::GetServerConf(void) const {
     return serverConf;
 }
 
-// void    AHandler::SetNonBlocking() const {
-//     const int flags = fcntl(fd, F_GETFL);
-//
-//     if (flags == -1) {
-//         std::cerr << "Webserv: fcntl(F_GETFL): "
-//                   << strerror(errno) << "\n";
-//         throw std::runtime_error("fcntl failed");
-//     }
-//
-//     if (fcntl(fd, F_SETFL, flags | O_NONBLOCK | FD_CLOEXEC) == -1) {
-//         std::cerr << "Webserv: fcntl(F_SETFL): "
-//                   << strerror(errno) << "\n";
-//         throw std::runtime_error("fcntl failed");
-//     }
-// }
+void    AHandler::SetNonBlocking() const {
+    const int fdflags = fcntl(fd, F_GETFD);
+    const int flflags = fcntl(fd, F_GETFL);
+
+    if (fdflags == -1 || flflags == -1) {
+        std::cerr << "Webserv: fcntl(): "
+                  << strerror(errno) << "\n";
+        throw std::runtime_error("fcntl failed");
+    }
+
+    if (fcntl(fd, F_SETFL, flflags | O_NONBLOCK) == -1) {
+        std::cerr << "Webserv: fcntl(): "
+                  << strerror(errno) << "\n";
+        throw std::runtime_error("fcntl failed");
+    }
+    if (fcntl(fd, F_SETFD, fdflags | FD_CLOEXEC) == -1) {
+        std::cerr << "Webserv: fcntl(): "
+                  << strerror(errno) << "\n";
+        throw std::runtime_error("fcntl failed");
+    }
+}

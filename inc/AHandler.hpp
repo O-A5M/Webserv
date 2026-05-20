@@ -17,7 +17,7 @@ protected:
     int             fd;
     ServerConfig    &serverConf;
     EventLoop       &loop;
-
+    void    SetNonBlocking() const;
 public:
     AHandler(int fd, ServerConfig &config, EventLoop& loop);
     virtual ~AHandler();
