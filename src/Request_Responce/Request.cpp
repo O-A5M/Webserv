@@ -2,7 +2,7 @@
 #include "../../inc/Response.hpp"
 
 std::string raw =
-		"GET /index.htm HTTP/1.1\r\n"
+		"GET /index.js HTTP/1.1\r\n"
 		"Host: localhost:8080\r\n"
 		"Transfer-Encoding: chunked\r\n"
 		"Content-Type: text/plain\r\n"
@@ -380,25 +380,25 @@ int Request::parse_request(std::string &raw)
 // 	return 0;
 // }
 
-int main()
-{
-	Request req;
-	req.parse_request(raw);
-	Response res;
-	res.handleRequest(req);
+// int main()
+// {
+// 	Request req;
+// 	req.parse_request(raw);
+// 	Response res;
+// 	res.handleRequest(req);
 
-	// 	if ( result == -1)
-	// 		return -1;
-	// 	else if (result == 1)
-	// 	{
-	// 	std::cout << "Waiting for more data to complete the request..." << std::endl;
-	// }
+// 	// 	if ( result == -1)
+// 	// 		return -1;
+// 	// 	else if (result == 1)
+// 	// 	{
+// 	// 	std::cout << "Waiting for more data to complete the request..." << std::endl;
+// 	// }
 
-	// if (req.getMethod() == GET)
-	// {
-	// 	res.get()
-	// }
+// 	// if (req.getMethod() == GET)
+// 	// {
+// 	// 	res.get()
+// 	// }
 
-	// std::cout << "Validation result: " << validateRequest(req) << std::endl;
-	//	req.display();
-}
+// 	// std::cout << "Validation result: " << validateRequest(req) << std::endl;
+// 	//	req.display();
+// }

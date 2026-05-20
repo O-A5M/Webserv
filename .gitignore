@@ -1,3 +1,8 @@
+<<<<<<< HEAD
 *.o
 webserv
 
+=======
+.o
+webserver
+>>>>>>> main
