@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 #include <fstream>
 #include <sstream>
+#include <ctime>
 
 #define MAX_URI_LENGTH 8192
 #define Client_max_body_size 1000000
@@ -47,8 +48,7 @@ private:
 	std::string body;
 	// bool complete;
 
-			int
-			parse_request_line(const std::string &req_line);
+	int parse_request_line(const std::string &req_line);
 	int parse_request_headers_helper(const std::string &header, size_t startIndex);
 	void skip_whitespace(const std::string &header, size_t &i);
 	int parse_request_headers(const std::string &header);

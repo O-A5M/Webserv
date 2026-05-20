@@ -2,7 +2,7 @@
 #include "../../inc/Response.hpp"
 
 std::string raw =
-		"POST / HTTP/1.1\r\n"
+		"GET /index.html HTTP/1.1\r\n"
 		"Host: localhost:8080\r\n"
 		"Transfer-Encoding: chunked\r\n"
 		"Content-Type: text/plain\r\n"
@@ -383,7 +383,7 @@ int Request::parse_request(std::string &raw)
 int main()
 {
 	Request req;
-	int result = req.parse_request(raw);
+	req.parse_request(raw);
 	Response res;
 	res.handleRequest(req);
 
