@@ -97,30 +97,35 @@ void Response::handleGet(const Request &req)
 	}
 		std::string local_path = build_local_path("www/", path);
 		int resource_status = check_resource(local_path);
-		if (resource_status == 200)
-		{
-			std::ifstream file(local_path.c_str(), std::ios::in | std::ios::binary);
-			if (!file.is_open())
+			if (resource_status == 200)
 			{
-				// 	generateErrorResponse(404);
-				// 	return;
-				std::cout << "Failed to open file: " << local_path << std::endl;
-				return;
+				std::ifstream file(local_path.c_str(), std::ios::in | std::ios::binary);
+				if (!file.is_open())
+				{
+					// 	generateErrorResponse(404);
+					// 	return;
+					std::cout << "Failed to open file: " << local_path << std::endl;
+					return;
+				}
+				std::stringstream buffer;
+				buffer << file.rdbuf();
+				this->setStatusCode(200);
+				this->setReasonPhrase("OK");
+				this->setBody(buffer.str());
+				this->setHeader("Content-Type", get_mime_type(local_path));
+				std::stringstream buuferLenght;
+				buuferLenght << this->getBody().size();
+				this->setHeader("Content-Length", buuferLenght.str());
+				this->setHeader("Date", this->current_http_date());
+				this->buildRawResponse();
+				std::cout << this->getRawResponse() << std::endl;
 			}
-			std::stringstream buffer;
-			buffer << file.rdbuf();
-			this->setStatusCode(200);
-			this->setReasonPhrase("OK");
-			this->setBody(buffer.str());
-			this->setHeader("Content-Type", get_mime_type(local_path));
-			std::stringstream buuferLenght;
-			buuferLenght << buffer.str().size();
-			this->setHeader("Content-Length", buuferLenght.str());
-			this->setHeader("Date", this->current_http_date());
-			this->buildRawResponse();
-			std::cout << this->getRawResponse() << std::endl;
-		}
-}
+			else if (resource_status == 300)
+			{
+					
+			}
+
+	}
 
 void Response::handleRequest(const Request &req)
 {
