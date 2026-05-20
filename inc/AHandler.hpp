@@ -8,19 +8,18 @@
 #include <unistd.h>
 #include <sys/epoll.h>
 #include "EventLoop.hpp"
+#include "Server.hpp"
 
 class EventLoop;
 
 class AHandler {
 protected:
-    int         fd;
-    EventLoop&  loop;
-
-private:
-    void    SetNonBlocking() const;
+    int             fd;
+    ServerConfig    &serverConf;
+    EventLoop       &loop;
 
 public:
-    AHandler(const int fd, EventLoop& loop);
+    AHandler(int fd, ServerConfig &config, EventLoop& loop);
     virtual ~AHandler();
 
     virtual void    OnRead() = 0;
@@ -30,6 +29,7 @@ public:
     void    EnableWrite();
     void    DisableWrite();
     int     GetFd() const;
+    ServerConfig    &GetServerConf() const;
 };
 
 #endif

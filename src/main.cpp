@@ -1,8 +1,11 @@
 #include "configParser.hpp"
 #include "serverConfig.hpp"
 #include "Server.hpp"
-
+#include "EventLoop.hpp"
 #include <iostream>
+#include <vector>
+#include "Server_Handler.hpp"
+
 
 int main(int ac, char **av)
 {
@@ -14,10 +17,28 @@ int main(int ac, char **av)
 
 	try
 	{
+		// Parsing of the config file
 		ConfigParser parser(av[1]);
-		const std::vector<ServerConfig> servers = parser.getServers();
-		Server server(servers);
-		server.initialize_socket();
+		std::vector<ServerConfig> serverConf = parser.getServers();
+
+		// Starting the multiplexer
+		EventLoop	loop;
+		std::vector<ServerHandler>	Handlers;
+		Handlers.reserve(serverConf.size());
+
+		// Starting the connection for the servers
+		std::vector<Server>	servers;
+		servers.reserve(serverConf.size());
+		for (int i = 0; i < static_cast<int>(serverConf.size()); i++) {
+			Server server(serverConf[i]);
+
+			servers.push_back(server);
+			servers[i].initialize_socket();
+
+			ServerHandler handler(server.GetFd(), server.GetConfig(), loop);
+
+			Handlers.push_back(handler);
+		}
 
 		// for (std::size_t i = 0; i < servers.size(); ++i)
 		// {

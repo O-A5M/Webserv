@@ -17,8 +17,9 @@ private:
     socklen_t           addrLen;
 
 public:
-    ClientHandler(int clientFd, EventLoop& loop,
-                  const struct sockaddr_in &addr, socklen_t addrLen);
+    ClientHandler(int fd, ServerConfig& config
+        , EventLoop& loop
+        , const struct sockaddr_in &addr, socklen_t addrLen);
     ~ClientHandler(void);
 
     void OnRead();

@@ -1,10 +1,12 @@
 #include "../../inc/Client.hpp"
 
-ClientHandler::ClientHandler(int clientFd, EventLoop &loop
+ClientHandler::ClientHandler(int fd, ServerConfig &config
+    , EventLoop &loop
     , const struct sockaddr_in &addr, socklen_t addrLen)
-        : AHandler(clientFd, loop)
+        : AHandler(fd, config, loop)
         , addr(addr)
         , addrLen(addrLen) {
+    this->fd = fd;
     loop.AddHandler(this, EPOLLIN);
 }
 

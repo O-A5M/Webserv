@@ -4,6 +4,7 @@ LDFLAGS =
 
 SRC_DIR = src
 SERVER_DIR = $(SRC_DIR)/Server
+MPLEXER_DIR = $(SRC_DIR)/Multiplexer
 INC_DIR = inc
 
 # Source files
@@ -11,7 +12,11 @@ SRCS = $(SERVER_DIR)/configParser.cpp \
        $(SERVER_DIR)/serverConfig.cpp \
        $(SERVER_DIR)/locationConfig.cpp \
        $(SRC_DIR)/main.cpp \
-	$(SERVER_DIR)/Server.cpp
+       $(SERVER_DIR)/Server.cpp \
+       $(MPLEXER_DIR)/AHandler.cpp \
+       $(MPLEXER_DIR)/Client.cpp \
+       $(MPLEXER_DIR)/EventLoop.cpp \
+       $(MPLEXER_DIR)/Server_Handler.cpp
 
 # Object files
 OBJS = $(SRCS:.cpp=.o)
@@ -37,6 +42,7 @@ fclean:
 	rm -rf $(TARGET) $(OBJS)
 	@echo "🧹 Fully cleaned"
 
-re: clean all
+re: fclean all
 
 .PHONY: all clean re
+.SECONDARY: $(OBJS)

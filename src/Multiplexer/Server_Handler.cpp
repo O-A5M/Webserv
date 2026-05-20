@@ -1,8 +1,8 @@
 #include "../../inc/Server_Handler.hpp"
 
 // SERVER HANDLER
-ServerHandler::ServerHandler(int fd, EventLoop &loop)
-    : AHandler(fd, loop) {
+ServerHandler::ServerHandler(int fd, ServerConfig &config, EventLoop &loop)
+    : AHandler(fd, config, loop) {
     loop.AddHandler(this, EPOLLIN);
 }
 
@@ -23,7 +23,7 @@ void    ServerHandler::OnRead() {
         return;
     }
     try {
-        new ClientHandler(client_fd, loop, client_addr, client_addr_len);
+        new ClientHandler(client_fd, serverConf, loop, client_addr, client_addr_len);
     }
     catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
