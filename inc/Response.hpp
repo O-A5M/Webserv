@@ -8,8 +8,8 @@
 #include <fstream>
 #include <sstream>
 #include <unistd.h>
-
-	class Response
+#include <ctime>
+class Response
 {
 private:
 	int status_code;
@@ -37,7 +37,10 @@ public:
 	const std::map<std::string, std::string> &getHeaders() const;
 	const std::string &getBody() const;
 	const std::string &getRawResponse() const;
+	std::string get_mime_type(const std::string &path);
 	void handleRequest(const Request &req);
+	std::string current_http_date();
+	void buildRawResponse();
 };
 
 

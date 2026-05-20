@@ -9,7 +9,8 @@ INC_DIR = inc
 # Source files
 SRCS = $(REQUEST_RESPONSE_DIR)/Request.cpp \
 	$(REQUEST_RESPONSE_DIR)/Request_getset.cpp \
-	$(REQUEST_RESPONSE_DIR)/Response.cpp
+	$(REQUEST_RESPONSE_DIR)/Response.cpp \
+	$(REQUEST_RESPONSE_DIR)/Response_getset.cpp
 
 # Object files
 OBJS = $(SRCS:.cpp=.o)

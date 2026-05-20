@@ -2,7 +2,7 @@
 #include "../../inc/Response.hpp"
 
 std::string raw =
-		"GET /index.html HTTP/1.1\r\n"
+		"GET /index.css HTTP/1.1\r\n"
 		"Host: localhost:8080\r\n"
 		"Transfer-Encoding: chunked\r\n"
 		"Content-Type: text/plain\r\n"

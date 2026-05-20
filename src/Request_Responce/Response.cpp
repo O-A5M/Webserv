@@ -40,6 +40,7 @@ bool is_traversal_attempt(const std::string &path)
 		return true;
 	return false;
 }
+
 std::string Response::get_mime_type(const std::string &path)
 {
 	size_t dot_pos = path.find_last_of('.');
@@ -63,6 +64,26 @@ std::string Response::get_mime_type(const std::string &path)
 	return "application/octet-stream";
 }
 
+void Response::buildRawResponse()
+{
+	std::stringstream response_stream;
+	response_stream << "HTTP/1.1 " << this->status_code << " " << this->reason_phrase << "\r\n";
+	std::map<std::string, std::string>::const_iterator it;
+	for (it = this->headers.begin(); it != this->headers.end(); ++it)
+		response_stream << it->first << ": " << it->second << "\r\n";
+	response_stream << "\r\n";
+	response_stream << this->body;
+	this->setRawResponse(response_stream.str());
+}
+
+std::string Response::current_http_date()
+{
+	char buffer[100];
+	time_t now = std::time(NULL);
+	struct tm *tm_info = gmtime(&now);
+	strftime(buffer, sizeof(buffer), "%a, %d %b %Y %H:%M:%S GMT", tm_info);
+	return std::string(buffer);
+}
 void Response::handleGet(const Request &req)
 {
 	std::string path = req.getPath();
@@ -95,8 +116,9 @@ void Response::handleGet(const Request &req)
 			std::stringstream buuferLenght;
 			buuferLenght << buffer.str().size();
 			this->setHeader("Content-Length", buuferLenght.str());
-			this->setHeader("Date", get_current_http_date());
-			std::cout << buffer.str() << std::endl;
+			this->setHeader("Date", this->current_http_date());
+			this->buildRawResponse();
+			std::cout << this->getRawResponse() << std::endl;
 		}
 }
 
