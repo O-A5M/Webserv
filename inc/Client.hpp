@@ -13,8 +13,8 @@ class ClientHandler : public AHandler {
 private:
     std::string         readBuf;
     std::string         writeBuf;
-    struct sockaddr_in  addr;
-    socklen_t           addrLen;
+    // struct sockaddr_in  addr;
+    // socklen_t           addrLen;
 
 public:
     ClientHandler(int fd, ServerConfig& config

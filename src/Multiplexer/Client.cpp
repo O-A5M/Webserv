@@ -4,8 +4,10 @@ ClientHandler::ClientHandler(int fd, ServerConfig &config
     , EventLoop &loop
     , const struct sockaddr_in &addr, socklen_t addrLen)
         : AHandler(fd, config, loop)
-        , addr(addr)
-        , addrLen(addrLen) {
+       /* , addr(addr)
+        , addrLen(addrLen) */{
+		(void) addrLen; // To avoid unused parameter warning
+		(void) addr; // To avoid unused parameter warning
     loop.AddHandler(this, EPOLLIN);
 }
 
