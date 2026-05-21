@@ -6,6 +6,8 @@
 #include <vector>
 #include <iostream>
 #include <netdb.h>
+#include <fcntl.h>
+#include <errno.h>
 // include for close
 #include <unistd.h>
 #include <cstring>
@@ -14,13 +16,17 @@
 
 class Server {
 	private:
-		std::vector<ServerConfig>	_servers;
-		std::vector<int> 			_serverFds;
-	public:
-		Server(const std::vector<ServerConfig>& servers);
-		~Server();
+		ServerConfig	_servers;
+		int 			_serverFds;
 
+		void	SetNonBlocking() const;
+
+	public:
+		Server(ServerConfig& servers);
+		~Server();
 		void initialize_socket();
+		int	GetFd() const;
+		ServerConfig	&GetConfig();
 };
 
 #endif // SERVER_HPP
