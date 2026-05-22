@@ -1,0 +1,40 @@
+□ Phase 5: Router
+  □ Match Host header to server_name
+  □ Match path to longest location prefix
+  □ Check if method is allowed
+
+  
+  □ Algorithm (routing)
+   □ 1) Parse Host header value; strip optional port.
+   □ 2) Select server block:
+     □ - If Host matches a server_name, choose that server.
+     □ - Else if no Host or no match, fall back to default server.
+   □ 3) Normalize request path:
+     □ - Ensure it starts with '/'.
+     □ - Resolve '.' and '..' segments.
+     □ - Collapse duplicate slashes (// -> /).
+     □ - Keep query string separate.
+   □ 4) Choose location:
+     □ - Find all locations whose prefix matches the path.
+     □ - Pick the longest matching prefix.
+     □ - If none match, use server root defaults.
+   □ 5) Merge effective settings (server -> location):
+     □ - root, index, autoindex, allowed methods, redirects, CGI, etc.
+   □ 6) Validate method:
+     □ - If method not in allowed list, return 405.
+   □ 7) Build target resource path:
+     □ - Join effective root with the remaining path suffix.
+     □ - If path ends with '/', append index file if configured.
+   □ 8) If redirect configured, return 3xx with Location.
+   □ 9) If CGI configured and path matches, dispatch to CGI handler.
+   □ 10) Otherwise, dispatch to static file handler.
+  □ Key concepts (routing)
+   □ - Default server: first or explicit default_server for a listen.
+   □ - server_name matching: exact match, optionally wildcard if supported.
+   □ - Longest prefix wins for locations.
+   □ - Keep query string out of path matching.
+   □ - Location settings override server settings.
+   □ - 405 when method is not allowed; include Allow header if implemented.
+   □ - Path normalization prevents traversal and inconsistent matching.
+   □ - Redirection happens before filesystem access.
+   □ - CGI selection rules must be deterministic and based on config.
