@@ -109,6 +109,10 @@ void ConfigParser::parseServerLine(const std::string& key, const std::vector<std
         if (words.size() != 3)
             throw std::runtime_error("Invalid error_page directive: " + key);
         int error_code = std::atoi(words[1].c_str());
+        if (error_code < 100 || error_code > 599)
+            throw std::runtime_error("Invalid error code in error_page directive: " + words[1]);
+        else if (!isdigit(words[1][0]))
+            throw std::runtime_error("Invalid error code in error_page directive: " + words[1]);
         server.error_pages[error_code] = words[2];
     }
 
@@ -137,12 +141,14 @@ void ConfigParser::parseLocationLine(const std::string& key, const std::vector<s
     else if (key == "autoindex") {
         if (words.size() != 2)
             throw std::runtime_error("Invalid autoindex directive in location: " + key);
-        location.autoindex = (words[1] == "on");
+        location.autoindex = (words[1] == "on"); 
     }
     else if (key == "client_max_body_size") {
         if (words.size() != 2)
-            throw std::runtime_error("Invalid client_max_body_size directive in location: " + key);
+            throw std::runtime_error("Invalid client_max_body_size directive: " + key);
         location.client_max_body_size = static_cast<std::size_t>(std::strtoul(words[1].c_str(), NULL, 10));
+        if (!isdigit(words[1][0]))
+            throw std::runtime_error("Invalid client_max_body_size value: " + words[1]);
     }
     else if (key == "cgi_extension") {
         if (words.size() != 2)
@@ -163,6 +169,9 @@ void ConfigParser::parseLocationLine(const std::string& key, const std::vector<s
         if (words.size() != 3)
             throw std::runtime_error("Invalid return/redirect directive in location: " + key);
         location.redirect = words[2];
+    }
+    else {
+        throw std::runtime_error("Unknown directive in server block: " + key);
     }
 }
 
@@ -233,15 +242,15 @@ void ConfigParser::parse()
                 LocationConfig location;
                 std::vector<std::string> words;
 
-                ++i;
-                if (i >= tokens.size())
+                i++;
+                if (i >= tokens.size()) // 
                     throw std::runtime_error("Unexpected end of file after 'location'");
 
                 location.path = tokens[i++];
 
                 if (i >= tokens.size() || tokens[i] != "{")
                     throw std::runtime_error("Expected '{' after 'location " + location.path + "'");
-                ++i;
+                i++;
 
                 while (i < tokens.size() && tokens[i] != "}")
                 {
@@ -258,15 +267,12 @@ void ConfigParser::parse()
                         throw std::runtime_error("Empty directive in location block");
 
                     parseLocationLine(words[0], words, location);
-
-                    if (i >= tokens.size() || tokens[i] != ";")
-                        throw std::runtime_error("Expected ';' after location directive");
-                    ++i;
+                    i++;
                 }
 
                 if (i >= tokens.size() || tokens[i] != "}")
                     throw std::runtime_error("Expected '}' to close location block for path: " + location.path);
-                ++i;
+                i++;
 
                 server.locations.push_back(location);
             }
