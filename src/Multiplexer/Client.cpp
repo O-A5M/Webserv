@@ -1,8 +1,13 @@
 #include "../../inc/Client.hpp"
 
 ClientHandler::ClientHandler(int fd, ServerConfig &config
-    , EventLoop &loop)
-        : AHandler(fd, config, loop) {
+    , EventLoop &loop
+    , const struct sockaddr_in &addr, socklen_t addrLen)
+        : AHandler(fd, config, loop)
+       /* , addr(addr)
+        , addrLen(addrLen) */{
+		(void) addrLen; // To avoid unused parameter warning
+		(void) addr; // To avoid unused parameter warning
     loop.AddHandler(this, EPOLLIN);
 }
 
@@ -22,11 +27,11 @@ void    ClientHandler::OnRead(void) {
         OnError();
         return ;
     }
-    readBuf = buff;
+    readBuf.append(buff, nread);
     std::cout << "ClientHandler::OnRead() " << readBuf << std::endl;
     // TODO: check if the request is complete
     // TODO: parse readBuf and build a response in writeBuf
-    readBuf.clear();
+
     if (!writeBuf.empty())
         EnableWrite();
 }
