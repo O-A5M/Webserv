@@ -1,6 +1,7 @@
 <<<<<<< HEAD
 *.o
 webserv
+.idea
 
 =======
 .o
