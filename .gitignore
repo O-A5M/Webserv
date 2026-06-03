@@ -1,9 +1,3 @@
-<<<<<<< HEAD
 *.o
 webserv
 .idea/
-
-=======
-.o
-webserver
->>>>>>> main
