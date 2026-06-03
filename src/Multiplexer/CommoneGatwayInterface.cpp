@@ -16,7 +16,6 @@ CgiHandler::CgiHandler(int stdoutPipe, int stdinPipe,
     , pid(pid)
     , writePipe(stdinPipe)
     , writeBuf(body) {
-
     uint32_t flags = EPOLLIN;
     if (!writeBuf.empty())
         flags |= EPOLLOUT;
