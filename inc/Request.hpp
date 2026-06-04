@@ -61,6 +61,7 @@ public:
 	void setQuery(const std::string &query);
 	void setPath(const std::string &path);
 	void setBody(const std::string &body);
+	void clear(void);
 
 	int setHeader(std::string key, std::string value);
 	void setHeaders(const std::map<std::string, std::string> &headers);

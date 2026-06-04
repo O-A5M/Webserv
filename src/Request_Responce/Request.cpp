@@ -20,7 +20,7 @@ int Request::parse_request_line(const std::string &req_line)
 	std::string uri;
 	std::string version;
 	int space_count = 0;
-	if (req_line[0] == ' ')
+	if (req_line.empty() || req_line[0] == ' ')
 		return -1;
 	for (size_t i = 0; i < req_line.size(); i++)
 	{
@@ -262,13 +262,13 @@ int Request::parse_request(std::string &raw)
 {
 	// NO MORE WHILE LOOP. We only parse ONE request per call.
 	if (raw.empty())
-		return 1; // Waiting for data
+		return 0; // Waiting for data
 
 	size_t pos = raw.find("\r\n\r\n");
 	size_t pos_req_line = raw.find("\r\n");
 
 	if (pos_req_line == std::string::npos || pos == std::string::npos)
-		return 1; // 1 means "Waiting for the rest of the headers..."
+		return 0; // 0 means "Waiting for the rest of the headers..."
 
 	std::string request_line = raw.substr(0, pos_req_line);
 	std::string header = raw.substr(pos_req_line + 2, pos - (pos_req_line + 2));
@@ -289,18 +289,22 @@ int Request::parse_request(std::string &raw)
 	if (bodyParseResult < 0)
 		return -1; // 400 Bad Request
 	if (bodyParseResult == 1)
-		return 1; // Waiting for more body data
+		return 0; // Waiting for more body data
 	// --- SUCCESS! WE HAVE PARSED EXACTLY ONE REQUEST ---
 	this->display();
 	// 1. Validate it
-	// int validation_status = this->validateRequest();
+	int validation_status = this->validateRequest();
+	if (validation_status != 200)
+	{
+		return -1;
+	}
 	// (You can store this status inside the req object for the Response to use later)
 
 	// 2. Erase ONLY this one request from the raw string.
 	// If there are 2 more requests behind it, they stay in 'raw' for next time!
 	size_t total_parsed_bytes = (pos + 4) + consumed_body_bytes;
 	raw.erase(0, total_parsed_bytes);
-	return 0; // Tell the server: "I have 1 request ready to execute!"
+	return 1; // Tell the server: "I have 1 request ready to execute!"
 }
 
 // int parse_request(std::string &raw, Request &req)

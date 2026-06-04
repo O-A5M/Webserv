@@ -84,8 +84,9 @@ std::string Response::current_http_date()
 	strftime(buffer, sizeof(buffer), "%a, %d %b %Y %H:%M:%S GMT", tm_info);
 	return std::string(buffer);
 }
-void Response::handleGet(const Request &req)
+void Response::handleGet(const Request &req, const LocationConfig &loc_conf, const ServerConfig &server_conf)
 {
+	(void)loc_conf;
 	std::string path = req.getPath();
 	if (path.empty())
 		path = "/";
@@ -95,7 +96,7 @@ void Response::handleGet(const Request &req)
 		std::cout << " hack attack " << std::endl;
 		return;
 	}
-		std::string local_path = build_local_path("www/", path);
+		std::string local_path = build_local_path(server_conf.root, path);
 		int resource_status = check_resource(local_path);
 			if (resource_status == 200)
 			{
@@ -127,10 +128,12 @@ void Response::handleGet(const Request &req)
 
 	}
 
-void Response::handleRequest(const Request &req)
+void Response::handleRequest(const Request &req , const LocationConfig &loc_conf, const ServerConfig &server_conf)
 {
 	if (req.getMethod() == GET)
-		handleGet(req);
+	{
+		handleGet(req , loc_conf , server_conf);
+	}
 	// else if (req.getMethod() == POST)
 	// 	handlePost(req);
 
