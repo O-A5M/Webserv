@@ -20,7 +20,7 @@ private:
 	std::string raw_response;
 	std::string build_local_path(const std::string &root, const std::string &req_path);
 	int check_resource(const std::string &local_path);
-	void handleGet(const Request &req, const LocationConfig &loc_conf, const ServerConfig &server_conf);
+	void handleGet(const Request &req, const ServerConfig &server_conf);
 	void handlePost(const Request &req);
 	void handleDelete(const Request &req);
 	void generateErrorResponse(int code);
@@ -39,7 +39,7 @@ public:
 	const std::string &getBody() const;
 	const std::string &getRawResponse() const;
 	std::string get_mime_type(const std::string &path);
-	void handleRequest(const Request &req , const LocationConfig &loc_conf, const ServerConfig &server_conf);
+	void handleRequest(const Request &req, const ServerConfig &server_conf);
 	std::string current_http_date();
 	void buildRawResponse();
 };

@@ -15,6 +15,7 @@ std::string Response::build_local_path(const std::string &root, const std::strin
 
 int Response::check_resource(const std::string &local_path)
 {
+	std::cout << "Resource status for " << local_path << std::endl;
 	struct stat file_info;
 	if (stat(local_path.c_str(), &file_info) != 0)
 		return 404;
@@ -84,20 +85,20 @@ std::string Response::current_http_date()
 	strftime(buffer, sizeof(buffer), "%a, %d %b %Y %H:%M:%S GMT", tm_info);
 	return std::string(buffer);
 }
-void Response::handleGet(const Request &req, const LocationConfig &loc_conf, const ServerConfig &server_conf)
+void Response::handleGet(const Request &req, const ServerConfig &server_conf)
 {
-	(void)loc_conf;
 	std::string path = req.getPath();
 	if (path.empty())
-		path = "/";
+		path = "/" + server_conf.index[0];
 	if (is_traversal_attempt(path))
 	{
 		// generateErrorResponse(403);
 		std::cout << " hack attack " << std::endl;
 		return;
 	}
-		std::string local_path = build_local_path(server_conf.root, path);
-		int resource_status = check_resource(local_path);
+			std::string local_path = build_local_path(server_conf.root, path);
+			int resource_status = check_resource(local_path);
+			std::cout << "Resource status for " << local_path << ": " << resource_status << std::endl;
 			if (resource_status == 200)
 			{
 				std::ifstream file(local_path.c_str(), std::ios::in | std::ios::binary);
@@ -123,16 +124,16 @@ void Response::handleGet(const Request &req, const LocationConfig &loc_conf, con
 			}
 			else if (resource_status == 300)
 			{
-					
+
 			}
 
 	}
 
-void Response::handleRequest(const Request &req , const LocationConfig &loc_conf, const ServerConfig &server_conf)
+void Response::handleRequest(const Request &req, const ServerConfig &server_conf)
 {
 	if (req.getMethod() == GET)
 	{
-		handleGet(req , loc_conf , server_conf);
+		handleGet(req, server_conf);
 	}
 	// else if (req.getMethod() == POST)
 	// 	handlePost(req);

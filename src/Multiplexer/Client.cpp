@@ -14,34 +14,6 @@ ClientHandler::ClientHandler(int fd, ServerConfig &config
 }
 
 
-LocationConfig getTemporaryLocation() {
-    LocationConfig fake_loc;
-    
-    // 1. Basic Path & Root
-    fake_loc.path = "/";
-    fake_loc.root = "www/html";
-    
-    // 2. Index files (Using push_back for C++98 std::vector)
-    fake_loc.index.push_back("index.html");
-    
-    // 3. Allowed Methods (We allow GET and POST, but leave out DELETE to test your 405 error)
-    fake_loc.allow_methods.push_back("GET");
-    fake_loc.allow_methods.push_back("POST");
-    
-    // 4. Limits & Behaviors
-    fake_loc.autoindex = false;
-    fake_loc.client_max_body_size = 10485760; // 10 Megabytes in bytes
-    
-    // 5. CGI & Uploads (Leaving CGI blank for now, setting upload folder)
-    fake_loc.cgi_extension = "";
-    fake_loc.cgi_path = "";
-    fake_loc.upload_store = "www/html/uploads";
-    
-    // 6. Redirects
-    fake_loc.redirect = "";
-    
-    return fake_loc;
-}
 
 ClientHandler::~ClientHandler(void) {}
 
@@ -62,13 +34,12 @@ void    ClientHandler::OnRead(void) {
     readBuf.append(buff, nread);
     int parse_status = this->req.parse_request(readBuf);
     std::cout << "s " << parse_status << std::endl;
-    // if (parse_status == 0)
-    // {
-    //     std::cout << "not complete" << std::endl;
-    //     return ; 
-    // }
-    Response res;
-    if (parse_status == -1) {
+    if (parse_status == 0)
+    {
+        return ;
+    }
+		Response res;
+		if (parse_status == -1) {
         // Status -1: BAD REQUEST (e.g., malformed headers).
         res.setStatusCode(400);
         res.setReasonPhrase("Bad Request");
@@ -76,9 +47,8 @@ void    ClientHandler::OnRead(void) {
         res.buildRawResponse();
     }
     // } else if (parse_status == 1){
-        ServerConfig &my_config = this->GetServerConf();
-        LocationConfig matched_location = getTemporaryLocation();
-        res.handleRequest(this->req, matched_location , my_config);
+		ServerConfig &my_config = this->GetServerConf();
+		res.handleRequest(this->req , my_config);
     // }
     this->writeBuf = res.getRawResponse();
     if (!writeBuf.empty())
