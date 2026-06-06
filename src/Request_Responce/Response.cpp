@@ -88,7 +88,7 @@ std::string Response::current_http_date()
 void Response::handleGet(const Request &req, const ServerConfig &server_conf)
 {
 	std::string path = req.getPath();
-	if (path.empty())
+	if (path  == "/")
 		path = "/" + server_conf.index[0];
 	if (is_traversal_attempt(path))
 	{
