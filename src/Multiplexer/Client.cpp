@@ -1,10 +1,14 @@
-#include "Client.hpp"
+#include "../../inc/Client.hpp"
+#include "../../inc/Response.hpp"
+
 
 ClientHandler::ClientHandler(int fd, ServerConfig &config
     , EventLoop &loop)
         : AHandler(fd, config, loop) {
     loop.AddHandler(this, EPOLLIN);
 }
+
+
 
 ClientHandler::~ClientHandler(void) {}
 
@@ -22,13 +26,29 @@ void    ClientHandler::OnRead(void) {
         OnError();
         return ;
     }
-    readBuf = buff;
-    std::cout << "ClientHandler::OnRead() " << readBuf << std::endl;
-    // TODO: check if the request is complete
-    // TODO: parse readBuf and build a response in writeBuf
-    readBuf.clear();
+    readBuf.append(buff, nread);
+    int parse_status = this->req.parse_request(readBuf);
+    std::cout << "s " << parse_status << std::endl;
+    if (parse_status == 0)
+    {
+        return ;
+    }
+		Response res;
+		if (parse_status == -1) {
+        // Status -1: BAD REQUEST (e.g., malformed headers).
+        res.setStatusCode(400);
+        res.setReasonPhrase("Bad Request");
+        // Optional: generate a generic 400 HTML body here if you want
+        res.buildRawResponse();
+    }
+    // } else if (parse_status == 1){
+		ServerConfig &my_config = this->GetServerConf();
+		res.handleRequest(this->req , my_config);
+    // }
+    this->writeBuf = res.getRawResponse();
     if (!writeBuf.empty())
         EnableWrite();
+    this->req.clear();
 }
 
 void    ClientHandler::OnWrite(void) {

@@ -18,6 +18,16 @@ Request::Request(void) : Method(UNKNOWN),
 Request::~Request(void)
 {
 }
+void Request::clear(void)
+{
+	this->Method = UNKNOWN;
+	this->uri.clear();
+	this->version.clear();
+	this->query_string.clear();
+	this->path.clear();
+	this->headers.clear();
+	this->body.clear();
+}
 void Request::setUri(const std::string &uri)
 {
 	this->uri = uri;
@@ -83,12 +93,6 @@ int Request::setHeader(std::string key,std::string value) {
 
     return 0;
 }
-
-
-
-
-
-
 
 
 void Request::setHeaders(const std::map<std::string, std::string> &headers)

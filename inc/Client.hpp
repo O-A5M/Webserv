@@ -8,11 +8,16 @@
 #include <netinet/in.h>
 
 #include "AHandler.hpp"
+#include "Request.hpp"
 
 class ClientHandler : public AHandler {
 private:
     std::string         readBuf;
     std::string         writeBuf;
+    // struct sockaddr_in  addr;
+    // socklen_t           addrLen;
+    Request             req;
+
 
 public:
     ClientHandler(int fd, ServerConfig& config, EventLoop& loop);
