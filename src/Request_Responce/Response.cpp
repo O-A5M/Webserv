@@ -124,11 +124,16 @@ void Response::handleGet(const Request &req, const ServerConfig &server_conf)
 			}
 			else if (resource_status == 300)
 			{
-
-			}
-
-	}
-
+					if (path[path.size() - 1] != '/')
+					{
+						this->setStatusCode(301);
+						this->setReasonPhrase("Moved Permanently");
+						this->setHeader("Location", path + "/");
+						this->buildRawResponse();
+						std::cout << this->getRawResponse() << std::endl;
+					}
+				}
+}
 void Response::handleRequest(const Request &req, const ServerConfig &server_conf)
 {
 	if (req.getMethod() == GET)
