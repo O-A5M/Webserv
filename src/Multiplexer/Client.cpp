@@ -13,7 +13,39 @@ ClientHandler::ClientHandler(int fd, ServerConfig &config
     loop.AddHandler(this, EPOLLIN);
 }
 
+RouteContext getMockRouteContext(int test_scenario)
+{
+	RouteContext mock;
 
+	if (test_scenario == 1)
+	{
+		// TEST 1: A perfect static file (e.g., index.html)
+		mock.status = 200;
+		mock.filesystem_path = "www/html/index.html"; // Make sure this file actually exists on your PC!
+		mock.is_file = true;
+		mock.allow_methods.push_back("GET");
+	}
+	else if (test_scenario == 2)
+	{
+		// TEST 2: Triggering the Autoindex listing
+		mock.status = 200;
+		mock.filesystem_path = "www/html/";
+		mock.is_autoindex = true;
+		mock.allow_methods.push_back("GET");
+	}
+	else if (test_scenario == 3)
+	{
+		// TEST 3: Forcing a 405 Error (Like someone tried to DELETE)
+		mock.status = 405;
+		mock.reason = "DELETE not allowed on location /protected";
+		mock.allow_methods.push_back("GET");
+		mock.allow_methods.push_back("POST");
+	}
+
+	// NOTE: We leave matched_location and matched_server as NULL for now.
+	// Your Response class shouldn't even need them because the booleans do all the work!
+	return mock;
+}
 
 ClientHandler::~ClientHandler(void) {}
 
@@ -46,10 +78,12 @@ void    ClientHandler::OnRead(void) {
         // Optional: generate a generic 400 HTML body here if you want
         res.buildRawResponse();
     }
-    // } else if (parse_status == 1){
-		ServerConfig &my_config = this->GetServerConf();
-		res.handleRequest(this->req , my_config);
     // }
+		else if (parse_status == 1){
+		// ServerConfig &my_config = this->GetServerConf();
+			RouteContext mog = getMockRouteContext(1);
+			res.handleRequest(this->req, mog);
+		}
     this->writeBuf = res.getRawResponse();
     if (!writeBuf.empty())
         EnableWrite();

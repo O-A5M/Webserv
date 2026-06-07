@@ -85,17 +85,21 @@ std::string Response::current_http_date()
 	strftime(buffer, sizeof(buffer), "%a, %d %b %Y %H:%M:%S GMT", tm_info);
 	return std::string(buffer);
 }
-void Response::handleGet(const Request &req, const ServerConfig &server_conf)
+void Response::handleGet(const Request &req, const RouteContext mog)
 {
-	std::string path = req.getPath();
-	if (path  == "/")
-		path = "/" + server_conf.index[0];
-	if (is_traversal_attempt(path))
-	{
+	std::cout << mog.status <<  std::endl;
+	std::cout << mog.filesystem_path <<  std::endl;
+	(void)req;
+
+	// std::string path = req.getPath();
+	// if (path  == "/")
+		// path = "/" + server_conf.index[0];
+	// if (is_traversal_attempt(path))
+	// {
 		// generateErrorResponse(403);
 		std::cout << " hack attack " << std::endl;
 		return;
-	}
+	// }
 			std::string local_path = build_local_path(server_conf.root, path);
 			int resource_status = check_resource(local_path);
 			std::cout << "Resource status for " << local_path << ": " << resource_status << std::endl;
@@ -134,11 +138,11 @@ void Response::handleGet(const Request &req, const ServerConfig &server_conf)
 					}
 				}
 }
-void Response::handleRequest(const Request &req, const ServerConfig &server_conf)
+void Response::handleRequest(const Request &req, const RouteContext mog)
 {
 	if (req.getMethod() == GET)
 	{
-		handleGet(req, server_conf);
+		handleGet(req, mog);
 	}
 	// else if (req.getMethod() == POST)
 	// 	handlePost(req);
