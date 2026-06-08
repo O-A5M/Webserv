@@ -21,9 +21,10 @@ RouteContext getMockRouteContext(int test_scenario)
 	{
 		// TEST 1: A perfect static file (e.g., index.html)
 		mock.status = 200;
-		mock.filesystem_path = "www/html/index.html"; // Make sure this file actually exists on your PC!
+		mock.filesystem_path = "./www/index.html"; // Make sure this file actually exists on your PC!
 		mock.is_file = true;
-		mock.allow_methods.push_back("GET");
+		// mock.allow_methods.push_back("GET");
+		mock.allow_methods.push_back("POST");
 	}
 	else if (test_scenario == 2)
 	{
@@ -32,6 +33,7 @@ RouteContext getMockRouteContext(int test_scenario)
 		mock.filesystem_path = "www/html/";
 		mock.is_autoindex = true;
 		mock.allow_methods.push_back("GET");
+		mock.allow_methods.push_back("POST");
 	}
 	else if (test_scenario == 3)
 	{
@@ -63,26 +65,27 @@ void    ClientHandler::OnRead(void) {
         OnError();
         return ;
     }
+
     readBuf.append(buff, nread);
     int parse_status = this->req.parse_request(readBuf);
-    std::cout << "s " << parse_status << std::endl;
-    if (parse_status == 0)
-    {
+    if (parse_status == PARSE_WAITING)
         return ;
-    }
+
 		Response res;
-		if (parse_status == -1) {
-        // Status -1: BAD REQUEST (e.g., malformed headers).
-        res.setStatusCode(400);
-        res.setReasonPhrase("Bad Request");
-        // Optional: generate a generic 400 HTML body here if you want
-        res.buildRawResponse();
+
+		if (parse_status == PARSE_BAD_REQUEST) {
+			res = Response::generateErrorResponse(400);
     }
-    // }
-		else if (parse_status == 1){
-		// ServerConfig &my_config = this->GetServerConf();
-			RouteContext mog = getMockRouteContext(1);
-			res.handleRequest(this->req, mog);
+		else if (parse_status == 1)
+		{
+			int status = this->req.validateRequest();
+			if (status != OK)
+				res = Response::generateErrorResponse(status);
+			else
+			{
+				RouteContext mog = getMockRouteContext(1);
+				res.handleRequest(this->req, mog);
+			}
 		}
     this->writeBuf = res.getRawResponse();
     if (!writeBuf.empty())

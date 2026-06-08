@@ -43,7 +43,6 @@ private:
 	void handleGet(const Request &req, const RouteContext mog);
 	void handlePost(const Request &req);
 	void handleDelete(const Request &req);
-	void generateErrorResponse(int code);
 
 public:
 	void setStatusCode(int code);
@@ -62,6 +61,8 @@ public:
 	void handleRequest(const Request &req, const RouteContext mog);
 	std::string current_http_date();
 	void buildRawResponse();
+	static Response generateErrorResponse(int code);
+	static std::string buildErrorPage(int code, const std::string &reason);
 };
 
 
