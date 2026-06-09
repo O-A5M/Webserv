@@ -16,6 +16,7 @@ struct LocationConfig
 	std::string              cgi_path;        // p3
     std::string              upload_store;    // P3
     std::string              redirect;             // THIS (for return/redirect)
+		int 										return_code;        // THIS (for return/redirect)
 
     LocationConfig();
 };

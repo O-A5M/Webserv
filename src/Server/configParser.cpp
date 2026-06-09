@@ -35,7 +35,7 @@ std::vector<std::string> ConfigParser::splitLine(const std::string& line, char d
     std::vector<std::string> words;
     std::istringstream       iss(line);
     std::string              word;
-    
+
     while (std::getline(iss, word, delimiter)) {
         if (!word.empty()) {
             words.push_back(word);
@@ -51,7 +51,7 @@ static bool startsServerDirective(const std::string& token)
         || token == "root"
         || token == "index"
         || token == "client_max_body_size"
-        || token == "error_page"; 
+        || token == "error_page";
 }
 
 static bool startsLocationDirective(const std::string& token)
@@ -141,7 +141,7 @@ void ConfigParser::parseLocationLine(const std::string& key, const std::vector<s
     else if (key == "autoindex") {
         if (words.size() != 2)
             throw std::runtime_error("Invalid autoindex directive in location: " + key);
-        location.autoindex = (words[1] == "on"); 
+        location.autoindex = (words[1] == "on");
     }
     else if (key == "client_max_body_size") {
         if (words.size() != 2)
@@ -168,8 +168,14 @@ void ConfigParser::parseLocationLine(const std::string& key, const std::vector<s
     else if (key == "return" || key == "redirect") {
         if (words.size() != 3)
             throw std::runtime_error("Invalid return/redirect directive in location: " + key);
-        location.redirect = words[2];
-    }
+				int return_code = std::atoi(words[1].c_str());
+				if (return_code < 100 || return_code > 599)
+					throw std::runtime_error("Invalid return code in return/redirect directive: " + words[1]);
+				else if (!isdigit(words[1][0]))
+					throw std::runtime_error("Invalid return code in return/redirect directive: " + words[1]);
+				location.return_code = return_code;
+				location.redirect = words[2];
+		}
     else {
         throw std::runtime_error("Unknown directive in server block: " + key);
     }
@@ -243,7 +249,7 @@ void ConfigParser::parse()
                 std::vector<std::string> words;
 
                 i++;
-                if (i >= tokens.size()) // 
+                if (i >= tokens.size()) //
                     throw std::runtime_error("Unexpected end of file after 'location'");
 
                 location.path = tokens[i++];
