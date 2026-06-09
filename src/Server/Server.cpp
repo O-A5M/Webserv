@@ -4,7 +4,10 @@
 #include <set>
 
 Server::Server(ServerConfig& servers)
-: _servers(servers), _serverFds(-1)
+: _servers(servers)
+, serverConfigs(1, servers)
+, router(serverConfigs)
+, _serverFds(-1)
 {
 }
 

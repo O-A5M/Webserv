@@ -11,25 +11,8 @@
 #include <unistd.h>
 #include <ctime>
 #include <cerrno>
+#include "RouteResult.hpp"
 
-struct RouteContext
-{
-	int status;
-	std::string filesystem_path;
-	const LocationConfig *matched_location;
-	const ServerConfig *matched_server;
-	bool is_file;
-	bool is_cgi;
-	bool is_autoindex;
-	bool is_redirect;
-	std::vector<std::string> allow_methods;
-	std::string reason;
-
-	// C++98 Constructor to set safe defaults
-	RouteContext() : status(200), matched_location(NULL), matched_server(NULL),
-									 is_file(false), is_cgi(false), is_autoindex(false),
-									 is_redirect(false) {}
-};
 
 class Response
 {
@@ -42,7 +25,7 @@ class Response
 		std::string raw_response;
 		std::string build_local_path(const std::string &root, const std::string &req_path);
 		int check_resource(const std::string &local_path);
-		void handleGet(const Request &req, const RouteContext mog);
+		void handleGet(const Request &req, const RouteResult &mog);
 		void handlePost(const Request &req);
 		void handleDelete(const Request &req);
 
@@ -60,14 +43,14 @@ class Response
 		std::string get_mime_type(const std::string &path);
 		std::string current_http_date();
 		void buildRawResponse();
-		void dispatchMethod(const Request &req, const RouteContext &context);
+		void dispatchMethod(const Request &req, const RouteResult &context);
 		static std::string buildErrorPage(int code, const std::string &reason);
 
 	public:
 
 		const std::string &getRawResponse() const;
 		static Response generateErrorResponse(int code);
-		void build(const Request &req, const RouteContext &mog);
+		void build(const Request &req, const RouteResult &mog);
 };
 
 

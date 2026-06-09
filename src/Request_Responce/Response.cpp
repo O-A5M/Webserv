@@ -212,7 +212,7 @@ std::string Response::current_http_date()
 	strftime(buffer, sizeof(buffer), "%a, %d %b %Y %H:%M:%S GMT", tm_info);
 	return std::string(buffer);
 }
-void Response::handleGet(const Request &req, const RouteContext mog)
+void Response::handleGet(const Request &req, const RouteResult &mog)
 {
 
 	(void)req;
@@ -279,7 +279,7 @@ void Response::handleGet(const Request &req, const RouteContext mog)
 				}
 }
 
-void Response::dispatchMethod(const Request &req, const RouteContext &context)
+void Response::dispatchMethod(const Request &req, const RouteResult &context)
 {
 
 	if (req.getMethod() == GET)
@@ -300,7 +300,7 @@ void Response::dispatchMethod(const Request &req, const RouteContext &context)
 	// }
 }
 
-void Response::build(const Request &req, const RouteContext &context)
+void Response::build(const Request &req, const RouteResult &context)
 {
 
 	// 1. Did the Router find a rule violation? (e.g., 405 Method Not Allowed)

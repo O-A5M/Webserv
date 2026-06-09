@@ -4,44 +4,10 @@
 
 ClientHandler::ClientHandler(int fd, ServerConfig &config
     , EventLoop &loop)
-        : AHandler(fd, config, loop) {
+        : AHandler(fd, config, loop)
+        , serverConfigs(1, config)
+        , router(serverConfigs) {
     loop.AddHandler(this, EPOLLIN);
-}
-
-RouteContext getMockRouteContext(int test_scenario)
-{
-	RouteContext mock;
-
-	if (test_scenario == 1)
-	{
-		// TEST 1: A perfect static file (e.g., index.html)
-		mock.status = 200;
-		mock.filesystem_path = "./www/index.html"; // Make sure this file actually exists on your PC!
-		mock.is_file = true;
-		mock.allow_methods.push_back("GET");
-		mock.allow_methods.push_back("POST");
-	}
-	else if (test_scenario == 2)
-	{
-		// TEST 2: Triggering the Autoindex listing
-		mock.status = 200;
-		mock.filesystem_path = "www/html/";
-		mock.is_autoindex = true;
-		mock.allow_methods.push_back("GET");
-		mock.allow_methods.push_back("POST");
-	}
-	else if (test_scenario == 3)
-	{
-		// TEST 3: Forcing a 405 Error (Like someone tried to DELETE)
-		mock.status = 405;
-		mock.reason = "DELETE not allowed on location /protected";
-		mock.allow_methods.push_back("GET");
-		mock.allow_methods.push_back("POST");
-	}
-
-	// NOTE: We leave matched_location and matched_server as NULL for now.
-	// Your Response class shouldn't even need them because the booleans do all the work!
-	return mock;
 }
 
 ClientHandler::~ClientHandler(void) {}
@@ -78,8 +44,19 @@ void    ClientHandler::OnRead(void) {
 				res = Response::generateErrorResponse(status);
 			else
 			{
-				RouteContext mog = getMockRouteContext(1);
-				res.build(this->req, mog);
+				// RouteContext mog = getMockRouteContext(1);
+        		RouteResult route_result = this->router.route(this->req, this->GetServerConf().port);
+				// std::cout << "RouteResult: status=" << route_result.status 
+                //     << ", filesystem_path=" << route_result.filesystem_path
+                //     << ", is_cgi=" << route_result.is_cgi
+                //     << ", is_autoindex=" << route_result.is_autoindex
+                //     << ", is_directory=" << route_result.is_directory
+                //     << ", is_file=" << route_result.is_file
+                //     << ", is_redirect=" << route_result.is_redirect
+                //     << ", redirect_location=" << route_result.redirect_location
+                //     << ", reason=" << route_result.reason
+                //     << std::endl;
+				res.build(this->req, route_result);
 			}
 		}
     this->writeBuf = res.getRawResponse();
