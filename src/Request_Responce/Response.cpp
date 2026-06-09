@@ -218,6 +218,10 @@ void Response::handleGet(const Request &req, const RouteResult &mog)
 	(void)req;
 	if (std::find(mog.allow_methods.begin(), mog.allow_methods.end(), "GET") == mog.allow_methods.end())
 	{
+		*this = generateErrorResponse(405);
+		return;
+	}
+	{
 		if (errno == EACCES)
 			*this = generateErrorResponse(403);
 		else if (errno == ENOENT)

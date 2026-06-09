@@ -28,8 +28,6 @@ void ClientHandler::OnRead(void)
 	}
 
 	readBuf.append(buff, nread);
-	std::cout << "Received data from client (fd=" << fd << "): " << nread << " bytes\n";
-	std::cout << "Current read buffer: " << readBuf << " bytes\n";
 	int parse_status = this->req.parse_request(readBuf);
 	if (parse_status == PARSE_WAITING)
 		return;
@@ -52,16 +50,16 @@ void ClientHandler::OnRead(void)
 			// for (size_t i = 0; i < route_result.allow_methods.size(); ++i) {
 			// 	std::cout << "Allowed method: " << route_result.allow_methods[i] << std::endl;
 			// }
-			    std::cout << "status=" << route_result.status
-					<< ", filesystem_path=" << route_result.filesystem_path
-			    << ", is_cgi=" << route_result.is_cgi
-			    << ", is_autoindex=" << route_result.is_autoindex
-			    << ", is_directory=" << route_result.is_directory
-			    << ", is_file=" << route_result.is_file
-			    << ", is_redirect=" << route_result.is_redirect
-			    << ", redirect_location=" << route_result.redirect_location
-			    << ", reason=" << route_result.reason
-			    << std::endl;
+			//     std::cout << "status=" << route_result.status
+			// 		<< ", filesystem_path=" << route_result.filesystem_path
+			//     << ", is_cgi=" << route_result.is_cgi
+			//     << ", is_autoindex=" << route_result.is_autoindex
+			//     << ", is_directory=" << route_result.is_directory
+			//     << ", is_file=" << route_result.is_file
+			//     << ", is_redirect=" << route_result.is_redirect
+			//     << ", redirect_location=" << route_result.redirect_location
+			//     << ", reason=" << route_result.reason
+			//     << std::endl;
 			res.build(this->req, route_result);
 		}
 	}
