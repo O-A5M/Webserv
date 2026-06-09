@@ -22,7 +22,7 @@ static bool is_regular_file(const std::string& path) {
     return S_ISREG(st.st_mode);
 }
 
-bool apply_redirect_if_needed(const LocationConfig& location, RouteResult& result)
+static bool apply_redirect_if_needed(const LocationConfig& location, RouteResult& result)
 {
     if (location.redirect.empty())
         return false;
@@ -83,9 +83,11 @@ RouteResult Router::route(const Request& req, int incoming_port) {
         result.reason = "Method not allowed: " + request_method;
         return result;
     }
-    
+
+    // check if redirect applies before building filesystem path
     if (apply_redirect_if_needed(*location, result))
         return result;
+
     // Step 4: Build the actual filesystem path
     result.filesystem_path = build_filesystem_path(*server, *location, req.getPath());
     // Step 5: Validate the path exists and is accessible
@@ -130,7 +132,6 @@ const ServerConfig* Router::select_server(const Request& req, int incoming_port)
     return NULL;
 }
 
-// Step 2: Find which location block matches this request path
 const LocationConfig* Router::match_location(const ServerConfig& server, 
                                              const std::string& request_path) {
     const LocationConfig* best_match = NULL;
@@ -172,14 +173,12 @@ std::string Router::build_filesystem_path(const ServerConfig& server,
 bool Router::validate_path(const std::string& path, const LocationConfig& location, RouteResult& result) {
     struct stat file_stat;
 
-    // Does the file/directory exist?
     if (stat(path.c_str(), &file_stat) != 0) {
         result.status = 404;
         result.reason = "File not found";
         return false;
     }
     
-    // Is it a file?
     if (S_ISREG(file_stat.st_mode)) {
         result.is_file = true;
         result.status = 200;
@@ -187,43 +186,42 @@ bool Router::validate_path(const std::string& path, const LocationConfig& locati
         return true;
     }
     
-    // Is it a directory?
     if (S_ISDIR(file_stat.st_mode)) {
         result.is_directory = true;
 
-    std::vector<std::string> index_files = location.index;
+        std::vector<std::string> index_files = location.index;
     
-    if (index_files.empty()) {
-        index_files.push_back("index.html");
-        index_files.push_back("index.htm");
-    }
+        if (index_files.empty()) {
+            index_files.push_back("index.html");
+            index_files.push_back("index.htm");
+        }
     
-    for (size_t i = 0; i < index_files.size(); ++i) {
+        for (size_t i = 0; i < index_files.size(); ++i) {
 
-        std::string index_path = path + index_files[i];
+            std::string index_path = path + index_files[i];
         
-        if (is_regular_file(index_path)) {
-            result.filesystem_path = index_path;
-            result.is_directory = false;
-            result.is_file = true;
-            result.status = 200;
-            result.reason = "Index file found: " + index_files[i];
-            return true;
+            if (is_regular_file(index_path)) {
+                result.filesystem_path = index_path;
+                result.is_directory = false;
+                result.is_file = true;
+                result.status = 200;
+                result.reason = "Index file found: " + index_files[i];
+                return true;
+            }
         }
-    }
-        if (location.autoindex) {
-            result.is_autoindex = true;
-            result.status = 200;
-            result.reason = "Autoindex enabled";
-            return true;
-        }
+            if (location.autoindex) {
+                result.is_autoindex = true;
+                result.status = 200;
+                result.reason = "Autoindex enabled";
+                return true;
+            }
 
-        result.status = 403;
-        result.reason = "Directory (no listing)";
-        return false;
-    }
+            result.status = 403;
+            result.reason = "Directory (no listing)";
+            return false;
+        }
     
-    result.status = 403;
-    result.reason = "Unknown file type";
-    return false;
+        result.status = 403;
+        result.reason = "Unknown file type";
+        return false;
 }
