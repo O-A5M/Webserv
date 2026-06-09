@@ -46,16 +46,16 @@ void    ClientHandler::OnRead(void) {
 			{
 				// RouteContext mog = getMockRouteContext(1);
         		RouteResult route_result = this->router.route(this->req, this->GetServerConf().port);
-				// std::cout << "RouteResult: status=" << route_result.status 
-                //     << ", filesystem_path=" << route_result.filesystem_path
-                //     << ", is_cgi=" << route_result.is_cgi
-                //     << ", is_autoindex=" << route_result.is_autoindex
-                //     << ", is_directory=" << route_result.is_directory
-                //     << ", is_file=" << route_result.is_file
-                //     << ", is_redirect=" << route_result.is_redirect
-                //     << ", redirect_location=" << route_result.redirect_location
-                //     << ", reason=" << route_result.reason
-                //     << std::endl;
+				std::cout << "RouteResult: status=" << route_result.status 
+                    << ", filesystem_path=" << route_result.filesystem_path
+                    << ", is_cgi=" << route_result.is_cgi
+                    << ", is_autoindex=" << route_result.is_autoindex
+                    << ", is_directory=" << route_result.is_directory
+                    << ", is_file=" << route_result.is_file
+                    << ", is_redirect=" << route_result.is_redirect
+                    << ", redirect_location=" << route_result.redirect_location
+                    << ", reason=" << route_result.reason
+                    << std::endl;
 				res.build(this->req, route_result);
 			}
 		}

@@ -6,7 +6,7 @@ Router::Router(const std::vector<ServerConfig>& servers)
     : servers(servers) {}
 
 
-std::string methodToString(e_Methodes method) {
+static std::string methodToString(e_Methodes method) {
     switch (method) {
         case GET:     return "GET";
         case POST:    return "POST";
@@ -15,11 +15,30 @@ std::string methodToString(e_Methodes method) {
     }
 }
 
-bool is_regular_file(const std::string& path) {
+static bool is_regular_file(const std::string& path) {
     struct stat st;
     if (stat(path.c_str(), &st) != 0)
         return false;
     return S_ISREG(st.st_mode);
+}
+
+bool apply_redirect_if_needed(const LocationConfig& location, RouteResult& result)
+{
+    if (location.redirect.empty())
+        return false;
+
+    result.is_redirect = true;
+    result.status = location.return_code;
+    result.redirect_location = location.redirect;
+
+    if (location.return_code == 301)
+        result.reason = "Moved Permanently";
+    else if (location.return_code == 302)
+        result.reason = "Found";
+    else
+        result.reason = "Redirect";
+
+    return true;
 }
 
 // MAIN METHOD - called from your code
@@ -53,29 +72,31 @@ RouteResult Router::route(const Request& req, int incoming_port) {
     bool method_allowed = false;
     for (std::vector<std::string>::const_iterator it = result.allow_methods.begin();
         it != result.allow_methods.end(); ++it) {
-        if (*it == request_method) {
+            if (*it == request_method) {
             method_allowed = true;
             break;
         }
     }
-
+    
     if (!method_allowed) {
         result.status = 405;
         result.reason = "Method not allowed: " + request_method;
         return result;
     }
     
+    if (apply_redirect_if_needed(*location, result))
+        return result;
     // Step 4: Build the actual filesystem path
     result.filesystem_path = build_filesystem_path(*server, *location, req.getPath());
-    
     // Step 5: Validate the path exists and is accessible
     validate_path(result.filesystem_path, *location, result);
     
     return result;
 }
 
-const ServerConfig* Router::select_server(const Request& req, int incoming_port) {
 
+const ServerConfig* Router::select_server(const Request& req, int incoming_port) {
+    
     const std::map<std::string, std::string>& headers = req.getHeaders();
     std::map<std::string, std::string>::const_iterator host_it = headers.find("host");
     
@@ -130,12 +151,11 @@ const LocationConfig* Router::match_location(const ServerConfig& server,
     return best_match;
 }
 
+
 // Step 3: Convert URL path to actual filesystem path
 std::string Router::build_filesystem_path(const ServerConfig& server,
                                          const LocationConfig& location,
                                          const std::string& request_path) {
-
-    // (void) server;
     std::string base_root;
     if (location.root.empty())
         base_root = server.root + "/";
@@ -143,17 +163,15 @@ std::string Router::build_filesystem_path(const ServerConfig& server,
         base_root = location.root + "/";
     
     std::string path_after_location = request_path.substr(location.path.length());
-    std::string result = base_root + path_after_location;
+    std::string filesystem_path = base_root + path_after_location;
     
-    return result;
+    return filesystem_path;
 }
 
 // Step 4: Check if path exists, is accessible, etc.
 bool Router::validate_path(const std::string& path, const LocationConfig& location, RouteResult& result) {
     struct stat file_stat;
 
-    // std::cout << "Validating path: " << path << std::endl;
-    
     // Does the file/directory exist?
     if (stat(path.c_str(), &file_stat) != 0) {
         result.status = 404;

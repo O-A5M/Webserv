@@ -1,5 +1,5 @@
-#ifndef CONFIG_PARSER_HPP
-#define CONFIG_PARSER_HPP
+#ifndef CONFIGPARSER_HPP
+#define CONFIGPARSER_HPP
 
 #include <iostream>
 #include <string>
@@ -40,4 +40,4 @@ class ConfigParser
         void parseLocationLine(const std::string& key, const std::vector<std::string>& words, LocationConfig& location);
 };
 
-#endif // CONFIG_PARSER_HPP
+#endif // CONFIGPARSER_HPP

@@ -1,6 +1,7 @@
 #include "configParser.hpp"
 #include <cstdlib>
 
+
 ConfigParser::ConfigParser(const std::string& filename)
 : _filename(filename)
 {
@@ -137,6 +138,12 @@ void ConfigParser::parseLocationLine(const std::string& key, const std::vector<s
         for (size_t i = 1; i < words.size(); ++i) {
             location.allow_methods.push_back(words[i]);
         }
+        // display allowed methods for debugging
+        // std::cout << "Parsed allow_methods for location " << location.path << ": ";
+        for (size_t i = 0; i < location.allow_methods.size(); ++i) {
+            std::cout << "========>" << location.allow_methods[i] << "\n";
+        }
+        // std::cout << std::endl;
     }
     else if (key == "autoindex") {
         if (words.size() != 2)
@@ -168,6 +175,12 @@ void ConfigParser::parseLocationLine(const std::string& key, const std::vector<s
     else if (key == "return" || key == "redirect") {
         if (words.size() != 3)
             throw std::runtime_error("Invalid return/redirect directive in location: " + key);
+        int return_code = std::atoi(words[1].c_str());
+        if (return_code < 100 || return_code > 599)
+            throw std::runtime_error("Invalid return code in return/redirect directive: " + words[1]);
+        else if (!isdigit(words[1][0]))
+            throw std::runtime_error("Invalid return code in return/redirect directive: " + words[1]);
+        location.return_code = return_code;
         location.redirect = words[2];
     }
     else {
