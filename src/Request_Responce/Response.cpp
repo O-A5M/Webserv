@@ -216,7 +216,17 @@ void Response::handleGet(const Request &req, const RouteContext mog)
 {
 
 	(void)req;
-
+	if (std::find(mog.allow_methods.begin(), mog.allow_methods.end(), "GET") == mog.allow_methods.end())
+	{
+		if (errno == EACCES)
+			*this = generateErrorResponse(403);
+		else if (errno == ENOENT)
+			*this = generateErrorResponse(404);
+		else
+			*this = generateErrorResponse(500);
+		return;
+	}
+	// std::cout << this->getRawResponse() << std::endl;
 	// std::string path = req.getPath();
 	// if (path  == "/")
 		// path = "/" + server_conf.index[0];
@@ -239,10 +249,9 @@ void Response::handleGet(const Request &req, const RouteContext mog)
 				std::ifstream file(mog.filesystem_path.c_str(), std::ios::in | std::ios::binary);
 				if (!file.is_open())
 				{
-					// 	generateErrorResponse(404);
-					// 	return;
-					std::cout << "Failed to open file: "  << std::endl;
+					*this = generateErrorResponse(403);
 					return;
+
 				}
 				std::stringstream buffer;
 				buffer << file.rdbuf();
@@ -269,24 +278,78 @@ void Response::handleGet(const Request &req, const RouteContext mog)
 					// }
 				}
 }
-void Response::handleRequest(const Request &req, const RouteContext mog)
+
+void Response::dispatchMethod(const Request &req, const RouteContext &context)
 {
+
 	if (req.getMethod() == GET)
 	{
-		if (std::find(mog.allow_methods.begin(), mog.allow_methods.end(), "GET") != mog.allow_methods.end())
-			handleGet(req, mog);
-		else
-		{
-			*this = generateErrorResponse(405);
-			// std::cout << this->getRawResponse() << std::endl;
-		}
+		handleGet(req, context);
 	}
 	// else if (req.getMethod() == POST)
-	// 	handlePost(req);
-
+	// {
+	// 	handlePost(req, context);
+	// }
 	// else if (req.getMethod() == DELETE)
-	// 	handleDelete(req);
-
+	// {
+	// 	handleDelete(context);
+	// }
 	// else
-	// 	generateErrorResponse(405);
+	// {
+	// 	buildErrorResponse(501); // 501 Not Implemented
+	// }
 }
+
+void Response::build(const Request &req, const RouteContext &context)
+{
+
+	// 1. Did the Router find a rule violation? (e.g., 405 Method Not Allowed)
+	if (context.status != 200)
+	{
+		*this = generateErrorResponse(context.status);
+		return;
+	}
+
+	// 2. Is this a Redirection?
+	// if (context.is_redirect)
+	// {
+	// 	// We use matched_location here because that is where the redirect URL lives!
+	// 	buildRedirectResponse(context.matched_location->redirect);
+	// 	return;
+	// }
+
+	// // 3. Is it an Autoindex request?
+	// if (context.is_autoindex)
+	// {
+	// 	buildDirectoryListing(context.filesystem_path);
+	// 	return;
+	// }
+
+	// 4. If it is a normal file operation, pass it to the Dispatcher!
+	if (context.is_file)
+	{
+		dispatchMethod(req, context);
+	}
+}
+
+// void Response::build(const Request &req, const RouteContext mog)
+// {
+// 	if (req.getMethod() == GET)
+// 	{
+// 		if (std::find(mog.allow_methods.begin(), mog.allow_methods.end(), "GET") != mog.allow_methods.end())
+// 			handleGet(req, mog);
+// 		else
+// 		{
+// 			*this = generateErrorResponse(405);
+// 			// std::cout << this->getRawResponse() << std::endl;
+// 		}
+// 	}
+// 	// else if (req.getMethod() == POST)
+// 	// 	handlePost(req);
+
+// 	// else if (req.getMethod() == DELETE)
+// 	// 	handleDelete(req);
+
+// 	// else
+// 	// 	generateErrorResponse(405);
+// }

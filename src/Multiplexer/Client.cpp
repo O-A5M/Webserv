@@ -23,7 +23,7 @@ RouteContext getMockRouteContext(int test_scenario)
 		mock.status = 200;
 		mock.filesystem_path = "./www/index.html"; // Make sure this file actually exists on your PC!
 		mock.is_file = true;
-		// mock.allow_methods.push_back("GET");
+		mock.allow_methods.push_back("GET");
 		mock.allow_methods.push_back("POST");
 	}
 	else if (test_scenario == 2)
@@ -84,7 +84,7 @@ void    ClientHandler::OnRead(void) {
 			else
 			{
 				RouteContext mog = getMockRouteContext(1);
-				res.handleRequest(this->req, mog);
+				res.build(this->req, mog);
 			}
 		}
     this->writeBuf = res.getRawResponse();
