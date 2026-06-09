@@ -46,7 +46,9 @@ void    ClientHandler::OnRead(void) {
 			{
 				// RouteContext mog = getMockRouteContext(1);
         		RouteResult route_result = this->router.route(this->req, this->GetServerConf().port);
-				// std::cout << "RouteResult: status=" << route_result.status 
+								// for (size_t i = 0; i < route_result.allow_methods.size(); ++i) {
+								// 	std::cout << "Allowed method: " << route_result.allow_methods[i] << std::endl;
+								// }
                 //     << ", filesystem_path=" << route_result.filesystem_path
                 //     << ", is_cgi=" << route_result.is_cgi
                 //     << ", is_autoindex=" << route_result.is_autoindex
