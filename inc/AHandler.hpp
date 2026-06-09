@@ -12,26 +12,24 @@
 
 class EventLoop;
 
-class AHandler
-{
+class AHandler {
 protected:
-    int fd;
-    ServerConfig &serverConf;
-    EventLoop &loop;
-    void SetNonBlocking() const;
-
+    int             fd;
+    ServerConfig    &serverConf;
+    EventLoop       &loop;
+    void    SetNonBlocking() const;
 public:
-    AHandler(int fd, ServerConfig &config, EventLoop &loop);
+    AHandler(int fd, ServerConfig &config, EventLoop& loop);
     virtual ~AHandler();
 
-    virtual void OnRead() = 0;
-    virtual void OnWrite() = 0;
-    virtual void OnError() = 0;
+    virtual void    OnRead() = 0;
+    virtual void    OnWrite() = 0;
+    virtual void    OnError() = 0;
 
-    void EnableWrite();
-    void DisableWrite();
-    int GetFd() const;
-    ServerConfig &GetServerConf() const;
+    void    EnableWrite();
+    void    DisableWrite();
+    int     GetFd() const;
+    ServerConfig    &GetServerConf() const;
 };
 
 #endif

@@ -8,18 +8,23 @@
 #include <netinet/in.h>
 
 #include "AHandler.hpp"
+#include "Request.hpp"
+#include "Router.hpp"
+#include <vector>
 
 class ClientHandler : public AHandler {
 private:
     std::string         readBuf;
     std::string         writeBuf;
+    std::vector<ServerConfig> serverConfigs;
+    Router              router;
     // struct sockaddr_in  addr;
     // socklen_t           addrLen;
+    Request             req;
+
 
 public:
-    ClientHandler(int fd, ServerConfig& config
-        , EventLoop& loop
-        , const struct sockaddr_in &addr, socklen_t addrLen);
+    ClientHandler(int fd, ServerConfig& config, EventLoop& loop);
     ~ClientHandler(void);
 
     void OnRead();

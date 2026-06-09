@@ -21,7 +21,9 @@ SRCS = $(SRC_DIR)/main.cpp \
 	$(SERVER_DIR)/configParser.cpp \
 	$(SERVER_DIR)/locationConfig.cpp \
 	$(SERVER_DIR)/serverConfig.cpp \
-	$(SERVER_DIR)/Server.cpp
+	$(SERVER_DIR)/Server.cpp \
+	$(SERVER_DIR)/Router.cpp \
+	$(SERVER_DIR)/RouteResult.cpp
 
 # Object files
 OBJS = $(SRCS:.cpp=.o)

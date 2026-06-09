@@ -12,11 +12,14 @@
 #include <unistd.h>
 #include <cstring>
 #include "serverConfig.hpp"
+#include "Router.hpp"
 
 
 class Server {
 	private:
 		ServerConfig	_servers;
+		std::vector<ServerConfig>	serverConfigs;
+		Router			router;
 		int 			_serverFds;
 
 		void	SetNonBlocking() const;

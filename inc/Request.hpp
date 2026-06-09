@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 #include <fstream>
 #include <sstream>
+#include <algorithm>
 
 #define MAX_URI_LENGTH 8192
 #define Client_max_body_size 1000000
@@ -21,6 +22,28 @@ enum e_Methodes
 	GET,
 	POST,
 	DELETE
+};
+
+enum ParseStatus
+{
+	OK = 200,
+	BAD_REQUEST = 400,
+	UNAUTHORIZED = 401,
+	FORBIDDEN = 403,
+	NOT_FOUND = 404,
+	METHOD_NOT_ALLOWED = 405,
+	URI_TOO_LONG = 414,
+	NOT_IMPLEMENTED = 501,
+	PAYLOAD_TOO_LARGE = 413,
+	VERSION_NOT_SUPPORTED = 505
+};
+
+enum ParseResult
+{
+	PARSE_WAITING,
+	PARSE_SUCCESS,
+	PARSE_BAD_REQUEST = 400,		 // 400
+	PARSE_HEADER_TOO_LARGE = 431 // 431
 };
 
 // typedef  struct	s_Request {
@@ -39,6 +62,8 @@ class Request
 
 private:
 	e_Methodes Method;
+	ParseStatus parse_status;
+	ParseResult parse_result;
 	std::string uri;
 	std::string version;
 	std::string query_string;
@@ -61,6 +86,7 @@ public:
 	void setQuery(const std::string &query);
 	void setPath(const std::string &path);
 	void setBody(const std::string &body);
+	void clear(void);
 
 	int setHeader(std::string key, std::string value);
 	void setHeaders(const std::map<std::string, std::string> &headers);
@@ -75,7 +101,7 @@ public:
 	const std::map<std::string, std::string> &getHeaders(void) const;
 	void removeHeader(const std::string &key);
 	void display(void) const;
-	int validateRequest(void);
+	ParseStatus validateRequest(void);
 	int parse_request(std::string &raw);
 };
 

@@ -1,13 +1,12 @@
 #include "../../inc/Client.hpp"
+#include "../../inc/Response.hpp"
+
 
 ClientHandler::ClientHandler(int fd, ServerConfig &config
-    , EventLoop &loop
-    , const struct sockaddr_in &addr, socklen_t addrLen)
+    , EventLoop &loop)
         : AHandler(fd, config, loop)
-       /* , addr(addr)
-        , addrLen(addrLen) */{
-		(void) addrLen; // To avoid unused parameter warning
-		(void) addr; // To avoid unused parameter warning
+        , serverConfigs(1, config)
+        , router(serverConfigs) {
     loop.AddHandler(this, EPOLLIN);
 }
 
@@ -27,13 +26,43 @@ void    ClientHandler::OnRead(void) {
         OnError();
         return ;
     }
-    readBuf.append(buff, nread);
-    std::cout << "ClientHandler::OnRead() " << readBuf << std::endl;
-    // TODO: check if the request is complete
-    // TODO: parse readBuf and build a response in writeBuf
 
+    readBuf.append(buff, nread);
+    int parse_status = this->req.parse_request(readBuf);
+    if (parse_status == PARSE_WAITING)
+        return ;
+
+		Response res;
+
+		if (parse_status == PARSE_BAD_REQUEST) {
+			res = Response::generateErrorResponse(400);
+    }
+		else if (parse_status == 1)
+		{
+			int status = this->req.validateRequest();
+			if (status != OK)
+				res = Response::generateErrorResponse(status);
+			else
+			{
+				// RouteContext mog = getMockRouteContext(1);
+        		RouteResult route_result = this->router.route(this->req, this->GetServerConf().port);
+				// std::cout << "RouteResult: status=" << route_result.status 
+                //     << ", filesystem_path=" << route_result.filesystem_path
+                //     << ", is_cgi=" << route_result.is_cgi
+                //     << ", is_autoindex=" << route_result.is_autoindex
+                //     << ", is_directory=" << route_result.is_directory
+                //     << ", is_file=" << route_result.is_file
+                //     << ", is_redirect=" << route_result.is_redirect
+                //     << ", redirect_location=" << route_result.redirect_location
+                //     << ", reason=" << route_result.reason
+                //     << std::endl;
+				res.build(this->req, route_result);
+			}
+		}
+    this->writeBuf = res.getRawResponse();
     if (!writeBuf.empty())
         EnableWrite();
+    this->req.clear();
 }
 
 void    ClientHandler::OnWrite(void) {

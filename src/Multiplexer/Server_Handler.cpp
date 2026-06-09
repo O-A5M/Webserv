@@ -23,7 +23,7 @@ void    ServerHandler::OnRead() {
         return;
     }
     try {
-        new ClientHandler(client_fd, serverConf, loop, client_addr, client_addr_len);
+        new ClientHandler(client_fd, serverConf, loop);
     }
     catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;

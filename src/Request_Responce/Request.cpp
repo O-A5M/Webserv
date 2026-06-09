@@ -2,17 +2,17 @@
 #include "../../inc/Response.hpp"
 
 std::string raw =
-	"GET /index.js HTTP/1.1\r\n"
-	"Host: localhost:8080\r\n"
-	"Transfer-Encoding: chunked\r\n"
-	"Content-Type: text/plain\r\n"
-	"\r\n"
-	"5\r\n"
-	"Hello\r\n"
-	"a\r\n"
-	", webserv!\r\n"
-	"0\r\n"
-	"\r\n";
+		"GET /index.js HTTP/1.1\r\n"
+		"Host: localhost:8080\r\n"
+		"Transfer-Encoding: chunked\r\n"
+		"Content-Type: text/plain\r\n"
+		"\r\n"
+		"5\r\n"
+		"Hello\r\n"
+		"a\r\n"
+		", webserv!\r\n"
+		"0\r\n"
+		"\r\n";
 
 int Request::parse_request_line(const std::string &req_line)
 {
@@ -20,7 +20,7 @@ int Request::parse_request_line(const std::string &req_line)
 	std::string uri;
 	std::string version;
 	int space_count = 0;
-	if (req_line[0] == ' ')
+	if (req_line.empty() || req_line[0] == ' ')
 		return -1;
 	for (size_t i = 0; i < req_line.size(); i++)
 	{
@@ -243,64 +243,56 @@ int Request::parse_body(const std::string &body, size_t &consumed_bytes)
 	}
 }
 
-int Request::validateRequest(void)
+ParseStatus Request::validateRequest(void)
 {
 	if (this->getVersion() != "HTTP/1.1")
-		return 505;
+		return VERSION_NOT_SUPPORTED;
 	if (this->getMethod() == UNKNOWN)
-		return 501;
+		return METHOD_NOT_ALLOWED;
 	if (this->getUri().size() > MAX_URI_LENGTH)
-		return 414;
+		return URI_TOO_LONG;
 	if (Client_max_body_size < this->getBody().size())
-		return 413;
-	if (this->getHeaders().find("host")->second.empty())
-		return 400;
-	return 200;
+		return PAYLOAD_TOO_LARGE;
+	std::map<std::string, std::string>::const_iterator it = this->getHeaders().find("host");
+	if (it == this->getHeaders().end() || it->second.empty())
+		return BAD_REQUEST;
+	return OK;
 }
 
 int Request::parse_request(std::string &raw)
 {
-	// NO MORE WHILE LOOP. We only parse ONE request per call.
 	if (raw.empty())
-		return 1; // Waiting for data
+		return PARSE_WAITING;
 
 	size_t pos = raw.find("\r\n\r\n");
 	size_t pos_req_line = raw.find("\r\n");
-
 	if (pos_req_line == std::string::npos || pos == std::string::npos)
-		return 1; // 1 means "Waiting for the rest of the headers..."
-
+		return PARSE_WAITING;
 	std::string request_line = raw.substr(0, pos_req_line);
 	std::string header = raw.substr(pos_req_line + 2, pos - (pos_req_line + 2));
-
 	if (header.size() > MAX_HEADER_SIZE)
-		return -1; // 431 Error
-
+		return PARSE_HEADER_TOO_LARGE;
 	int typeOfError = this->parse_request_line(request_line);
 	int typeOfError2 = this->parse_request_headers(header);
 
 	if (typeOfError < 0 || typeOfError2 < 0)
-		return -1; // 400 Bad Request
-
+		return PARSE_BAD_REQUEST;
 	size_t consumed_body_bytes = 0;
 	std::string body = raw.substr(pos + 4);
 	int bodyParseResult = this->parse_body(body, consumed_body_bytes);
-
 	if (bodyParseResult < 0)
-		return -1; // 400 Bad Request
+		return PARSE_BAD_REQUEST;
 	if (bodyParseResult == 1)
-		return 1; // Waiting for more body data
-	// --- SUCCESS! WE HAVE PARSED EXACTLY ONE REQUEST ---
+		return PARSE_WAITING;
 	this->display();
-	// 1. Validate it
-	// int validation_status = this->validateRequest();
-	// (You can store this status inside the req object for the Response to use later)
-
-	// 2. Erase ONLY this one request from the raw string.
-	// If there are 2 more requests behind it, they stay in 'raw' for next time!
+	int validation_status = this->validateRequest();
+	if (validation_status != 200)
+	{
+		return -1;
+	}
 	size_t total_parsed_bytes = (pos + 4) + consumed_body_bytes;
 	raw.erase(0, total_parsed_bytes);
-	return 0; // Tell the server: "I have 1 request ready to execute!"
+	return PARSE_SUCCESS;
 }
 
 // int parse_request(std::string &raw, Request &req)
