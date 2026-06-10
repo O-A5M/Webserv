@@ -221,15 +221,6 @@ void Response::handleGet(const Request &req, const RouteResult &mog)
 		*this = generateErrorResponse(405);
 		return;
 	}
-	{
-		if (errno == EACCES)
-			*this = generateErrorResponse(403);
-		else if (errno == ENOENT)
-			*this = generateErrorResponse(404);
-		else
-			*this = generateErrorResponse(500);
-		return;
-	}
 	// std::cout << this->getRawResponse() << std::endl;
 	// std::string path = req.getPath();
 	// if (path  == "/")
@@ -253,9 +244,13 @@ void Response::handleGet(const Request &req, const RouteResult &mog)
 				std::ifstream file(mog.filesystem_path.c_str(), std::ios::in | std::ios::binary);
 				if (!file.is_open())
 				{
-					*this = generateErrorResponse(403);
+					if (errno == EACCES)
+						*this = generateErrorResponse(403);
+					else if (errno == ENOENT)
+						*this = generateErrorResponse(404);
+					else
+						*this = generateErrorResponse(500);
 					return;
-
 				}
 				std::stringstream buffer;
 				buffer << file.rdbuf();
