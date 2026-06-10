@@ -147,8 +147,8 @@ void ConfigParser::parseLocationLine(const std::string &key, const std::vector<s
     {
         for (size_t i = 1; i < words.size(); ++i)
         {
-            if (words[i] != "GET" && words[i] != "POST" && words[i] != "DELETE")
-                throw std::runtime_error("Invalid HTTP method in allow_methods directive: " + words[i]);
+            // if (words[i] != "GET" && words[i] != "POST" && words[i] != "DELETE")
+            //     throw std::runtime_error("Invalid HTTP method in allow_methods directive: " + words[i]);
             location.allow_methods.push_back(words[i]);
         }
     }

@@ -6,21 +6,21 @@ Router::Router(const std::vector<ServerConfig>& servers)
     : servers(servers) {}
 
 
-static std::string methodToString(e_Methodes method) {
-    switch (method) {
-        case GET:     return "GET";
-        case POST:    return "POST";
-        case DELETE:  return "DELETE";
-        default:      return "UNKNOWN";
-    }
-}
+// static std::string methodToString(e_Methodes method) {
+//     switch (method) {
+//         case GET:     return "GET";
+//         case POST:    return "POST";
+//         case DELETE:  return "DELETE";
+//         default:      return "UNKNOWN";
+//     }
+// }
 
-static bool is_regular_file(const std::string& path) {
-    struct stat st;
-    if (stat(path.c_str(), &st) != 0)
-        return false;
-    return S_ISREG(st.st_mode);
-}
+// static bool is_regular_file(const std::string& path) {
+//     struct stat st;
+//     if (stat(path.c_str(), &st) != 0)
+//         return false;
+//     return S_ISREG(st.st_mode);
+// }
 
 static bool apply_redirect_if_needed(const LocationConfig& location, RouteResult& result)
 {
@@ -67,22 +67,22 @@ RouteResult Router::route(const Request& req, int incoming_port) {
     
     // Step 3: Check if method is allowed
     result.allow_methods = location->allow_methods;
-    std::string request_method = methodToString(req.getMethod());
+    // std::string request_method = methodToString(req.getMethod());
 
-    bool method_allowed = false;
-    for (std::vector<std::string>::const_iterator it = result.allow_methods.begin();
-        it != result.allow_methods.end(); ++it) {
-            if (*it == request_method) {
-            method_allowed = true;
-            break;
-        }
-    }
+    // bool method_allowed = false;
+    // for (std::vector<std::string>::const_iterator it = result.allow_methods.begin();
+    //     it != result.allow_methods.end(); ++it) {
+    //         if (*it == request_method) {
+    //         method_allowed = true;
+    //         break;
+    //     }
+    // }
     
-    if (!method_allowed) {
-        result.status = 405;
-        result.reason = "Method not allowed: " + request_method;
-        return result;
-    }
+    // if (!method_allowed) {
+    //     result.status = 405;
+    //     result.reason = "Method not allowed: " + request_method;
+    //     return result;
+    // }
 
     // check if redirect applies before building filesystem path
     if (apply_redirect_if_needed(*location, result))
@@ -157,15 +157,14 @@ const LocationConfig* Router::match_location(const ServerConfig& server,
 std::string Router::build_filesystem_path(const ServerConfig& server,
                                          const LocationConfig& location,
                                          const std::string& request_path) {
+    // fills autoindex.
     std::string base_root;
+    std::string filesystem_path;
     if (location.root.empty())
         base_root = server.root + "/";
     else
         base_root = location.root + "/";
-    
-    std::string path_after_location = request_path.substr(location.path.length());
-    std::string filesystem_path = base_root + path_after_location;
-    
+    filesystem_path = base_root + request_path;
     return filesystem_path;
 }
 
@@ -188,26 +187,27 @@ bool Router::validate_path(const std::string& path, const LocationConfig& locati
     
     if (S_ISDIR(file_stat.st_mode)) {
         result.is_directory = true;
-
-        std::vector<std::string> index_files = location.index;
-    
-        if (index_files.empty()) {
-            index_files.push_back("index.html");
-            index_files.push_back("index.htm");
-        }
-    
-        for (size_t i = 0; i < index_files.size(); ++i) {
-
-            std::string index_path = path + index_files[i];
         
-            if (is_regular_file(index_path)) {
-                result.filesystem_path = index_path;
-                result.is_directory = false;
-                result.is_file = true;
-                result.status = 200;
-                result.reason = "Index file found: " + index_files[i];
-                return true;
-            }
+        std::vector<std::string> index_files = location.index;
+        
+        for (size_t i = 0; i < index_files.size(); ++i) {
+            
+            std::string index_path = path + "/" + index_files[i];
+            // www/index/index.html
+            // return true;
+            // std::cout << "Checking for index file: " << index_path << std::endl;
+        
+            // if (is_regular_file(index_path)) {
+            //     std::cout << "DKHEEEEL" << std::endl;
+            //     result.filesystem_path = index_path;
+            //     result.is_directory = false;
+            //     result.is_file = true;
+            //     result.status = 200;
+            //     result.reason = "Index file found: " + index_files[i];
+            //     return true;
+            // }
+            // else 
+            result.filesystem_path = index_path;
         }
             if (location.autoindex) {
                 result.is_autoindex = true;
@@ -216,7 +216,7 @@ bool Router::validate_path(const std::string& path, const LocationConfig& locati
                 return true;
             }
 
-            result.status = 403;
+            result.status = 200;
             result.reason = "Directory (no listing)";
             return false;
         }

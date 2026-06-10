@@ -17,3 +17,6 @@ CASE 14: unknown block type
   → decide: error OR last one wins OR first one wins
   → be consistent across all directives
   ===================================================
+
+
+  block location not found ===> error
