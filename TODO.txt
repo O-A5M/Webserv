@@ -17,10 +17,3 @@ CASE 14: unknown block type
   → decide: error OR last one wins OR first one wins
   → be consistent across all directives
   ===================================================
-
-===================================================
-  CASE 21: empty value after key
-  listen ;
-  root   ;
-  → error: empty value for directive
-===================================================
