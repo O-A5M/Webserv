@@ -1,3 +1,9 @@
-work with vect and map
-begin pasr of req
+REFACTORY FILE CONFIGPARSE()
+
+in function tokenize()
+    - tokenizeLine(line)
+
+in function parse()
+    - parseConfigFile(tokens)
+        -parseServerLcationLine(tokens)
 

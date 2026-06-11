@@ -220,7 +220,7 @@ std::vector<std::string> ConfigParser::tokenize()
     while (std::getline(infile, line))
     {
         std::string current;
-
+        // build tokenizeLine().
         for (std::size_t i = 0; i < line.size(); i++)
         {
             char ch = line[i];
@@ -246,9 +246,7 @@ std::vector<std::string> ConfigParser::tokenize()
                 }
             }
             else
-            {
                 current += ch;
-            }
         }
 
         if (!current.empty())

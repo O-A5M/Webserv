@@ -1,12 +1,11 @@
 edge cases about configparsing
-
 =========================================
 CASE 14: unknown block type
   database {
       host localhost;
   }
   → error: unknown block type "database"
-  =======================================
+=======================================
 
 =====================================================
   CASE 20: duplicate directive in same block
