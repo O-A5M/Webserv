@@ -12,8 +12,7 @@
 #include <ctime>
 #include <cerrno>
 #include "RouteResult.hpp"
-
-
+#include <dirent.h>
 class Response
 {
 	private:
@@ -47,11 +46,15 @@ class Response
 		static std::string buildErrorPage(int code, const std::string &reason);
 
 	public:
-
+		void buildRedirectResponse(const RouteResult &context);
 		const std::string &getRawResponse() const;
 		static Response generateErrorResponse(int code);
+		void serveFile(const RouteResult &mog);
 		void build(const Request &req, const RouteResult &mog);
 };
+
+
+
 
 
 #endif

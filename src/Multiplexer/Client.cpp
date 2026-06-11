@@ -51,6 +51,7 @@ void ClientHandler::OnRead(void)
 				std::cout << "Allowed method: " << route_result.allow_methods[i] << std::endl;
 			}
 			    std::cout << "status=" << route_result.status
+					<< "victore size=" << route_result.allow_methods.size()
 					<< ", filesystem_path=" << route_result.filesystem_path
 			    << ", is_cgi=" << route_result.is_cgi
 			    << ", is_autoindex=" << route_result.is_autoindex

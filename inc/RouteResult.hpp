@@ -27,7 +27,7 @@ struct RouteResult {
     std::map<std::string, std::string> cgi_env;      // CGI environment variables
     std::string error_page_path;                     // custom error page
     std::string reason;                             // human-readable reason
-    
+
     // Constructor
     RouteResult();
 };

@@ -14,6 +14,19 @@ std::string raw =
 		"0\r\n"
 		"\r\n";
 
+bool Request::is_traversal_attempt(const std::string &path)
+{
+	if (path.find("/../") != std::string::npos)
+		return true;
+	if (path.find("../") == 0)
+		return true;
+	if (path.length() >= 3 && path.substr(path.length() - 3) == "/..")
+		return true;
+	if (path == "..")
+		return true;
+	return false;
+}
+
 int Request::parse_request_line(const std::string &req_line)
 {
 	std::string method_str;
@@ -251,6 +264,8 @@ ParseStatus Request::validateRequest(void)
 		return METHOD_NOT_ALLOWED;
 	if (this->getUri().size() > MAX_URI_LENGTH)
 		return URI_TOO_LONG;
+	if (this->is_traversal_attempt(this->getUri()))
+		return FORBIDDEN;
 	if (Client_max_body_size < this->getBody().size())
 		return PAYLOAD_TOO_LARGE;
 	std::map<std::string, std::string>::const_iterator it = this->getHeaders().find("host");
@@ -285,13 +300,10 @@ int Request::parse_request(std::string &raw)
 	if (bodyParseResult == 1)
 		return PARSE_WAITING;
 	this->display();
-	int validation_status = this->validateRequest();
-	if (validation_status != 200)
-	{
-		return -1;
-	}
 	size_t total_parsed_bytes = (pos + 4) + consumed_body_bytes;
 	raw.erase(0, total_parsed_bytes);
+	std::cout << "Parsing raw request:\n"
+						<< raw << std::endl;
 	return PARSE_SUCCESS;
 }
 
