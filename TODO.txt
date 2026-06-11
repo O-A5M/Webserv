@@ -18,5 +18,12 @@ CASE 14: unknown block type
   → be consistent across all directives
   ===================================================
 
+  ===================================================
+  CASE 33: cgi_extension without leading dot
+  cgi_extension php;   ← should be .php
+  → decide: auto-add dot or reject
+  ===================================================
 
-  block location not found ===> error
+case if client_max_body_size overflow.
+
+listen and server_name (check)

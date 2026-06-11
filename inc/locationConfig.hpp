@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 
+
 struct LocationConfig
 {
     std::string              path;

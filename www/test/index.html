@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Walid's Webserv Gallery</title>
+    <style>
+        /* CSS styling for a dark, modern look */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1e1e2f;
+            color: #ffffff;
+            text-align: center;
+            margin: 0;
+            padding: 50px;
+        }
+
+        h1 {
+            margin-bottom: 40px;
+            font-size: 2.5rem;
+            color: #00d2ff; /* A nice neon blue accent */
+        }
+
+        /* Flexbox container to put images side-by-side */
+        .gallery-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            flex-wrap: wrap; /* Pushes images to the next line on small screens */
+        }
+
+        /* Styling for the card holding the image */
+        .gallery-card {
+            background-color: #2a2a40;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+        }
+
+        /* Styling the images to be the same size */
+        .gallery-card img {
+            width: 300px;
+            height: 200px;
+            object-fit: cover; /* Prevents images from stretching ugly */
+            border-radius: 8px;
+            transition: transform 0.3s ease; /* Smooth animation setup */
+        }
+
+        /* Hover animation */
+        .gallery-card img:hover {
+            transform: scale(1.08); /* Zooms in slightly when hovered */
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>My Web Server Image Gallery</h1>
+
+    <div class="gallery-container">
+
+        <div class="gallery-card">
+            <img src="/images/pic1.jpg" alt="First cool image">
+        </div>
+
+        <div class="gallery-card">
+            <img src="/images/pic2.jpg" alt="Second cool image">
+        </div>
+
+        <div class="gallery-card">
+            <img src="/images/pic3.jpg" alt="Third cool image">
+        </div>
+
+    </div>
+
+</body>
+</html>

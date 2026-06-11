@@ -57,7 +57,7 @@ static bool startsLocationDirective(const std::string &token)
     return token == "root" || token == "index" || token == "allow_methods" || token == "autoindex" || token == "client_max_body_size" || token == "cgi_extension" || token == "cgi_path" || token == "upload_store" || token == "return" || token == "redirect";
 }
 
-bool is_all_digits(const std::string& s)
+bool is_all_digits(const std::string &s)
 {
     if (s.empty())
         return false;
@@ -109,20 +109,23 @@ void ConfigParser::parseServerLine(const std::string &key, const std::vector<std
     {
         if (words.size() != 2)
             throw std::runtime_error("Empty value for directive: " + key);
-        server.client_max_body_size = static_cast<std::size_t>(std::strtoul(words[1].c_str(), NULL, 10));
-        if (!isdigit(words[1][0]))
+        if (!is_all_digits(words[1]))
             throw std::runtime_error("Invalid client_max_body_size value: " + words[1]);
+        server.client_max_body_size = static_cast<std::size_t>(std::strtoul(words[1].c_str(), NULL, 10));
+        // check for overflow
+        if (server.client_max_body_size == 0 || server.client_max_body_size < 0)
+            throw std::runtime_error("client_max_body_size value is too large: " + words[1]);
     }
 
     else if (key == "error_page")
     {
         if (words.size() != 3)
             throw std::runtime_error("Empty value for directive: " + key);
+        if (!is_all_digits(words[1]))
+            throw std::runtime_error("Invalid error code in error_page directive: " + words[1]);
         int error_code = std::atoi(words[1].c_str());
-        if (error_code < 100 || error_code > 599)
-            throw std::runtime_error("Invalid error code in error_page directive: " + words[1]);
-        else if (!isdigit(words[1][0]))
-            throw std::runtime_error("Invalid error code in error_page directive: " + words[1]);
+        if (error_code < 400 || error_code > 599)
+            throw std::runtime_error("Invalid error_page status code: " + words[1]);
         server.error_pages[error_code] = words[2];
     }
 
@@ -147,8 +150,8 @@ void ConfigParser::parseLocationLine(const std::string &key, const std::vector<s
     {
         for (size_t i = 1; i < words.size(); ++i)
         {
-            // if (words[i] != "GET" && words[i] != "POST" && words[i] != "DELETE")
-            //     throw std::runtime_error("Invalid HTTP method in allow_methods directive: " + words[i]);
+            if (words[i] != "GET" && words[i] != "POST" && words[i] != "DELETE")
+                throw std::runtime_error("Invalid HTTP method in allow_methods directive: " + words[i]);
             location.allow_methods.push_back(words[i]);
         }
     }
@@ -156,15 +159,17 @@ void ConfigParser::parseLocationLine(const std::string &key, const std::vector<s
     {
         if (words.size() != 2)
             throw std::runtime_error("Empty value for directive: " + key);
+        if (words[1] != "on" && words[1] != "off")
+            throw std::runtime_error("Invalid value for autoindex directive: " + words[1]);
         location.autoindex = (words[1] == "on");
     }
     else if (key == "client_max_body_size")
     {
         if (words.size() != 2)
             throw std::runtime_error("Empty value for directive: " + key);
-        location.client_max_body_size = static_cast<std::size_t>(std::strtoul(words[1].c_str(), NULL, 10));
-        if (!isdigit(words[1][0]))
+        if (!is_all_digits(words[1]))
             throw std::runtime_error("Invalid client_max_body_size value: " + words[1]);
+        location.client_max_body_size = static_cast<std::size_t>(std::strtoul(words[1].c_str(), NULL, 10));
     }
     else if (key == "cgi_extension")
     {
@@ -188,11 +193,11 @@ void ConfigParser::parseLocationLine(const std::string &key, const std::vector<s
     {
         if (words.size() != 3)
             throw std::runtime_error("Empty value for directive: " + key);
+        if (!is_all_digits(words[1]))
+            throw std::runtime_error("Invalid return code in return/redirect directive: " + words[1]);
         int return_code = std::atoi(words[1].c_str());
-        if (return_code < 100 || return_code > 599)
-            throw std::runtime_error("Invalid return code in return/redirect directive: " + words[1]);
-        else if (!isdigit(words[1][0]))
-            throw std::runtime_error("Invalid return code in return/redirect directive: " + words[1]);
+        if (return_code < 301 || return_code > 308)
+            throw std::runtime_error("Invalid return code in return/redirect: " + words[1]);
         location.return_code = return_code;
         location.redirect = words[2];
     }
@@ -260,6 +265,7 @@ void ConfigParser::parse()
 {
     std::vector<std::string> tokens = tokenize();
     std::size_t i = 0;
+    int flag = 0;
 
     while (i < tokens.size())
     {
@@ -280,6 +286,7 @@ void ConfigParser::parse()
 
             if (tokens[i] == "location")
             {
+                flag = 1;
                 LocationConfig location;
                 std::vector<std::string> words;
 
@@ -288,6 +295,8 @@ void ConfigParser::parse()
                     throw std::runtime_error("Unexpected end of file after 'location'");
 
                 location.path = tokens[i++];
+                if (location.path[0] != '/')
+                    throw std::runtime_error("Invalid location path doesn't start with /: " + location.path);
 
                 if (i >= tokens.size() || tokens[i] != "{")
                     throw std::runtime_error("Expected '{' after 'location " + location.path + "'");
@@ -335,6 +344,8 @@ void ConfigParser::parse()
                 i++;
             }
         }
+        if (flag == 0)
+            throw std::runtime_error("Server block must contain at least one location block");
 
         if (i >= tokens.size() || tokens[i] != "}")
             throw std::runtime_error("Expected '}' to close server block");
