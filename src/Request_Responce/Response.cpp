@@ -236,6 +236,60 @@ void Response::serveFile(const RouteResult &mog)
 	std::cout << this->getRawResponse() << std::endl;
 }
 
+#include <dirent.h>
+#include <sys/stat.h>
+#include <string>
+
+std::string Response::buildAutoIndex(const std::string &physicalPath, const std::string &requestURI)
+{
+	std::string html = "<html><head><title>Index of " + requestURI + "</title></head><body>";
+	html += "<h1>Index of " + requestURI + "</h1><hr><ul>";
+
+	DIR *dir = opendir(physicalPath.c_str());
+	if (dir == NULL)
+	{
+		return "";
+	}
+	struct dirent *entry;
+	while ((entry = readdir(dir)) != NULL)
+	{
+
+		std::string itemName = entry->d_name;
+
+		if (itemName == ".")
+		{
+			continue;
+		}
+		std::string fullItemPath = physicalPath + "/" + itemName;
+		struct stat st;
+
+		if (stat(fullItemPath.c_str(), &st) == 0)
+		{
+			if (S_ISDIR(st.st_mode))
+			{
+				itemName += "/";
+			}
+		}
+		std::string href;
+
+		if (requestURI[requestURI.length() - 1] == '/')
+		{
+			href = requestURI + itemName;
+		}
+		else
+		{
+			href = requestURI + "/" + itemName;
+		}
+
+		html += "<li><a href=\"" + href + "\">" + itemName + "</a></li>";
+	}
+
+	closedir(dir);
+	html += "</ul><hr></body></html>";
+
+	return html;
+}
+
 void Response::handleGet(const Request &req, const RouteResult &mog)
 {
 
@@ -248,29 +302,6 @@ void Response::handleGet(const Request &req, const RouteResult &mog)
 			if (mog.is_file)
 			{
 				serveFile(mog);
-				// std::ifstream file(mog.filesystem_path.c_str(), std::ios::in | std::ios::binary);
-				// if (!file.is_open())
-				// {
-				// 	if (errno == EACCES)
-				// 		*this = generateErrorResponse(403);
-				// 	else if (errno == ENOENT)
-				// 		*this = generateErrorResponse(404);
-				// 	else
-				// 		*this = generateErrorResponse(500);
-				// 	return;
-				// }
-				// std::stringstream buffer;
-				// buffer << file.rdbuf();
-				// this->setStatusCode(200);
-				// this->setReasonPhrase("OK");
-				// this->setBody(buffer.str());
-				// this->setHeader("Content-Type", get_mime_type(mog.filesystem_path));
-				// std::stringstream buuferLenght;
-				// buuferLenght << this->getBody().size();
-				// this->setHeader("Content-Length", buuferLenght.str());
-				// this->setHeader("Date", this->current_http_date());
-				// this->buildRawResponse();
-				// std::cout << this->getRawResponse() << std::endl;
 			}
 			else if (mog.is_directory)
 			{
@@ -281,14 +312,37 @@ void Response::handleGet(const Request &req, const RouteResult &mog)
 				}
 				else if (mog.is_autoindex)
 				{
-				
+					std::string autoIndexContent = buildAutoIndex(mog.physicalPath, req.getUri());
+					if (autoIndexContent.empty())
+					{
+						*this = generateErrorResponse(500);
+						return;
+					}
+					this->setStatusCode(200);
+					this->setReasonPhrase("OK");
+					this->setBody(autoIndexContent);
+					this->setHeader("Content-Type", "text/html");
+					std::stringstream buuferLenght;
+					buuferLenght << this->getBody().size();
+					this->setHeader("Content-Length", buuferLenght.str());
+					this->setHeader("Date", this->current_http_date());
+					this->buildRawResponse();
 				}
 				else
 				{
 					*this = generateErrorResponse(403);
 					return;
 				}
-			}
+
+
+    		// closedir(dirStream);
+    		// }
+				}
+				else
+				{
+					*this = generateErrorResponse(403);
+					return;
+				}
 }
 
 void Response::dispatchMethod(const Request &req, const RouteResult &context)
@@ -311,6 +365,20 @@ void Response::dispatchMethod(const Request &req, const RouteResult &context)
 	// 	buildErrorResponse(501); // 501 Not Implemented
 	// }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 void Response::buildRedirectResponse(const RouteResult &context)
 {

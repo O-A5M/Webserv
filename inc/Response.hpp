@@ -44,9 +44,9 @@ class Response
 		void buildRawResponse();
 		void dispatchMethod(const Request &req, const RouteResult &context);
 		static std::string buildErrorPage(int code, const std::string &reason);
+		std::string buildAutoIndex(const std::string &physicalPath, const std::string &requestURI);
 
-	public:
-		void buildRedirectResponse(const RouteResult &context);
+			public : void buildRedirectResponse(const RouteResult &context);
 		const std::string &getRawResponse() const;
 		static Response generateErrorResponse(int code);
 		void serveFile(const RouteResult &mog);

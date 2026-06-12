@@ -14,7 +14,8 @@
 struct RouteResult {
     int status;                                    // 200, 301, 404, 403, 405, etc.
     std::string filesystem_path;                    // resolved absolute path
-    const LocationConfig* matched_location;          // which location matched
+		std::string physicalPath;												// original request path
+		const LocationConfig* matched_location;          // which location matched
     const ServerConfig* matched_server;             // which server matched
     bool is_cgi;                                     // CGI handler?
     bool is_autoindex;                               // directory listing?

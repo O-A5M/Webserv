@@ -141,6 +141,7 @@ std::string Router::build_filesystem_path(const ServerConfig& server,
     else
         base_root = location.root + "/";
 
+		// result.root_path = base_root;
 		std::string path_after_location = request_path;
     std::string result = base_root + path_after_location;
 
@@ -171,15 +172,17 @@ bool Router::validate_path(const std::string& path, const LocationConfig& locati
     // Is it a directory?
     if (S_ISDIR(file_stat.st_mode)) {
         result.is_directory = true;
+				result.physicalPath = path;
 
-    std::vector<std::string> index_files = location.index;
+				std::vector<std::string> index_files = location.index;
 
-    for (size_t i = 0; i < index_files.size(); ++i) {
+				for (size_t i = 0; i < index_files.size(); ++i)
+				{
 
-        std::string index_path = path + "/" + index_files[i];
-				result.filesystem_path = index_path;
-				result.status = 200;
-    }
+					std::string index_path = path + "/" + index_files[i];
+					result.filesystem_path = index_path;
+					result.status = 200;
+				}
         if (location.autoindex) {
             result.is_autoindex = true;
             result.status = 200;
