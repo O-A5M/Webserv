@@ -10,7 +10,11 @@ ClientHandler::ClientHandler(int fd, ServerConfig &config
     loop.AddHandler(this, EPOLLIN);
 }
 
-ClientHandler::~ClientHandler(void) {}
+ClientHandler::~ClientHandler(void) {
+    if (fd != -1)
+        close(fd);
+    delete this;
+}
 
 void    ClientHandler::OnRead(void) {
     char    buff[4096];
@@ -32,21 +36,21 @@ void    ClientHandler::OnRead(void) {
     if (parse_status == PARSE_WAITING)
         return ;
 
-		Response res;
+    Response res;
 
-		if (parse_status == PARSE_BAD_REQUEST) {
-			res = Response::generateErrorResponse(400);
+    if (parse_status == PARSE_BAD_REQUEST) {
+        res = Response::generateErrorResponse(400);
     }
-		else if (parse_status == 1)
-		{
-			int status = this->req.validateRequest();
-			if (status != OK)
-				res = Response::generateErrorResponse(status);
-			else
-			{
+    else if (parse_status == 1)
+    {
+        int status = this->req.validateRequest();
+        if (status != OK)
+            res = Response::generateErrorResponse(status);
+        else
+        {
 				// RouteContext mog = getMockRouteContext(1);
-        		RouteResult route_result = this->router.route(this->req, this->GetServerConf().port);
-				// std::cout << "RouteResult: status=" << route_result.status 
+            RouteResult route_result = this->router.route(this->req, this->GetServerConf().port);
+				// std::cout << "RouteResult: status=" << route_result.status
                 //     << ", filesystem_path=" << route_result.filesystem_path
                 //     << ", is_cgi=" << route_result.is_cgi
                 //     << ", is_autoindex=" << route_result.is_autoindex
@@ -56,9 +60,9 @@ void    ClientHandler::OnRead(void) {
                 //     << ", redirect_location=" << route_result.redirect_location
                 //     << ", reason=" << route_result.reason
                 //     << std::endl;
-				res.build(this->req, route_result);
-			}
-		}
+            res.build(this->req, route_result);
+        }
+    }
     this->writeBuf = res.getRawResponse();
     if (!writeBuf.empty())
         EnableWrite();

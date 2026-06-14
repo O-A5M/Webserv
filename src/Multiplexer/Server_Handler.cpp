@@ -9,6 +9,7 @@ ServerHandler::ServerHandler(int fd, ServerConfig &config, EventLoop &loop)
 ServerHandler::~ServerHandler() {
     if (fd != -1)
         close (fd);
+    delete this;
 }
 
 void    ServerHandler::OnRead() {

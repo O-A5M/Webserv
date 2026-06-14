@@ -18,8 +18,6 @@ private:
     std::string         writeBuf;
     std::vector<ServerConfig> serverConfigs;
     Router              router;
-    // struct sockaddr_in  addr;
-    // socklen_t           addrLen;
     Request             req;
 
 

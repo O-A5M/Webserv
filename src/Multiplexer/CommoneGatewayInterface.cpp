@@ -1,20 +1,19 @@
-#include "CommoneGatewayInterface.hpp"
+#include "../../inc/CommoneGatewayInterface.hpp"
 #include "../../inc/Client.hpp"
 #include <unistd.h>
 #include <cstring>
 #include <iostream>
 #include <vector>
 
-CgiHandler::CgiHandler(int stdoutPipe, int stdinPipe,
+CgiHandler::CgiHandler(int fd,
                        pid_t pid,
                        ServerConfig& config,
                        EventLoop& loop,
                        ClientHandler& client,
                        const std::string& body)
-    : AHandler(stdoutPipe, config, loop)
+    : AHandler(fd, config, loop)
     , client(client)
     , pid(pid)
-    , writePipe(stdinPipe)
     , writeBuf(body) {
     uint32_t flags = EPOLLIN;
     if (!writeBuf.empty())
@@ -23,8 +22,8 @@ CgiHandler::CgiHandler(int stdoutPipe, int stdinPipe,
 }
 
 CgiHandler::~CgiHandler() {
-    if (writePipe != -1)
-        close(writePipe);
+    if (fd != -1)
+        close(fd);
 }
 
 void CgiHandler::OnRead() {
@@ -40,19 +39,15 @@ void CgiHandler::OnRead() {
 }
 
 void CgiHandler::OnWrite() {
-    while (!writeBuf.empty()) {
-        ssize_t n = write(writePipe, writeBuf.data(), writeBuf.size());
-        if (n == -1) {
-            if (errno == EAGAIN || errno == EWOULDBLOCK)
-                return;
-            std::cerr << "CgiHandler::OnWrite: " << strerror(errno) << "\n";
-            OnError();
+    ssize_t n = write(fd, writeBuf.data(), writeBuf.size());
+    if (n == -1) {
+        if (errno == EAGAIN || errno == EWOULDBLOCK)
             return;
-        }
-        writeBuf.erase(0, n);
+        std::cerr << "CgiHandler::OnWrite: " << strerror(errno) << "\n";
+        OnError();
+        return;
     }
-    close(writePipe);
-    writePipe = -1;
+    writeBuf.erase(0, n);
     DisableWrite();
 }
 
@@ -64,9 +59,11 @@ void CgiHandler::OnError() {
 }
 
 void CgiHandler::Finalize() {
-    int status = 0;
-    waitpid(pid, &status, WNOHANG);
-    pid = -1;
+    if (pid != -1) {
+        int status = 0;
+        waitpid(pid, &status, WNOHANG);
+        pid = -1;
+    }
 
     loop.RemoveHandler(this);
     client.OnCgiResponse(readBuf);
@@ -88,30 +85,30 @@ CgiHandler* CgiHandler::Launch(
     const std::string&                      body,
     ServerConfig&                           config,
     EventLoop&                              loop,
-    ClientHandler&                          client)
-{
-    int stdinPipe[2];
-    int stdoutPipe[2];
+    ClientHandler&                          client) {
 
-    if (pipe(stdinPipe) == -1 || pipe(stdoutPipe) == -1) {
-        std::cerr << "CgiHandler::Launch pipe: " << strerror(errno) << "\n";
+    int sockPair[2];
+
+    if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockPair) == -1) {
+        std::cerr << "CgiHandler::Launch socketpair: " << strerror(errno) << "\n";
+        // TODO: server error 500
         return NULL;
     }
 
     pid_t pid = fork();
     if (pid == -1) {
         std::cerr << "CgiHandler::Launch fork: " << strerror(errno) << "\n";
-        close(stdinPipe[0]);  close(stdinPipe[1]);
-        close(stdoutPipe[0]); close(stdoutPipe[1]);
+        close(sockPair[0]);  close(sockPair[1]);
+        // TODO: server error 500
         return NULL;
     }
 
     if (pid == 0) {
-        dup2(stdinPipe[0],  STDIN_FILENO);
-        dup2(stdoutPipe[1], STDOUT_FILENO);
+        dup2(sockPair[0],  STDIN_FILENO);
+        dup2(sockPair[0], STDOUT_FILENO);
 
-        close(stdinPipe[0]);  close(stdinPipe[1]);
-        close(stdoutPipe[0]); close(stdoutPipe[1]);
+        close(sockPair[0]);
+        close(sockPair[1]);
 
         std::string dir = scriptPath.substr(0, scriptPath.rfind('/'));
         if (!dir.empty())
@@ -132,14 +129,13 @@ CgiHandler* CgiHandler::Launch(
             NULL
         };
 
-        execve(interpreter.c_str(), argv, envp.data());
+        execve(interpreter.c_str(), argv, &envp[0]);
         std::cerr << "CgiHandler::Launch execve: " << strerror(errno) << "\n";
         exit(1);
     }
 
-    close(stdinPipe[0]);
-    close(stdoutPipe[1]);
+    close(sockPair[0]);
 
-    return new CgiHandler(stdoutPipe[0], stdinPipe[1],
-                          pid, config, loop, client, body);
+    return new CgiHandler(sockPair[1], pid, config,
+                          loop, client, body);
 }
