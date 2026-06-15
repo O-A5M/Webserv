@@ -18,9 +18,7 @@
     <option name="reloaded" value="true" />
   </component>
   <component name="CMakeRunConfigurationManager">
-    <generated>
-      <config projectName="Webserv" targetName="Webserv" />
-    </generated>
+    <generated />
   </component>
   <component name="CMakeSettings">
     <configurations>
@@ -29,8 +27,14 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="2520d05e-25a8-4337-a2b2-e68e37f8dced" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/inc/Client.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/inc/Client.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/inc/configParser.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/inc/configParser.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inc/CommoneGatewayInterface.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/inc/CommoneGatewayInterface.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Multiplexer/AHandler.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/Multiplexer/AHandler.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Multiplexer/Client.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/Multiplexer/Client.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Multiplexer/CommoneGatwayInterface.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Multiplexer/EventLoop.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/Multiplexer/EventLoop.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Multiplexer/Server_Handler.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/Multiplexer/Server_Handler.cpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -96,9 +100,9 @@
   }
 }</component>
   <component name="RunManager">
-    <configuration name="Webserv" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Webserv" TARGET_NAME="Webserv" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="Webserv" RUN_TARGET_NAME="Webserv">
+    <configuration default="true" type="CLionExternalRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
       <method v="2">
-        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+        <option name="CLION.EXTERNAL.BUILD" enabled="true" />
       </method>
     </configuration>
   </component>
@@ -125,6 +129,7 @@
       <workItem from="1779805693884" duration="606000" />
       <workItem from="1780062583127" duration="12236000" />
       <workItem from="1780247659788" duration="5000" />
+      <workItem from="1781364945902" duration="11044000" />
     </task>
     <servers />
   </component>

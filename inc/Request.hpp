@@ -101,7 +101,8 @@ public:
 	const std::map<std::string, std::string> &getHeaders(void) const;
 	void removeHeader(const std::string &key);
 	void display(void) const;
-	ParseStatus validateRequest(void);
+	bool is_traversal_attempt(const std::string &path);
+	ParseStatus validateRequest();
 	int parse_request(std::string &raw);
 };
 

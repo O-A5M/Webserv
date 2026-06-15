@@ -10,7 +10,7 @@
 
 struct ServerConfig
 {
-	// std::string host;
+	std::string host;
 	std::string server_name;
 	std::string root;
 	std::vector<std::string> index; // READ

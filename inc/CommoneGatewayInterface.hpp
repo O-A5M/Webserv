@@ -15,12 +15,11 @@ class CgiHandler : public AHandler {
 private:
     ClientHandler&  client;
     pid_t           pid;
-    int             writePipe;
     std::string     writeBuf;
     std::string     readBuf;
 
 public:
-    CgiHandler(int stdoutPipe, int stdinPipe,
+    CgiHandler(int fd,
                pid_t pid,
                ServerConfig& config,
                EventLoop& loop,

@@ -1,6 +1,5 @@
 #include "../../inc/AHandler.hpp"
 
-// EVENT HANDLER BASE CLASS
 AHandler::AHandler(int fd, ServerConfig &config, EventLoop& loop)
     : fd(fd)
     , serverConf(config)

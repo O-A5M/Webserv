@@ -17,7 +17,7 @@
 // {
 // 	std::cout << "Resource status for " << local_path << std::endl;
 // 	struct stat file_info;
-// 	if (stat(local_path.c_str(), &file_info) != 0)
+// 	if (stat(local_path.c_str(),fi &le_info) != 0)
 // 		return 404;
 // 	if (S_ISDIR(file_info.st_mode))
 // 		return 300;
@@ -29,17 +29,12 @@
 // 	return 200;
 // }
 
-bool is_traversal_attempt(const std::string &path)
+bool fileExists(const std::string &path)
 {
-	if (path.find("/../") != std::string::npos)
-		return true;
-	if (path.find("../") == 0)
-		return true;
-	if (path.length() >= 3 && path.substr(path.length() - 3) == "/..")
-		return true;
-	if (path == "..")
-		return true;
-	return false;
+	struct stat st;
+	if (stat(path.c_str(), &st) != 0)
+		return false;
+	return S_ISREG(st.st_mode);
 }
 
 std::string Response::buildErrorPage(int code, const std::string &reason)
@@ -212,11 +207,11 @@ std::string Response::current_http_date()
 	strftime(buffer, sizeof(buffer), "%a, %d %b %Y %H:%M:%S GMT", tm_info);
 	return std::string(buffer);
 }
-void Response::handleGet(const Request &req, const RouteResult &mog)
-{
 
-	(void)req;
-	if (std::find(mog.allow_methods.begin(), mog.allow_methods.end(), "GET") == mog.allow_methods.end())
+void Response::serveFile(const RouteResult &context)
+{
+	std::ifstream file(context.filesystem_path.c_str(), std::ios::in | std::ios::binary);
+	if (!file.is_open())
 	{
 		if (errno == EACCES)
 			*this = generateErrorResponse(403);
@@ -226,57 +221,124 @@ void Response::handleGet(const Request &req, const RouteResult &mog)
 			*this = generateErrorResponse(500);
 		return;
 	}
-	// std::cout << this->getRawResponse() << std::endl;
-	// std::string path = req.getPath();
-	// if (path  == "/")
-		// path = "/" + server_conf.index[0];
-	// if (is_traversal_attempt(path))
-	// {
-		// generateErrorResponse(403);
-		// std::cout << " hack attack " << std::endl;
-		// return;
-	// }
-			// std::string local_path = build_local_path(server_conf.root, path);
-			// int resource_status = check_resource(local_path);
-			// std::cout << "Resource status for " << local_path << ": " << resource_status << std::endl;
-			// if (mog.status != 200)
-			// {
-			// 	generateErrorResponse(mog.status);
-			// 	return;
-			// }
-			if (mog.is_file)
-			{
-				std::ifstream file(mog.filesystem_path.c_str(), std::ios::in | std::ios::binary);
-				if (!file.is_open())
-				{
-					*this = generateErrorResponse(403);
-					return;
 
-				}
-				std::stringstream buffer;
-				buffer << file.rdbuf();
-				this->setStatusCode(200);
-				this->setReasonPhrase("OK");
-				this->setBody(buffer.str());
-				this->setHeader("Content-Type", get_mime_type(mog.filesystem_path));
-				std::stringstream buuferLenght;
-				buuferLenght << this->getBody().size();
-				this->setHeader("Content-Length", buuferLenght.str());
-				this->setHeader("Date", this->current_http_date());
-				this->buildRawResponse();
-				std::cout << this->getRawResponse() << std::endl;
-			}
-			else if (mog.is_redirect)
+	std::stringstream buffer;
+	buffer << file.rdbuf();
+	this->setStatusCode(200);
+	this->setReasonPhrase("OK");
+	this->setBody(buffer.str());
+	this->setHeader("Content-Type", get_mime_type(context.filesystem_path));
+	std::stringstream buuferLenght;
+	buuferLenght << this->getBody().size();
+	this->setHeader("Content-Length", buuferLenght.str());
+	this->setHeader("Date", this->current_http_date());
+	this->buildRawResponse();
+	std::cout << this->getRawResponse() << std::endl;
+}
+
+#include <dirent.h>
+#include <sys/stat.h>
+#include <string>
+
+std::string Response::buildAutoIndex(const std::string &physicalPath, const std::string &requestURI)
+{
+	std::string html = "<html><head><title>Index of " + requestURI + "</title></head><body>";
+	html += "<h1>Index of " + requestURI + "</h1><hr><ul>";
+
+	DIR *dir = opendir(physicalPath.c_str());
+	if (dir == NULL)
+	{
+		return "";
+	}
+	struct dirent *entry;
+	while ((entry = readdir(dir)) != NULL)
+	{
+
+		std::string itemName = entry->d_name;
+
+		if (itemName == ".")
+		{
+			continue;
+		}
+		std::string fullItemPath = physicalPath + "/" + itemName;
+		struct stat st;
+
+		if (stat(fullItemPath.c_str(), &st) == 0)
+		{
+			if (S_ISDIR(st.st_mode))
 			{
-					// if (path[mog.filesystem_path.size() - 1] != '/')
-					// {
-					// 	this->setStatusCode(301);
-					// 	this->setReasonPhrase("Moved Permanently");
-					// 	this->setHeader("Location", path + "/");
-					// 	this->buildRawResponse();
-					// 	std::cout << this->getRawResponse() << std::endl;
-					// }
-				}
+				itemName += "/";
+			}
+		}
+		std::string href;
+
+		if (requestURI[requestURI.length() - 1] == '/')
+		{
+			href = requestURI + itemName;
+		}
+		else
+		{
+			href = requestURI + "/" + itemName;
+		}
+
+		html += "<li><a href=\"" + href + "\">" + itemName + "</a></li>";
+	}
+
+	closedir(dir);
+	html += "</ul><hr></body></html>";
+
+	return html;
+}
+
+void Response::handleGet(const Request &req, const RouteResult &context)
+{
+
+	(void)req;
+	if (context.allow_methods.size() > 0 && (std::find(context.allow_methods.begin(), context.allow_methods.end(), "GET") == context.allow_methods.end()))
+	{
+		*this = generateErrorResponse(405);
+		return;
+	}
+	if (context.is_file)
+	{
+		serveFile(context);
+	}
+	else if (context.is_directory)
+	{
+		if (fileExists(context.filesystem_path))
+		{
+			serveFile(context);
+			return;
+		}
+		else if (context.is_autoindex)
+		{
+			std::string autoIndexContent = buildAutoIndex(context.physicalPath, req.getUri());
+			if (autoIndexContent.empty())
+			{
+				*this = generateErrorResponse(500);
+				return;
+			}
+			this->setStatusCode(200);
+			this->setReasonPhrase("OK");
+			this->setBody(autoIndexContent);
+			this->setHeader("Content-Type", "text/html");
+			std::stringstream buuferLenght;
+			buuferLenght << this->getBody().size();
+			this->setHeader("Content-Length", buuferLenght.str());
+			this->setHeader("Date", this->current_http_date());
+			this->buildRawResponse();
+		}
+		else
+		{
+			*this = generateErrorResponse(403);
+			return;
+		}
+	}
+	else
+	{
+		*this = generateErrorResponse(403);
+		return;
+	}
 }
 
 void Response::dispatchMethod(const Request &req, const RouteResult &context)
@@ -286,10 +348,10 @@ void Response::dispatchMethod(const Request &req, const RouteResult &context)
 	{
 		handleGet(req, context);
 	}
-	// else if (req.getMethod() == POST)
-	// {
-	// 	handlePost(req, context);
-	// }
+	else if (req.getMethod() == POST)
+	{
+		
+	}
 	// else if (req.getMethod() == DELETE)
 	// {
 	// 	handleDelete(context);
@@ -300,44 +362,48 @@ void Response::dispatchMethod(const Request &req, const RouteResult &context)
 	// }
 }
 
+void Response::buildRedirectResponse(const RouteResult &context)
+{
+	this->setStatusCode(context.status);
+	this->setReasonPhrase("Moved Permanently");
+	this->setHeader("Location", context.redirect_location);
+	this->setHeader("Date", this->current_http_date());
+	this->setHeader("Content-Length", "0");
+	this->setHeader("Connection", "keep-alive");
+	this->setHeader("Server", "Webserv/1.0 (Ubuntu)");
+	this->buildRawResponse();
+}
 void Response::build(const Request &req, const RouteResult &context)
 {
 
 	// 1. Did the Router find a rule violation? (e.g., 405 Method Not Allowed)
-	if (context.status != 200)
+	// if (context.status != 200)
+	// {
+	// 	*this = generateErrorResponse(context.status);
+	// 	return;
+	// }
+	if (context.is_redirect)
 	{
-		*this = generateErrorResponse(context.status);
+		buildRedirectResponse(context);
 		return;
 	}
-
-	// 2. Is this a Redirection?
-	// if (context.is_redirect)
-	// {
-	// 	// We use matched_location here because that is where the redirect URL lives!
-	// 	buildRedirectResponse(context.matched_location->redirect);
-	// 	return;
-	// }
-
-	// // 3. Is it an Autoindex request?
-	// if (context.is_autoindex)
-	// {
-	// 	buildDirectoryListing(context.filesystem_path);
-	// 	return;
-	// }
-
 	// 4. If it is a normal file operation, pass it to the Dispatcher!
-	if (context.is_file)
+	if (context.status == 200)
 	{
 		dispatchMethod(req, context);
 	}
+	else
+	{
+		*this = generateErrorResponse(context.status);
+	}
 }
 
-// void Response::build(const Request &req, const RouteContext mog)
+// void Response::build(const Request &req, const RouteContext context)
 // {
 // 	if (req.getMethod() == GET)
 // 	{
-// 		if (std::find(mog.allow_methods.begin(), mog.allow_methods.end(), "GET") != mog.allow_methods.end())
-// 			handleGet(req, mog);
+// 		if (std::find(context.allow_methods.begin(), context.allow_methods.end(), "GET") != context.allow_methods.end())
+// 			handleGet(req, context);
 // 		else
 // 		{
 // 			*this = generateErrorResponse(405);

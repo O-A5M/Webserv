@@ -1,18 +1,18 @@
 #include "../../inc/Request.hpp"
 #include "../../inc/Response.hpp"
 
-std::string raw =
-		"GET /index.js HTTP/1.1\r\n"
-		"Host: localhost:8080\r\n"
-		"Transfer-Encoding: chunked\r\n"
-		"Content-Type: text/plain\r\n"
-		"\r\n"
-		"5\r\n"
-		"Hello\r\n"
-		"a\r\n"
-		", webserv!\r\n"
-		"0\r\n"
-		"\r\n";
+bool Request::is_traversal_attempt(const std::string &path)
+{
+	if (path.find("/../") != std::string::npos)
+		return true;
+	if (path.find("../") == 0)
+		return true;
+	if (path.length() >= 3 && path.substr(path.length() - 3) == "/..")
+		return true;
+	if (path == "..")
+		return true;
+	return false;
+}
 
 int Request::parse_request_line(const std::string &req_line)
 {
@@ -243,7 +243,7 @@ int Request::parse_body(const std::string &body, size_t &consumed_bytes)
 	}
 }
 
-ParseStatus Request::validateRequest(void)
+ParseStatus Request::validateRequest()
 {
 	if (this->getVersion() != "HTTP/1.1")
 		return VERSION_NOT_SUPPORTED;
@@ -251,6 +251,8 @@ ParseStatus Request::validateRequest(void)
 		return METHOD_NOT_ALLOWED;
 	if (this->getUri().size() > MAX_URI_LENGTH)
 		return URI_TOO_LONG;
+	if (this->is_traversal_attempt(this->getUri()))
+		return FORBIDDEN;
 	if (Client_max_body_size < this->getBody().size())
 		return PAYLOAD_TOO_LARGE;
 	std::map<std::string, std::string>::const_iterator it = this->getHeaders().find("host");
@@ -263,7 +265,6 @@ int Request::parse_request(std::string &raw)
 {
 	if (raw.empty())
 		return PARSE_WAITING;
-
 	size_t pos = raw.find("\r\n\r\n");
 	size_t pos_req_line = raw.find("\r\n");
 	if (pos_req_line == std::string::npos || pos == std::string::npos)
@@ -273,9 +274,10 @@ int Request::parse_request(std::string &raw)
 	if (header.size() > MAX_HEADER_SIZE)
 		return PARSE_HEADER_TOO_LARGE;
 	int typeOfError = this->parse_request_line(request_line);
+	if (typeOfError < 0)
+		return PARSE_BAD_REQUEST;
 	int typeOfError2 = this->parse_request_headers(header);
-
-	if (typeOfError < 0 || typeOfError2 < 0)
+	if (typeOfError2 < 0)
 		return PARSE_BAD_REQUEST;
 	size_t consumed_body_bytes = 0;
 	std::string body = raw.substr(pos + 4);
@@ -284,12 +286,7 @@ int Request::parse_request(std::string &raw)
 		return PARSE_BAD_REQUEST;
 	if (bodyParseResult == 1)
 		return PARSE_WAITING;
-	this->display();
-	int validation_status = this->validateRequest();
-	if (validation_status != 200)
-	{
-		return -1;
-	}
+	// this->display();
 	size_t total_parsed_bytes = (pos + 4) + consumed_body_bytes;
 	raw.erase(0, total_parsed_bytes);
 	return PARSE_SUCCESS;
