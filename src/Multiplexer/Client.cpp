@@ -10,7 +10,7 @@ ClientHandler::ClientHandler(int fd, ServerConfig &config, EventLoop &loop)
 ClientHandler::~ClientHandler(void) {
     if (fd != -1)
         close(fd);
-    delete this;
+    // delete this;
 }
 
 void ClientHandler::OnRead(void)
