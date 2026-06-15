@@ -45,12 +45,14 @@ void ClientHandler::OnRead(void)
 			res = Response::generateErrorResponse(status);
 		else
 		{
-			// RouteContext mog = getMockRouteContext(1);
+			// RouteContext context = getMockRouteContext(1);
 			RouteResult route_result = this->router.route(this->req, this->GetServerConf().port);
-			for (size_t i = 0; i < route_result.allow_methods.size(); ++i) {
+			for (size_t i = 0; i < route_result.allow_methods.size(); ++i)
+			{
 				std::cout << "Allowed method: " << route_result.allow_methods[i] << std::endl;
 			}
 			std::cout << "status=" << route_result.status
+								<< "max body length" << route_result.matched_location->client_max_body_size
 								<< ", physique_path=" << route_result.physicalPath
 								<< ", victore size=" << route_result.allow_methods.size()
 								<< ", filesystem_path=" << route_result.filesystem_path

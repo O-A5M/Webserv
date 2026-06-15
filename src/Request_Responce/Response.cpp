@@ -208,9 +208,9 @@ std::string Response::current_http_date()
 	return std::string(buffer);
 }
 
-void Response::serveFile(const RouteResult &mog)
+void Response::serveFile(const RouteResult &context)
 {
-	std::ifstream file(mog.filesystem_path.c_str(), std::ios::in | std::ios::binary);
+	std::ifstream file(context.filesystem_path.c_str(), std::ios::in | std::ios::binary);
 	if (!file.is_open())
 	{
 		if (errno == EACCES)
@@ -227,7 +227,7 @@ void Response::serveFile(const RouteResult &mog)
 	this->setStatusCode(200);
 	this->setReasonPhrase("OK");
 	this->setBody(buffer.str());
-	this->setHeader("Content-Type", get_mime_type(mog.filesystem_path));
+	this->setHeader("Content-Type", get_mime_type(context.filesystem_path));
 	std::stringstream buuferLenght;
 	buuferLenght << this->getBody().size();
 	this->setHeader("Content-Length", buuferLenght.str());
@@ -290,59 +290,55 @@ std::string Response::buildAutoIndex(const std::string &physicalPath, const std:
 	return html;
 }
 
-void Response::handleGet(const Request &req, const RouteResult &mog)
+void Response::handleGet(const Request &req, const RouteResult &context)
 {
 
-		(void)req;
-		if(mog.allow_methods.size() > 0 && (std::find(mog.allow_methods.begin(), mog.allow_methods.end(), "GET") == mog.allow_methods.end()))
+	(void)req;
+	if (context.allow_methods.size() > 0 && (std::find(context.allow_methods.begin(), context.allow_methods.end(), "GET") == context.allow_methods.end()))
+	{
+		*this = generateErrorResponse(405);
+		return;
+	}
+	if (context.is_file)
+	{
+		serveFile(context);
+	}
+	else if (context.is_directory)
+	{
+		if (fileExists(context.filesystem_path))
 		{
-			*this = generateErrorResponse(405);
+			serveFile(context);
 			return;
 		}
-			if (mog.is_file)
+		else if (context.is_autoindex)
+		{
+			std::string autoIndexContent = buildAutoIndex(context.physicalPath, req.getUri());
+			if (autoIndexContent.empty())
 			{
-				serveFile(mog);
+				*this = generateErrorResponse(500);
+				return;
 			}
-			else if (mog.is_directory)
-			{
-				if (fileExists(mog.filesystem_path))
-				{
-					serveFile(mog);
-					return;
-				}
-				else if (mog.is_autoindex)
-				{
-					std::string autoIndexContent = buildAutoIndex(mog.physicalPath, req.getUri());
-					if (autoIndexContent.empty())
-					{
-						*this = generateErrorResponse(500);
-						return;
-					}
-					this->setStatusCode(200);
-					this->setReasonPhrase("OK");
-					this->setBody(autoIndexContent);
-					this->setHeader("Content-Type", "text/html");
-					std::stringstream buuferLenght;
-					buuferLenght << this->getBody().size();
-					this->setHeader("Content-Length", buuferLenght.str());
-					this->setHeader("Date", this->current_http_date());
-					this->buildRawResponse();
-				}
-				else
-				{
-					*this = generateErrorResponse(403);
-					return;
-				}
-
-
-    		// closedir(dirStream);
-    		// }
-				}
-				else
-				{
-					*this = generateErrorResponse(403);
-					return;
-				}
+			this->setStatusCode(200);
+			this->setReasonPhrase("OK");
+			this->setBody(autoIndexContent);
+			this->setHeader("Content-Type", "text/html");
+			std::stringstream buuferLenght;
+			buuferLenght << this->getBody().size();
+			this->setHeader("Content-Length", buuferLenght.str());
+			this->setHeader("Date", this->current_http_date());
+			this->buildRawResponse();
+		}
+		else
+		{
+			*this = generateErrorResponse(403);
+			return;
+		}
+	}
+	else
+	{
+		*this = generateErrorResponse(403);
+		return;
+	}
 }
 
 void Response::dispatchMethod(const Request &req, const RouteResult &context)
@@ -352,10 +348,10 @@ void Response::dispatchMethod(const Request &req, const RouteResult &context)
 	{
 		handleGet(req, context);
 	}
-	// else if (req.getMethod() == POST)
-	// {
-	// 	handlePost(req, context);
-	// }
+	else if (req.getMethod() == POST)
+	{
+		
+	}
 	// else if (req.getMethod() == DELETE)
 	// {
 	// 	handleDelete(context);
@@ -365,20 +361,6 @@ void Response::dispatchMethod(const Request &req, const RouteResult &context)
 	// 	buildErrorResponse(501); // 501 Not Implemented
 	// }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 void Response::buildRedirectResponse(const RouteResult &context)
 {
@@ -416,12 +398,12 @@ void Response::build(const Request &req, const RouteResult &context)
 	}
 }
 
-// void Response::build(const Request &req, const RouteContext mog)
+// void Response::build(const Request &req, const RouteContext context)
 // {
 // 	if (req.getMethod() == GET)
 // 	{
-// 		if (std::find(mog.allow_methods.begin(), mog.allow_methods.end(), "GET") != mog.allow_methods.end())
-// 			handleGet(req, mog);
+// 		if (std::find(context.allow_methods.begin(), context.allow_methods.end(), "GET") != context.allow_methods.end())
+// 			handleGet(req, context);
 // 		else
 // 		{
 // 			*this = generateErrorResponse(405);

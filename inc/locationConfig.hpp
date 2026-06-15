@@ -13,7 +13,7 @@ struct LocationConfig
     bool                     autoindex;
     size_t                   client_max_body_size;
     std::string              cgi_extension;        // p3
-	std::string              cgi_path;        // p3
+		std::string              cgi_path;        // p3
     std::string              upload_store;    // P3
     std::string              redirect;             // THIS (for return/redirect)
 		int 										return_code;        // THIS (for return/redirect)

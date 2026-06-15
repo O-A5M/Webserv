@@ -102,7 +102,7 @@ public:
 	void removeHeader(const std::string &key);
 	void display(void) const;
 	bool is_traversal_attempt(const std::string &path);
-	ParseStatus validateRequest(void);
+	ParseStatus validateRequest();
 	int parse_request(std::string &raw);
 };
 
