@@ -414,7 +414,7 @@ void ConfigParser::parse()
 {
     std::vector<std::string> tokens = tokenize();
     std::size_t i = 0;
-    int flag = 0;
+    // int flag = 0;
 
     // main loop
     while (i < tokens.size())
@@ -434,7 +434,7 @@ void ConfigParser::parse()
 
             if (tokens[i] == "location")
             {
-                flag = 1;
+                // flag = 1;
                 LocationConfig location;
                 i++;
                 location.path = tokens[i++];

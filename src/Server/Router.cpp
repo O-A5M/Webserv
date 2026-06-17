@@ -5,9 +5,6 @@
 Router::Router(const std::vector<ServerConfig>& servers)
     : servers(servers) {}
 
-
-
-
 static bool apply_redirect_if_needed(const LocationConfig &location, RouteResult &result)
 {
 	if (location.redirect.empty())
@@ -25,6 +22,28 @@ static bool apply_redirect_if_needed(const LocationConfig &location, RouteResult
 		result.reason = "Redirect";
 
 	return true;
+}
+
+static bool extension_request_path(RouteResult &res, const std::string& request_path)
+{
+    size_t dotPos = request_path.rfind('.');
+    if (dotPos != std::string::npos) {
+        res.cgi_extension = request_path.substr(dotPos);
+        return true;
+    }
+    return false;
+}
+
+static bool isCgiRequestPath(const std::string& extension)
+{
+    std::vector<std::string> cgi_extensions;
+    cgi_extensions.push_back(".php"); cgi_extensions.push_back(".pl"); cgi_extensions.push_back(".py"); cgi_extensions.push_back(".cgi");
+    for (size_t i = 0; i < cgi_extensions.size(); ++i) {
+        if (extension == cgi_extensions[i]) {
+            return true;
+        }
+    }
+    return false;
 }
 
 RouteResult Router::route(const Request& req, int incoming_port) {
@@ -50,10 +69,10 @@ RouteResult Router::route(const Request& req, int incoming_port) {
 
     result.allow_methods = location->allow_methods;
 
-		if (apply_redirect_if_needed(*location, result))
-			return result;
+	if (apply_redirect_if_needed(*location, result))
+		return result;
 
-    result.filesystem_path = build_filesystem_path(*server, *location, req.getPath());
+    result.filesystem_path = build_filesystem_path(result, *server, *location, req.getPath());
 
     validate_path(result.filesystem_path, *location, result);
 
@@ -112,10 +131,9 @@ const LocationConfig* Router::match_location(const ServerConfig& server,
     return best_match;
 }
 
-std::string Router::build_filesystem_path(const ServerConfig& server,
+std::string Router::build_filesystem_path(RouteResult& res, const ServerConfig& server,
                                          const LocationConfig& location,
                                          const std::string& request_path) {
-
     std::string base_root;
     std::string filesystem_path;
     if (location.root.empty())
@@ -123,8 +141,20 @@ std::string Router::build_filesystem_path(const ServerConfig& server,
     else
         base_root = location.root + "/";
 
-		std::string path_after_location = request_path;
-    std::string result = base_root + path_after_location;
+    if (extension_request_path(res, request_path))
+    {
+        if (isCgiRequestPath(res.cgi_extension))
+        {
+            res.is_cgi = true;
+            if (res.cgi_extension == location.cgi_extension)
+                return res.cgi_script_path = base_root + request_path;
+            else 
+                // Handle the case where the CGI extension does not match;
+                throw std::runtime_error("CGI extension does not match the location's CGI extension");
+        } 
+    }
+
+    std::string result = base_root + request_path;
 
     return result;
 }

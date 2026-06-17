@@ -26,6 +26,7 @@ struct RouteResult {
     std::vector<std::string> allow_methods;         // allowed methods (for 405)
     std::string cgi_script_path;                     // CGI script location
     std::map<std::string, std::string> cgi_env;      // CGI environment variables
+    std::string cgi_extension;                         // CGI extension (e.g., .php, .pl)
     std::string error_page_path;                     // custom error page
     std::string reason;                             // human-readable reason
 

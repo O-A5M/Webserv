@@ -1,19 +1,14 @@
 #include <iostream>
-#include <set>
 #include <string>
 
 int main() {
-    // Valid C++98 initialization
-    std::set<std::string> mySet;
+    std::string text = "Hello World.py";
+    std::size_t position = text.find(".py"); // Using the built-in function
     
-    // Elements must be added manually
-    mySet.insert("Apple");
-    mySet.insert("Banana");
-    
-    // Explicit iterator type required in C++98 (cannot use 'auto')
-    for (std::set<std::string>::const_iterator it = mySet.begin(); it != mySet.end(); ++it) {
-        std::cout << *it << std::endl;
+    if (position != std::string::npos) {
+        std::string extension = text.substr(position); // Extracting the extension
+        std::cout << "Extension found: " << extension << std::endl;
+    } else {
+        std::cout << "Not found\n";
     }
-    
-    return 0;
 }
