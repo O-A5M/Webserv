@@ -11,6 +11,7 @@ Request::Request(void) : Method(UNKNOWN),
       version(""),
       query_string(""),
       path(""),
+      boundary(""),
       headers(),
       body("")
 {
@@ -27,12 +28,21 @@ void Request::clear(void)
 	this->path.clear();
 	this->headers.clear();
 	this->body.clear();
+	this->boundary.clear();
 }
 void Request::setUri(const std::string &uri)
 {
 	this->uri = uri;
 }
 
+void Request::setBoundary(const std::string &boundary)
+{
+	this->boundary = boundary;
+}
+const std::string &Request::getBoundary(void) const
+{
+	return this->boundary;
+}
 void Request::setVersion(const std::string &version)
 {
 	this->version = version;
@@ -94,6 +104,17 @@ int Request::setHeader(std::string key,std::string value) {
     return 0;
 }
 
+std::string Request::getHeader(const std::string &key) const
+{
+	std::map<std::string, std::string>::const_iterator it = this->headers.find(key);
+
+	if (it != this->headers.end())
+	{
+		return it->second;
+	}
+
+	return "";
+}
 
 void Request::setHeaders(const std::map<std::string, std::string> &headers)
 {

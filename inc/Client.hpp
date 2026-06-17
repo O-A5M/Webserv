@@ -12,6 +12,18 @@
 #include "Router.hpp"
 #include <vector>
 
+enum ParseResult
+{
+	STATE_READING_REQUEST_LINE
+	STATE_READING_HEADERS,
+	STATE_HEADERS_DONE,
+	STATE_READING_BODY,
+	PARSE_WAITING,
+	PARSE_SUCCESS,
+	PARSE_BAD_REQUEST = 400,		 // 400
+	PARSE_HEADER_TOO_LARGE = 431 // 431
+};
+
 class ClientHandler : public AHandler {
 private:
     std::string         readBuf;
@@ -23,9 +35,11 @@ private:
 
 public:
     ClientHandler(int fd, ServerConfig& config, EventLoop& loop);
+		ClientHandler();
     ~ClientHandler(void);
-
-    void OnRead();
+		ParseResult state;
+		int error_code;
+		void OnRead();
     void OnWrite();
     void OnError();
 };

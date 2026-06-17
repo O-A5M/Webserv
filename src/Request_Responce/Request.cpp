@@ -141,6 +141,24 @@ int Request::parse_request_headers(const std::string &header)
 			}
 		}
 	}
+	std::string contentType = getHeader("content-type");
+	if (!contentType.empty())
+	{
+	if (contentType.find("multipart/form-data") != std::string::npos)
+	{
+		size_t boundaryPos = contentType.find("boundary=");
+		if (boundaryPos != std::string::npos)
+		{
+			std::string boundary = contentType.substr(boundaryPos + 9);
+			setBoundary(boundary);
+		}
+		else
+		{
+			std::cout << "Boundary not found in Content-Type header" << std::endl;
+			return -1;
+		}
+	}
+	}
 	if (this->getHeaders().find("host") == this->getHeaders().end())
 	{
 		std::cout << "Host header does not exist" << std::endl;
@@ -242,7 +260,6 @@ int Request::parse_body(const std::string &body, size_t &consumed_bytes)
 		return 0;
 	}
 }
-
 ParseStatus Request::validateRequest()
 {
 	if (this->getVersion() != "HTTP/1.1")
@@ -263,6 +280,7 @@ ParseStatus Request::validateRequest()
 
 int Request::parse_request(std::string &raw)
 {
+
 	if (raw.empty())
 		return PARSE_WAITING;
 	size_t pos = raw.find("\r\n\r\n");

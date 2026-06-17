@@ -40,6 +40,9 @@ enum ParseStatus
 
 enum ParseResult
 {
+	STATE_READING_HEADERS,
+	STATE_HEADERS_DONE,
+	STATE_READING_BODY,
 	PARSE_WAITING,
 	PARSE_SUCCESS,
 	PARSE_BAD_REQUEST = 400,		 // 400
@@ -68,6 +71,7 @@ private:
 	std::string version;
 	std::string query_string;
 	std::string path;
+	std::string boundary;
 	std::map<std::string, std::string> headers;
 	std::string body;
 	// bool complete;
@@ -81,6 +85,7 @@ private:
 
 public:
 	void setMethod(e_Methodes method);
+	void setBoundary(const std::string &boundary);
 	void setUri(const std::string &uri);
 	void setVersion(const std::string &version);
 	void setQuery(const std::string &query);
@@ -94,6 +99,8 @@ public:
 	~Request(void);
 	const e_Methodes &getMethod(void) const;
 	const std::string &getUri(void) const;
+	std::string getHeader(const std::string &key) const;
+	const std::string &getBoundary(void) const;
 	const std::string &getVersion(void) const;
 	const std::string &getQuery(void) const;
 	const std::string &getPath(void) const;

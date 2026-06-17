@@ -290,6 +290,27 @@ std::string Response::buildAutoIndex(const std::string &physicalPath, const std:
 	return html;
 }
 
+// void Response::handlePost(const Request &req, const RouteResult &context)
+// {
+// std::string contentType = getHeader("content-type");
+// if (!contentType.empty())
+// {
+// 	if (contentType.find("multipart/form-data") != std::string::npos)
+// 	{
+// 		size_t boundaryPos = contentType.find("boundary=");
+// 		if (boundaryPos != std::string::npos)
+// 		{
+// 			std::string boundary = contentType.substr(boundaryPos + 9);
+// 			setBoundary(boundary);
+// 		}
+// 		else
+// 		{
+// 			return -1;
+// 		}
+// 	}
+// }
+// }
+
 void Response::handleGet(const Request &req, const RouteResult &context)
 {
 
@@ -348,10 +369,10 @@ void Response::dispatchMethod(const Request &req, const RouteResult &context)
 	{
 		handleGet(req, context);
 	}
-	else if (req.getMethod() == POST)
-	{
-		
-	}
+	// else if (req.getMethod() == POST)
+	// {
+	// 	handlePost(req, context);
+	// }
 	// else if (req.getMethod() == DELETE)
 	// {
 	// 	handleDelete(context);
