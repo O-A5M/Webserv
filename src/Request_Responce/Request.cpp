@@ -278,37 +278,37 @@ ParseStatus Request::validateRequest()
 	return OK;
 }
 
-int Request::parse_request(std::string &raw)
-{
+// int Request::parse_request(std::string &raw)
+// {
 
-	if (raw.empty())
-		return PARSE_WAITING;
-	size_t pos = raw.find("\r\n\r\n");
-	size_t pos_req_line = raw.find("\r\n");
-	if (pos_req_line == std::string::npos || pos == std::string::npos)
-		return PARSE_WAITING;
-	std::string request_line = raw.substr(0, pos_req_line);
-	std::string header = raw.substr(pos_req_line + 2, pos - (pos_req_line + 2));
-	if (header.size() > MAX_HEADER_SIZE)
-		return PARSE_HEADER_TOO_LARGE;
-	int typeOfError = this->parse_request_line(request_line);
-	if (typeOfError < 0)
-		return PARSE_BAD_REQUEST;
-	int typeOfError2 = this->parse_request_headers(header);
-	if (typeOfError2 < 0)
-		return PARSE_BAD_REQUEST;
-	size_t consumed_body_bytes = 0;
-	std::string body = raw.substr(pos + 4);
-	int bodyParseResult = this->parse_body(body, consumed_body_bytes);
-	if (bodyParseResult < 0)
-		return PARSE_BAD_REQUEST;
-	if (bodyParseResult == 1)
-		return PARSE_WAITING;
-	// this->display();
-	size_t total_parsed_bytes = (pos + 4) + consumed_body_bytes;
-	raw.erase(0, total_parsed_bytes);
-	return PARSE_SUCCESS;
-}
+// 	if (raw.empty())
+// 		return PARSE_WAITING;
+// 	size_t pos = raw.find("\r\n\r\n");
+// 	size_t pos_req_line = raw.find("\r\n");
+// 	if (pos_req_line == std::string::npos || pos == std::string::npos)
+// 		return PARSE_WAITING;
+// 	std::string request_line = raw.substr(0, pos_req_line);
+// 	std::string header = raw.substr(pos_req_line + 2, pos - (pos_req_line + 2));
+// 	if (header.size() > MAX_HEADER_SIZE)
+// 		return PARSE_HEADER_TOO_LARGE;
+// 	int typeOfError = this->parse_request_line(request_line);
+// 	if (typeOfError < 0)
+// 		return PARSE_BAD_REQUEST;
+// 	int typeOfError2 = this->parse_request_headers(header);
+// 	if (typeOfError2 < 0)
+// 		return PARSE_BAD_REQUEST;
+// 	size_t consumed_body_bytes = 0;
+// 	std::string body = raw.substr(pos + 4);
+// 	int bodyParseResult = this->parse_body(body, consumed_body_bytes);
+// 	if (bodyParseResult < 0)
+// 		return PARSE_BAD_REQUEST;
+// 	if (bodyParseResult == 1)
+// 		return PARSE_WAITING;
+// 	// this->display();
+// 	size_t total_parsed_bytes = (pos + 4) + consumed_body_bytes;
+// 	raw.erase(0, total_parsed_bytes);
+// 	return PARSE_SUCCESS;
+// }
 
 // int parse_request(std::string &raw, Request &req)
 // {
@@ -367,7 +367,8 @@ int Request::parse_request(std::string &raw)
 // 			{
 // 				if (path[path.size() - 1] != '/')
 // 					std::cout << "301 Moved Permanently" << std::endl;
-// 				else
+// 				else.
+
 // 				{
 // 					// autoindexing logic not working yet :(
 // 					std::string index_path = build_local_path(local_path, "index.html");
