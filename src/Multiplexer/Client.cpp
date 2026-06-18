@@ -56,19 +56,33 @@ void ClientHandler::OnRead(void)
 			// {
 			// 	std::cout << "Allowed method: " << route_result.allow_methods[i] << std::endl;
 			// }
-			// std::cout << "status=" << route_result.status
-			// 					<< "max body length" << route_result.matched_location->client_max_body_size
-			// 					<< ", physique_path=" << route_result.physicalPath
-			// 					<< ", victore size=" << route_result.allow_methods.size()
-			// 					<< ", filesystem_path=" << route_result.filesystem_path
-			// 					<< ", is_cgi=" << route_result.is_cgi
-			// 					<< ", is_autoindex=" << route_result.is_autoindex
-			// 					<< ", is_directory=" << route_result.is_directory
-			// 					<< ", is_file=" << route_result.is_file
-			// 					<< ", is_redirect=" << route_result.is_redirect
-			// 					<< ", redirect_location=" << route_result.redirect_location
-			// 					<< ", reason=" << route_result.reason
-			// 					<< std::endl;
+			// std::cout << "status= " << route_result.status
+			// 					<< "max body length= " << route_result.matched_location->client_max_body_size
+			// 					<< ", physique_path= " << route_result.physicalPath
+			// 					<< ", victore size= " << route_result.allow_methods.size()
+			// 					<< ", filesystem_path= " << route_result.filesystem_path
+			// 					<< ", is_cgi= " << route_result.is_cgi
+			// 					<< ", is_autoindex= " << route_result.is_autoindex
+			// 					<< ", is_directory= " << route_result.is_directory
+			// 					<< ", is_file= " << route_result.is_file
+			// 					<< ", is_redirect= " << route_result.is_redirect
+			// 					<< ", redirect_location= " << route_result.redirect_location
+			// 					<< ", reason= " << route_result.reason
+			// 					<< ", cgi_script_path= " << route_result.cgi_script_path
+			// 					// display cgi env variables
+			// 					<< ", cgi_env= {";
+			// for (std::map<std::string, std::string>::const_iterator it = route_result.cgi_env.begin(); it != route_result.cgi_env.end(); ++it)
+			// {
+    		// 	std::cout << it->first << ": " << it->second;
+
+    		// 	std::map<std::string, std::string>::const_iterator next_it = it;
+    		// 	++next_it;
+
+    		// 	if (next_it != route_result.cgi_env.end())
+        	// 	std::cout << ", ";
+			// }
+			// std::cout << "}"
+			// << std::endl;
 			res.build(this->req, route_result);
 		}
 	}

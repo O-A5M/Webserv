@@ -45,9 +45,7 @@ static bool isCgiRequestPath(const std::string &extension)
     for (size_t i = 0; i < cgi_extensions.size(); ++i)
     {
         if (extension == cgi_extensions[i])
-        {
             return true;
-        }
     }
     return false;
 }
