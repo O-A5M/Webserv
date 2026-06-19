@@ -27,7 +27,8 @@ public:
 
     void OnRead();
     void OnWrite();
-    void OnError();
+    void OnClose();
+    void OnCgiResponse(const std::string &cgiResponse);
 };
 
 #endif

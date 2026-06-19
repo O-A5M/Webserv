@@ -9,7 +9,6 @@ ServerHandler::ServerHandler(int fd, ServerConfig &config, EventLoop &loop)
 ServerHandler::~ServerHandler() {
     if (fd != -1)
         close (fd);
-    delete this;
 }
 
 void    ServerHandler::OnRead() {
@@ -34,7 +33,7 @@ void    ServerHandler::OnRead() {
 
 void    ServerHandler::OnWrite() {}
 
-void    ServerHandler::OnError() {
+void    ServerHandler::Onclose() {
     loop.RemoveHandler(this);
     delete this;
 }

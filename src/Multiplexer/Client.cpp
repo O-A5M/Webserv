@@ -10,7 +10,6 @@ ClientHandler::ClientHandler(int fd, ServerConfig &config, EventLoop &loop)
 ClientHandler::~ClientHandler(void) {
     if (fd != -1)
         close(fd);
-    delete this;
 }
 
 void ClientHandler::OnRead(void)
@@ -20,14 +19,14 @@ void ClientHandler::OnRead(void)
 
 	if (nread == 0)
 	{
-		OnError();
+		OnClose();
 		return;
 	}
 	if (nread == -1 && errno != EAGAIN && errno != EWOULDBLOCK)
 	{
 		std::cerr << "ClientHandler::OnRead() error: "
 							<< strerror(errno) << std::endl;
-		OnError();
+		OnClose();
 		return;
 	}
 
@@ -88,7 +87,7 @@ void ClientHandler::OnWrite(void)
 				return;
 			std::cerr << "ClientHandler: OnWrite() error: "
 								<< strerror(errno) << std::endl;
-			OnError();
+			OnClose();
 			return;
 		}
 		writeBuf.erase(0, nwrite);
@@ -97,8 +96,17 @@ void ClientHandler::OnWrite(void)
 	DisableWrite();
 }
 
-void ClientHandler::OnError(void)
+void ClientHandler::OnClose(void)
 {
 	loop.RemoveHandler(this);
 	delete this;
+}
+
+void ClientHandler::OnCgiResponse(const std::string &cgiRequest) {
+	Response res;
+
+	// TODO: res.buildFromCgiResponse(cgiRequest);
+	this->writeBuf = res.getRawResponse();
+	if (!writeBuf.empty())
+		EnableWrite();
 }

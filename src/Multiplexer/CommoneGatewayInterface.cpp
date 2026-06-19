@@ -44,14 +44,14 @@ void CgiHandler::OnWrite() {
         if (errno == EAGAIN || errno == EWOULDBLOCK)
             return;
         std::cerr << "CgiHandler::OnWrite: " << strerror(errno) << "\n";
-        OnError();
+        OnClose();
         return;
     }
     writeBuf.erase(0, n);
     DisableWrite();
 }
 
-void CgiHandler::OnError() {
+void CgiHandler::OnClose() {
     KillChild();
     loop.RemoveHandler(this);
     // TODO: tell client to send 502

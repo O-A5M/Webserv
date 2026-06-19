@@ -29,7 +29,7 @@ public:
 
     void OnRead();
     void OnWrite();
-    void OnError();
+    void OnClose();
 
     static CgiHandler* Launch(
         const std::string&                      scriptPath,

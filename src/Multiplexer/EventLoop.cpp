@@ -69,7 +69,7 @@ void EventLoop::Loop() {
             uint32_t ev = events[i].events;
 
             if (ev & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)) {
-                handler->OnError();
+                handler->OnClose();
                 continue;
             }
             if (ev & EPOLLIN)

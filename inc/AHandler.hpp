@@ -24,7 +24,7 @@ public:
 
     virtual void    OnRead() = 0;
     virtual void    OnWrite() = 0;
-    virtual void    OnError() = 0;
+    virtual void    OnClose() = 0;
 
     void    EnableWrite();
     void    DisableWrite();
