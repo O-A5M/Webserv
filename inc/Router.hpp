@@ -24,7 +24,7 @@ private:
     const LocationConfig* match_location(const ServerConfig& server, 
                                          const std::string& request_path);
     
-    std::string build_filesystem_path(const ServerConfig& server,
+    std::string build_filesystem_path(RouteResult& res, const ServerConfig& server,
                                      const LocationConfig& location,
                                      const std::string& request_path);
     
