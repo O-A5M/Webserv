@@ -1,4 +1,6 @@
 #include "../../inc/Client.hpp"
+
+#include "../../inc/CommoneGatewayInterface.hpp"
 #include "../../inc/Response.hpp"
 
 ClientHandler::ClientHandler(int fd, ServerConfig &config, EventLoop &loop)
@@ -54,6 +56,12 @@ void ClientHandler::OnRead(void)
 			{
 				std::cout << "Allowed method: " << route_result.allow_methods[i] << std::endl;
 			}
+			if (route_result.is_cgi) {
+				std::cout << route_result.cgi_script_path << std::endl;
+				CgiHandler::Launch(route_result.cgi_script_path
+					, serverConf.locations[5].cgi_path, route_result.cgi_env
+					,req.getBody(), serverConf, loop, *this);
+			}
 			// std::cout << "status=" << route_result.status
 			// 					<< "max body length" << route_result.matched_location->client_max_body_size
 			// 					<< ", physique_path=" << route_result.physicalPath
@@ -102,11 +110,11 @@ void ClientHandler::OnClose(void)
 	delete this;
 }
 
-void ClientHandler::OnCgiResponse(const std::string &cgiRequest) {
-	Response res;
-
-	// TODO: res.buildFromCgiResponse(cgiRequest);
-	this->writeBuf = res.getRawResponse();
-	if (!writeBuf.empty())
-		EnableWrite();
-}
+// void ClientHandler::OnCgiResponse(const std::string &cgiRequest) {
+// 	Response res;
+//
+// 	// TODO: res.buildFromCgiResponse(cgiRequest);
+// 	this->writeBuf = res.getRawResponse();
+// 	if (!writeBuf.empty())
+// 		EnableWrite();
+// }

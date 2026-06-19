@@ -33,7 +33,7 @@ void    ServerHandler::OnRead() {
 
 void    ServerHandler::OnWrite() {}
 
-void    ServerHandler::Onclose() {
+void    ServerHandler::OnClose() {
     loop.RemoveHandler(this);
     delete this;
 }

@@ -66,7 +66,8 @@ void CgiHandler::Finalize() {
     }
 
     loop.RemoveHandler(this);
-    client.OnCgiResponse(readBuf);
+    std::cout << readBuf << std::endl;
+    // client.OnCgiResponse(readBuf);
     delete this;
 }
 
