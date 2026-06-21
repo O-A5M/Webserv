@@ -14,6 +14,8 @@ bool Request::is_traversal_attempt(const std::string &path)
 	return false;
 }
 
+
+
 int Request::parse_request_line(const std::string &req_line)
 {
 	std::string method_str;
@@ -203,63 +205,194 @@ int Request::convert_hex_to_dec(const std::string &hex)
 	return result;
 }
 
+// int Request::parse_body(const std::string &body, size_t &consumed_bytes)
+// {
+// 	if (this->getHeaders().find("content-length") != this->getHeaders().end())
+// 	{
+// 		size_t bSize = body.size();
+// 		char *end;
+// 		size_t expected_size = strtoul(this->getHeaders().find("content-length")->second.c_str(), &end, 10);
+
+// 		if (bSize < expected_size)
+// 		{
+// 			return 1;
+// 		}
+// 		else if (bSize == expected_size)
+// 		{
+// 			this->setBody(body);
+// 			consumed_bytes = expected_size;
+// 			return 0;
+// 		}
+// 		else
+// 		{
+// 			this->setBody(body.substr(0, expected_size));
+// 			consumed_bytes = expected_size;
+// 			return 0;
+// 		}
+// 	}
+// 	else if (this->getHeaders().find("transfer-encoding") != this->getHeaders().end())
+// 	{
+// 		std::string chunked_body;
+// 		size_t pos = 0;
+// 		while (true)
+// 		{
+// 			size_t crlf_pos = body.find("\r\n", pos);
+// 			if (crlf_pos == std::string::npos)
+// 				return 1;
+// 			std::string chunk_size_str = body.substr(pos, crlf_pos - pos);
+// 			int chunk_size = convert_hex_to_dec(chunk_size_str);
+// 			if (chunk_size < 0)
+// 				return -1; // Invalid chunk size
+// 			pos = crlf_pos + 2;
+// 			if (body.size() < pos + chunk_size + 2)
+// 				return 1; // Incomplete chunk data
+// 			chunked_body += body.substr(pos, chunk_size);
+// 			pos += chunk_size + 2; // Skip chunk data and trailing CRLF
+// 			if (chunk_size == 0)
+// 				break; // Last chunk
+// 		}
+// 		this->setBody(chunked_body);
+// 		consumed_bytes = pos;
+// 		return 0;
+// 	}
+// 	else
+// 	{
+// 		this->setBody("");
+// 		consumed_bytes = 0;
+// 		return 0;
+// 	}
+// }
+
+std::string Request::generate_unique_filename()
+{
+	static unsigned long counter = 0;
+	std::stringstream ss;
+
+	// Using /tmp/ is standard on Linux/Mac and guarantees the folder exists.
+	// If you prefer a local folder like "www/uploads/", ensure that folder exists first!
+	ss << "/tmp/body_"
+		 << std::time(NULL) << "_"
+		 << ++counter << "_"
+		 << std::rand() << ".bin";
+
+	return ss.str();
+}
+
 int Request::parse_body(const std::string &body, size_t &consumed_bytes)
 {
 	if (this->getHeaders().find("content-length") != this->getHeaders().end())
 	{
+		if (this->body_file_path.empty())
+			this->body_file_path = generate_unique_filename();
+
+		std::ofstream body_file(this->body_file_path.c_str(), std::ios::binary | std::ios::app);
+		if (!body_file.is_open())
+			return -1;
+
 		size_t bSize = body.size();
 		char *end;
 		size_t expected_size = strtoul(this->getHeaders().find("content-length")->second.c_str(), &end, 10);
+		if (this->body_bytes_processed > bSize)
+		{
+			body_file.close();
+			return -1;
+		}
 
-		if (bSize < expected_size)
+		// How many NEW bytes have arrived since the last time we checked?
+		size_t new_bytes = bSize - this->body_bytes_processed;
+
+		if (new_bytes > 0)
 		{
-			return 1;
+			// Make sure we don't write more than the expected size
+			size_t bytes_to_write = new_bytes;
+			if (this->body_bytes_processed + new_bytes > expected_size)
+				bytes_to_write = expected_size - this->body_bytes_processed;
+
+			// Write ONLY the new bytes
+			body_file.write(body.data() + this->body_bytes_processed, bytes_to_write);
+
+			// Save our progress!
+			this->body_bytes_processed += bytes_to_write;
 		}
-		else if (bSize == expected_size)
+
+		if (this->body_bytes_processed < expected_size)
 		{
-			this->setBody(body);
-			consumed_bytes = expected_size;
-			return 0;
+			body_file.close();
+			return 1; // Still waiting for more data
 		}
-		else
-		{
-			this->setBody(body.substr(0, expected_size));
-			consumed_bytes = expected_size;
-			return 0;
-		}
+
+		body_file.close();
+		consumed_bytes = expected_size;
+		return 0; // Done!
 	}
+
+	// 4. Handle Transfer-Encoding: chunked
 	else if (this->getHeaders().find("transfer-encoding") != this->getHeaders().end())
 	{
-		std::string chunked_body;
-		size_t pos = 0;
+		if (this->body_file_path.empty())
+			this->body_file_path = generate_unique_filename();
+
+		std::ofstream body_file(this->body_file_path.c_str(), std::ios::binary | std::ios::app);
+		if (!body_file.is_open())
+			return -1;
+
+		// START WHERE WE LEFT OFF, not at 0!
+		size_t pos = this->body_bytes_processed;
+
 		while (true)
 		{
 			size_t crlf_pos = body.find("\r\n", pos);
 			if (crlf_pos == std::string::npos)
-				return 1;
+			{
+				body_file.close();
+				return 1; // Waiting for the rest of the chunk
+			}
+
 			std::string chunk_size_str = body.substr(pos, crlf_pos - pos);
 			int chunk_size = convert_hex_to_dec(chunk_size_str);
+
 			if (chunk_size < 0)
-				return -1; // Invalid chunk size
-			pos = crlf_pos + 2;
-			if (body.size() < pos + chunk_size + 2)
-				return 1; // Incomplete chunk data
-			chunked_body += body.substr(pos, chunk_size);
-			pos += chunk_size + 2; // Skip chunk data and trailing CRLF
+			{
+				body_file.close();
+				return -1; // Invalid chunk
+			}
+
+			size_t data_start = crlf_pos + 2;
+
+			if (body.size() < data_start + chunk_size + 2)
+			{
+				body_file.close();
+				return 1; // We have the size, but the actual chunk data isn't fully here yet
+			}
+
+			// Write this specific chunk directly to the file
+			if (chunk_size > 0)
+			{
+				body_file.write(body.data() + data_start, chunk_size);
+			}
+
+			// Move pos past the chunk data and its trailing "\r\n"
+			pos = data_start + chunk_size + 2;
+
+			// SAVE OUR PROGRESS!
+			this->body_bytes_processed = pos;
+
 			if (chunk_size == 0)
-				break; // Last chunk
+				break; // 0-sized chunk means we are completely done
 		}
-		this->setBody(chunked_body);
+
+		body_file.close();
 		consumed_bytes = pos;
 		return 0;
 	}
+	// 5. No body expected
 	else
 	{
-		this->setBody("");
 		consumed_bytes = 0;
 		return 0;
 	}
 }
+
 ParseStatus Request::validateRequest()
 {
 	if (this->getVersion() != "HTTP/1.1")

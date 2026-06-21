@@ -6,6 +6,7 @@ ClientHandler::ClientHandler(int fd, ServerConfig &config, EventLoop &loop)
 {
 	loop.AddHandler(this, EPOLLIN);
 	this->state = STATE_READING_REQUEST_LINE;
+	this->error_code = 0;
 }
 
 ClientHandler::~ClientHandler(void)
@@ -97,6 +98,14 @@ void ClientHandler::OnRead(void)
 			}
 
 			this->req.route_result = this->router.route(this->req, this->GetServerConf().port);
+			if (this->req.route_result.matched_location == NULL)
+			{
+				this->error_code = this->req.route_result.status;
+				if (this->error_code == 0)
+					this->error_code = 500;
+				this->state = STATE_ERROR;
+				break;
+			}
 
 			size_t expected_size = 0;
 			if (this->req.getHeaders().find("content-length") != this->req.getHeaders().end())
@@ -136,7 +145,7 @@ void ClientHandler::OnRead(void)
 		case STATE_COMPLETE:
 		{
 			std::cout << "Request Fully Parsed! Building response..." << std::endl;
-
+			this->req.display();
 			Response res;
 			res.build(this->req, this->req.route_result);
 

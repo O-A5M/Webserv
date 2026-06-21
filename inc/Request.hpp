@@ -77,6 +77,10 @@ private:
 	std::map<std::string, std::string> headers;
 	std::string body;
 	// bool complete;
+	std::string body_file_path;
+	std::string generate_unique_filename();
+	size_t body_bytes_processed;
+
 public:
 	int parse_request_line(const std::string &req_line);
 	int parse_request_headers_helper(const std::string &header, size_t startIndex);
@@ -112,7 +116,7 @@ public:
 	void display(void) const;
 	bool is_traversal_attempt(const std::string &path);
 	ParseStatus validateRequest();
-	int parse_request(std::string &raw);
+	const std::string &getBodyFilePath() const { return body_file_path; }
 };
 
 #endif

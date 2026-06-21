@@ -7,13 +7,16 @@ void Request::setMethod(e_Methodes method)
 }
 
 Request::Request(void) : Method(UNKNOWN),
+      parse_status(OK),
       uri(""),
       version(""),
       query_string(""),
       path(""),
       boundary(""),
       headers(),
-      body("")
+      body(""),
+      body_file_path(""),
+      body_bytes_processed(0)
 {
 }
 Request::~Request(void)
@@ -22,6 +25,7 @@ Request::~Request(void)
 void Request::clear(void)
 {
 	this->Method = UNKNOWN;
+	this->parse_status = OK;
 	this->uri.clear();
 	this->version.clear();
 	this->query_string.clear();
@@ -29,6 +33,9 @@ void Request::clear(void)
 	this->headers.clear();
 	this->body.clear();
 	this->boundary.clear();
+	this->body_file_path.clear();
+	this->body_bytes_processed = 0;
+	this->route_result = RouteResult();
 }
 void Request::setUri(const std::string &uri)
 {
@@ -159,9 +166,41 @@ void Request::removeHeader(const std::string& key) {
     this->headers.erase(key);
 }
 
+// void Request::display(void) const
+// {
+// 	std::cout << "===== REQUEST =====" << std::endl;
+// 	if (this->Method == UNKNOWN)
+// 		std::cout << "Method:UNKNOWN" << std::endl;
+// 	else if (this->Method == GET)
+// 		std::cout << "Method:GET" << std::endl;
+// 	else if (this->Method == POST)
+// 		std::cout << "Method:POST" << std::endl;
+// 	else if (this->Method == DELETE)
+// 		std::cout << "Method:DELETE" << std::endl;
+// 	std::cout << "URI:" << this->uri << std::endl;
+// 	std::cout << "Version:" << this->version << std::endl;
+// 	std::cout << "Query String:" << this->query_string << std::endl;
+// 	std::cout << "Path:" << this->path << std::endl;
+
+// 	std::cout << "\n--- Headers ---" << std::endl;
+
+// 	std::map<std::string, std::string>::const_iterator it;
+
+// 	for (it = this->headers.begin(); it != this->headers.end(); ++it)
+// 	{
+// 		std::cout << it->first << ":" << it->second << std::endl;
+// 	}
+
+// 	std::cout << "\n--- Body ---" << std::endl;
+
+// 	std::cout << "===================" << std::endl;
+// }
+#include <fstream> // Make sure this is at the top of your file
+
 void Request::display(void) const
 {
 	std::cout << "===== REQUEST =====" << std::endl;
+
 	if (this->Method == UNKNOWN)
 		std::cout << "Method:UNKNOWN" << std::endl;
 	else if (this->Method == GET)
@@ -170,6 +209,7 @@ void Request::display(void) const
 		std::cout << "Method:POST" << std::endl;
 	else if (this->Method == DELETE)
 		std::cout << "Method:DELETE" << std::endl;
+
 	std::cout << "URI:" << this->uri << std::endl;
 	std::cout << "Version:" << this->version << std::endl;
 	std::cout << "Query String:" << this->query_string << std::endl;
@@ -178,14 +218,57 @@ void Request::display(void) const
 	std::cout << "\n--- Headers ---" << std::endl;
 
 	std::map<std::string, std::string>::const_iterator it;
-
 	for (it = this->headers.begin(); it != this->headers.end(); ++it)
 	{
 		std::cout << it->first << ":" << it->second << std::endl;
 	}
 
 	std::cout << "\n--- Body ---" << std::endl;
-	std::cout << this->body << std::endl;
+
+	// 1. Check if we actually have a body file
+	if (this->body_file_path.empty())
+	{
+		std::cout << "(No body or not yet parsed)" << std::endl;
+	}
+	else
+	{
+		// 2. Print where the file is stored
+		std::cout << "Location: " << this->body_file_path << std::endl;
+
+		// 3. Open the file to peek at the first 100 bytes
+		std::ifstream peek_file(this->body_file_path.c_str(), std::ios::binary);
+		if (peek_file.is_open())
+		{
+			char buffer[100];
+			peek_file.read(buffer, sizeof(buffer));
+			std::streamsize bytes_read = peek_file.gcount();
+
+			if (bytes_read > 0)
+			{
+				std::cout << "Preview (first " << bytes_read << " bytes):" << std::endl;
+				std::cout << "[";
+
+				// Print characters safely. If it's a binary byte, print a dot '.' instead.
+				for (std::streamsize i = 0; i < bytes_read; ++i)
+				{
+					if (buffer[i] >= 32 && buffer[i] <= 126) // Printable ASCII range
+						std::cout << buffer[i];
+					else
+						std::cout << '.';
+				}
+				std::cout << "]" << std::endl;
+
+				// If the file is longer than our 100 byte peek, let the user know
+				if (!peek_file.eof())
+					std::cout << "... (truncated for display)" << std::endl;
+			}
+			peek_file.close();
+		}
+		else
+		{
+			std::cout << "(Could not open file for preview)" << std::endl;
+		}
+	}
 
 	std::cout << "===================" << std::endl;
 }
