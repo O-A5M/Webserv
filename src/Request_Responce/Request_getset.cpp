@@ -12,6 +12,7 @@ Request::Request(void) : Method(UNKNOWN),
       query_string(""),
       path(""),
       headers(),
+      cookies(), // ADD about (Cookie) parsing
       body("")
 {
 }
@@ -26,6 +27,7 @@ void Request::clear(void)
 	this->query_string.clear();
 	this->path.clear();
 	this->headers.clear();
+	this->cookies.clear(); // ADD about (Cookie) parsing
 	this->body.clear();
 }
 void Request::setUri(const std::string &uri)
@@ -134,6 +136,12 @@ const std::map<std::string, std::string> &Request::getHeaders(void) const
 	return this->headers;
 }
 
+// ADD about (Cookie) parsing
+const std::map<std::string, std::string> &Request::getCookies(void) const
+{
+	return this->cookies;
+}
+
 void Request::removeHeader(const std::string& key) {
     this->headers.erase(key);
 }
@@ -159,6 +167,13 @@ void Request::display(void) const
 	std::map<std::string, std::string>::const_iterator it;
 
 	for (it = this->headers.begin(); it != this->headers.end(); ++it)
+	{
+		std::cout << it->first << ":" << it->second << std::endl;
+	}
+
+	// ADD about (Cookie) parsing
+	std::cout << "\n--- Cookies ---" << std::endl;
+	for (it = this->cookies.begin(); it != this->cookies.end(); ++it)
 	{
 		std::cout << it->first << ":" << it->second << std::endl;
 	}

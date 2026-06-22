@@ -69,9 +69,12 @@ private:
 	std::string query_string;
 	std::string path;
 	std::map<std::string, std::string> headers;
+	std::map<std::string, std::string> cookies; // ADD about (Cookie) parsing
 	std::string body;
 	// bool complete;
 
+	std::string trim_cookie_part(const std::string &value) const; // ADD about (Cookie) parsing
+	void parse_cookies(void); // ADD about (Cookie) parsing
 	int parse_request_line(const std::string &req_line);
 	int parse_request_headers_helper(const std::string &header, size_t startIndex);
 	void skip_whitespace(const std::string &header, size_t &i);
@@ -99,6 +102,7 @@ public:
 	const std::string &getPath(void) const;
 	const std::string &getBody(void) const;
 	const std::map<std::string, std::string> &getHeaders(void) const;
+	const std::map<std::string, std::string> &getCookies(void) const; // ADD about (Cookie) parsing
 	void removeHeader(const std::string &key);
 	void display(void) const;
 	bool is_traversal_attempt(const std::string &path);

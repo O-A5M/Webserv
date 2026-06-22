@@ -1,6 +1,56 @@
 #include "../../inc/Request.hpp"
 #include "../../inc/Response.hpp"
 
+
+// // ADD about (Cookie) parsing
+std::string Request::trim_cookie_part(const std::string &value) const
+{
+	size_t start = 0;
+	size_t end = value.size();
+
+	while (start < end && (value[start] == ' ' || value[start] == '\t'))
+		start++;
+	while (end > start && (value[end - 1] == ' ' || value[end - 1] == '\t'))
+		end--;
+	return value.substr(start, end - start);
+}
+
+// ADD about (Cookie) parsing
+void Request::parse_cookies(void)
+{
+	this->cookies.clear();
+
+	std::map<std::string, std::string>::const_iterator it = this->headers.find("cookie");
+	if (it == this->headers.end())
+		return;
+
+	const std::string &cookie_header = it->second;
+	size_t start = 0;
+	while (start <= cookie_header.size())
+	{
+		size_t end = cookie_header.find(';', start);
+		std::string cookie_pair;
+
+		if (end == std::string::npos)
+			cookie_pair = cookie_header.substr(start);
+		else
+			cookie_pair = cookie_header.substr(start, end - start);
+
+		size_t equal_pos = cookie_pair.find('=');
+		if (equal_pos != std::string::npos)
+		{
+			std::string name = trim_cookie_part(cookie_pair.substr(0, equal_pos));
+			std::string value = trim_cookie_part(cookie_pair.substr(equal_pos + 1));
+			if (!name.empty())
+				this->cookies[name] = value;
+		}
+
+		if (end == std::string::npos)
+			break;
+		start = end + 1;
+	}
+}
+
 bool Request::is_traversal_attempt(const std::string &path)
 {
 	if (path.find("/../") != std::string::npos)
@@ -164,6 +214,7 @@ int Request::parse_request_headers(const std::string &header)
 	{
 		return -1;
 	}
+	this->parse_cookies(); // ADD about (Cookie) parsing
 	return 0;
 }
 
