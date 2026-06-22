@@ -43,6 +43,8 @@ void ClientHandler::OnRead(void)
 		{
 		case STATE_READING_REQUEST_LINE:
 		{
+			while (readBuf.compare(0, 2, "\r\n") == 0)
+				readBuf.erase(0, 2);
 			size_t pos = readBuf.find("\r\n");
 			if (pos == std::string::npos)
 			{

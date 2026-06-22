@@ -292,20 +292,162 @@ std::string Response::buildAutoIndex(const std::string &physicalPath, const std:
 
 void Response::handlePost(const Request &req, const RouteResult &context)
 {
-	std::map<std::string, std::string>::const_iterator it = req.getHeaders().find("content-type");
-	if (it != req.getHeaders().end())
+	if (context.allow_methods.size() > 0 && (std::find(context.allow_methods.begin(), context.allow_methods.end(), "POST") == context.allow_methods.end()))
 	{
-		std::string contentType = it->second;
-		if (contentType.find("multipart/form-data") != std::string::npos)
+		*this = generateErrorResponse(405);
+		return;
+	}
+
+	std::string request_body;
+	if (!req.getBodyFilePath().empty())
+	{
+		std::ifstream temp_body_file(req.getBodyFilePath().c_str(), std::ios::binary);
+		if (!temp_body_file.is_open())
 		{
-			std::ifstream temp_body_file(req.getTempFilePath().c_str(), std::ios::binary);
-			if (!temp_body_file.is_open())
+			*this = generateErrorResponse(500);
+			return;
+		}
+
+		std::stringstream buffer;
+		buffer << temp_body_file.rdbuf();
+		request_body = buffer.str();
+	}
+
+	std::string upload_dir;
+	if (context.is_directory)
+		upload_dir = context.physicalPath;
+	else if (!context.filesystem_path.empty())
+	{
+		size_t slash_pos = context.filesystem_path.find_last_of('/');
+		if (slash_pos == std::string::npos)
+			upload_dir = ".";
+		else
+			upload_dir = context.filesystem_path.substr(0, slash_pos);
+	}
+	else if (context.matched_location != NULL && !context.matched_location->root.empty())
+		upload_dir = context.matched_location->root;
+	else if (context.matched_server != NULL && !context.matched_server->root.empty())
+		upload_dir = context.matched_server->root;
+	else
+		upload_dir = ".";
+
+	if (!upload_dir.empty() && upload_dir[upload_dir.size() - 1] == '/')
+		upload_dir.erase(upload_dir.size() - 1);
+
+	struct stat st;
+	if (stat(upload_dir.c_str(), &st) != 0 || !S_ISDIR(st.st_mode) || access(upload_dir.c_str(), W_OK) != 0)
+	{
+		*this = generateErrorResponse(403);
+		return;
+	}
+
+	std::map<std::string, std::string>::const_iterator it = req.getHeaders().find("content-type");
+	std::string contentType;
+	if (it != req.getHeaders().end())
+		contentType = it->second;
+
+	size_t saved_files = 0;
+	if (contentType.find("multipart/form-data") != std::string::npos)
+	{
+		std::string boundary = req.getBoundary();
+		if (boundary.empty())
+		{
+			*this = generateErrorResponse(400);
+			return;
+		}
+
+		size_t pos = request_body.find(boundary);
+		while (pos != std::string::npos)
+		{
+			size_t part_start = pos + boundary.size();
+			if (request_body.compare(part_start, 2, "--") == 0)
+				break;
+			if (request_body.compare(part_start, 2, "\r\n") == 0)
+				part_start += 2;
+
+			size_t header_end = request_body.find("\r\n\r\n", part_start);
+			if (header_end == std::string::npos)
+				break;
+
+			std::string part_headers = request_body.substr(part_start, header_end - part_start);
+			size_t data_start = header_end + 4;
+			size_t next_boundary = request_body.find("\r\n" + boundary, data_start);
+			if (next_boundary == std::string::npos)
+				break;
+
+			size_t filename_pos = part_headers.find("filename=\"");
+			if (filename_pos != std::string::npos)
 			{
-				this->buildErrorResponse(500);
-				return;
+				filename_pos += 10;
+				size_t filename_end = part_headers.find("\"", filename_pos);
+				std::string filename = part_headers.substr(filename_pos, filename_end - filename_pos);
+
+				if (!filename.empty())
+				{
+					std::string safe_filename;
+					for (size_t i = 0; i < filename.size(); ++i)
+					{
+						char c = filename[i];
+						if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '.' || c == '_' || c == '-')
+							safe_filename += c;
+						else
+							safe_filename += '_';
+					}
+
+					std::string output_path = upload_dir + "/" + safe_filename;
+					if (fileExists(output_path))
+					{
+						std::stringstream unique_name;
+						unique_name << std::time(NULL) << "_" << std::rand() << "_" << safe_filename;
+						output_path = upload_dir + "/" + unique_name.str();
+					}
+
+					std::ofstream output_file(output_path.c_str(), std::ios::binary);
+					if (!output_file.is_open())
+					{
+						*this = generateErrorResponse(500);
+						return;
+					}
+					output_file.write(request_body.data() + data_start, next_boundary - data_start);
+					output_file.close();
+					++saved_files;
+				}
 			}
+			pos = request_body.find(boundary, next_boundary + 2);
 		}
 	}
+
+	if (saved_files == 0)
+	{
+		std::stringstream filename;
+		filename << "post_body_" << std::time(NULL) << "_" << std::rand() << ".bin";
+		std::string output_path = upload_dir + "/" + filename.str();
+		std::ofstream output_file(output_path.c_str(), std::ios::binary);
+		if (!output_file.is_open())
+		{
+			*this = generateErrorResponse(500);
+			return;
+		}
+		output_file.write(request_body.data(), request_body.size());
+		output_file.close();
+		saved_files = 1;
+	}
+
+	std::stringstream response_body;
+	response_body << "Created " << saved_files << " file";
+	if (saved_files != 1)
+		response_body << "s";
+	response_body << "\n";
+
+	this->setStatusCode(201);
+	this->setReasonPhrase("Created");
+	this->setBody(response_body.str());
+	this->setHeader("Content-Type", "text/plain");
+	std::stringstream content_length;
+	content_length << this->getBody().size();
+	this->setHeader("Content-Length", content_length.str());
+	this->setHeader("Date", this->current_http_date());
+	this->buildRawResponse();
 }
 
 void Response::handleGet(const Request &req, const RouteResult &context)

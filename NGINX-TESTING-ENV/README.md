@@ -1,3 +1,0 @@
-# NGINX Docker Development Environment
-
-

@@ -24,7 +24,7 @@ private:
 	std::string build_local_path(const std::string &root, const std::string &req_path);
 	int check_resource(const std::string &local_path);
 	void handleGet(const Request &req, const RouteResult &context);
-	void handlePost(const Request &req);
+	void handlePost(const Request &req , const RouteResult &context);
 	void handleDelete(const Request &req);
 
 	void setStatusCode(int code);
