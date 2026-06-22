@@ -14,6 +14,19 @@ ClientHandler::~ClientHandler(void) {
         close(fd);
 }
 
+std::string	ClientHandler::getInterpreterPath(void) const {
+	std::vector<LocationConfig>::iterator it = serverConf.locations.begin();
+	std::vector<LocationConfig>::iterator itEnd = serverConf.locations.end();
+
+	while (it != itEnd) {
+		if (!it->cgi_path.empty())
+			break;
+		++it;
+	}
+	std::cout << "Interpreter path: " << it->cgi_path << std::endl;
+	return (it->cgi_path);
+}
+
 void ClientHandler::OnRead(void)
 {
 	char buff[4096];
@@ -57,9 +70,9 @@ void ClientHandler::OnRead(void)
 				std::cout << "Allowed method: " << route_result.allow_methods[i] << std::endl;
 			}
 			if (route_result.is_cgi) {
-				std::cout << route_result.cgi_script_path << std::endl;
+				std::cout << "script Path " << route_result.cgi_script_path << std::endl;
 				CgiHandler::Launch(route_result.cgi_script_path
-					, serverConf.locations[5].cgi_path, route_result.cgi_env
+					, getInterpreterPath(), route_result.cgi_env
 					,req.getBody(), serverConf, loop, *this);
 			}
 			// std::cout << "status=" << route_result.status

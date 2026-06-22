@@ -19,7 +19,7 @@ private:
     std::vector<ServerConfig> serverConfigs;
     Router              router;
     Request             req;
-
+    std::string getInterpreterPath(void) const;
 
 public:
     ClientHandler(int fd, ServerConfig& config, EventLoop& loop);
