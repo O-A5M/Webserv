@@ -151,7 +151,7 @@ int Request::parse_request_headers(const std::string &header)
 		size_t boundaryPos = contentType.find("boundary=");
 		if (boundaryPos != std::string::npos)
 		{
-			std::string boundary = contentType.substr(boundaryPos + 9);
+			std::string boundary = "--" + contentType.substr(boundaryPos + 9);
 			setBoundary(boundary);
 		}
 		else

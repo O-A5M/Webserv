@@ -214,6 +214,7 @@ void Request::display(void) const
 	std::cout << "Version:" << this->version << std::endl;
 	std::cout << "Query String:" << this->query_string << std::endl;
 	std::cout << "Path:" << this->path << std::endl;
+	std::cout << "Boundary:" << this->getBoundary() << std::endl;
 
 	std::cout << "\n--- Headers ---" << std::endl;
 

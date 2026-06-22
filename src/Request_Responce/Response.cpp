@@ -290,26 +290,23 @@ std::string Response::buildAutoIndex(const std::string &physicalPath, const std:
 	return html;
 }
 
-// void Response::handlePost(const Request &req, const RouteResult &context)
-// {
-// std::string contentType = getHeader("content-type");
-// if (!contentType.empty())
-// {
-// 	if (contentType.find("multipart/form-data") != std::string::npos)
-// 	{
-// 		size_t boundaryPos = contentType.find("boundary=");
-// 		if (boundaryPos != std::string::npos)
-// 		{
-// 			std::string boundary = contentType.substr(boundaryPos + 9);
-// 			setBoundary(boundary);
-// 		}
-// 		else
-// 		{
-// 			return -1;
-// 		}
-// 	}
-// }
-// }
+void Response::handlePost(const Request &req, const RouteResult &context)
+{
+	std::map<std::string, std::string>::const_iterator it = req.getHeaders().find("content-type");
+	if (it != req.getHeaders().end())
+	{
+		std::string contentType = it->second;
+		if (contentType.find("multipart/form-data") != std::string::npos)
+		{
+			std::ifstream temp_body_file(req.getTempFilePath().c_str(), std::ios::binary);
+			if (!temp_body_file.is_open())
+			{
+				this->buildErrorResponse(500);
+				return;
+			}
+		}
+	}
+}
 
 void Response::handleGet(const Request &req, const RouteResult &context)
 {
@@ -369,10 +366,10 @@ void Response::dispatchMethod(const Request &req, const RouteResult &context)
 	{
 		handleGet(req, context);
 	}
-	// else if (req.getMethod() == POST)
-	// {
-	// 	handlePost(req, context);
-	// }
+	else if (req.getMethod() == POST)
+	{
+		handlePost(req, context);
+	}
 	// else if (req.getMethod() == DELETE)
 	// {
 	// 	handleDelete(context);
