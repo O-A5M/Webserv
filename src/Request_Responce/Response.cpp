@@ -290,41 +290,31 @@ std::string Response::buildAutoIndex(const std::string &physicalPath, const std:
 	return html;
 }
 
+
 void Response::handlePost(const Request &req, const RouteResult &context)
 {
-	if (context.allow_methods.size() > 0 && (std::find(context.allow_methods.begin(), context.allow_methods.end(), "POST") == context.allow_methods.end()))
+	// =========================================================
+	// TASK 1: PRE-FLIGHT CHECKS
+	// =========================================================
+
+	// 1. Method Check
+	if (context.allow_methods.size() > 0 &&
+			(std::find(context.allow_methods.begin(), context.allow_methods.end(), "POST") == context.allow_methods.end()))
 	{
 		*this = generateErrorResponse(405);
 		return;
 	}
 
-	std::string request_body;
-	if (!req.getBodyFilePath().empty())
-	{
-		std::ifstream temp_body_file(req.getBodyFilePath().c_str(), std::ios::binary);
-		if (!temp_body_file.is_open())
-		{
-			*this = generateErrorResponse(500);
-			return;
-		}
+	// 2. Size Limit Check (Safe against NULL location)
+	// if (context.matched_location != NULL && req > context.matched_location->client_max_body_size)
+	// {
+	// 	*this = generateErrorResponse(413);
+	// 	return;
+	// }
 
-		std::stringstream buffer;
-		buffer << temp_body_file.rdbuf();
-		request_body = buffer.str();
-	}
-
+	// 3. Path Resolution
 	std::string upload_dir;
-	if (context.is_directory)
-		upload_dir = context.physicalPath;
-	else if (!context.filesystem_path.empty())
-	{
-		size_t slash_pos = context.filesystem_path.find_last_of('/');
-		if (slash_pos == std::string::npos)
-			upload_dir = ".";
-		else
-			upload_dir = context.filesystem_path.substr(0, slash_pos);
-	}
-	else if (context.matched_location != NULL && !context.matched_location->root.empty())
+	if (context.matched_location != NULL && !context.matched_location->root.empty())
 		upload_dir = context.matched_location->root;
 	else if (context.matched_server != NULL && !context.matched_server->root.empty())
 		upload_dir = context.matched_server->root;
@@ -332,8 +322,11 @@ void Response::handlePost(const Request &req, const RouteResult &context)
 		upload_dir = ".";
 
 	if (!upload_dir.empty() && upload_dir[upload_dir.size() - 1] == '/')
+	{
 		upload_dir.erase(upload_dir.size() - 1);
+	}
 
+	// 4. Directory Permissions
 	struct stat st;
 	if (stat(upload_dir.c_str(), &st) != 0 || !S_ISDIR(st.st_mode) || access(upload_dir.c_str(), W_OK) != 0)
 	{
@@ -341,12 +334,19 @@ void Response::handlePost(const Request &req, const RouteResult &context)
 		return;
 	}
 
-	std::map<std::string, std::string>::const_iterator it = req.getHeaders().find("content-type");
-	std::string contentType;
-	if (it != req.getHeaders().end())
-		contentType = it->second;
+	// =========================================================
+	// TASK 2: CONTENT-TYPE ROUTING
+	// =========================================================
 
-	size_t saved_files = 0;
+	std::string contentType = "";
+	std::map<std::string, std::string>::const_iterator it = req.getHeaders().find("content-type");
+
+	if (it != req.getHeaders().end())
+	{
+		contentType = it->second;
+	}
+
+
 	if (contentType.find("multipart/form-data") != std::string::npos)
 	{
 		std::string boundary = req.getBoundary();
@@ -355,97 +355,195 @@ void Response::handlePost(const Request &req, const RouteResult &context)
 			*this = generateErrorResponse(400);
 			return;
 		}
-
-		size_t pos = request_body.find(boundary);
-		while (pos != std::string::npos)
-		{
-			size_t part_start = pos + boundary.size();
-			if (request_body.compare(part_start, 2, "--") == 0)
-				break;
-			if (request_body.compare(part_start, 2, "\r\n") == 0)
-				part_start += 2;
-
-			size_t header_end = request_body.find("\r\n\r\n", part_start);
-			if (header_end == std::string::npos)
-				break;
-
-			std::string part_headers = request_body.substr(part_start, header_end - part_start);
-			size_t data_start = header_end + 4;
-			size_t next_boundary = request_body.find("\r\n" + boundary, data_start);
-			if (next_boundary == std::string::npos)
-				break;
-
-			size_t filename_pos = part_headers.find("filename=\"");
-			if (filename_pos != std::string::npos)
-			{
-				filename_pos += 10;
-				size_t filename_end = part_headers.find("\"", filename_pos);
-				std::string filename = part_headers.substr(filename_pos, filename_end - filename_pos);
-
-				if (!filename.empty())
-				{
-					std::string safe_filename;
-					for (size_t i = 0; i < filename.size(); ++i)
-					{
-						char c = filename[i];
-						if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '.' || c == '_' || c == '-')
-							safe_filename += c;
-						else
-							safe_filename += '_';
-					}
-
-					std::string output_path = upload_dir + "/" + safe_filename;
-					if (fileExists(output_path))
-					{
-						std::stringstream unique_name;
-						unique_name << std::time(NULL) << "_" << std::rand() << "_" << safe_filename;
-						output_path = upload_dir + "/" + unique_name.str();
-					}
-
-					std::ofstream output_file(output_path.c_str(), std::ios::binary);
-					if (!output_file.is_open())
-					{
-						*this = generateErrorResponse(500);
-						return;
-					}
-					output_file.write(request_body.data() + data_start, next_boundary - data_start);
-					output_file.close();
-					++saved_files;
-				}
-			}
-			pos = request_body.find(boundary, next_boundary + 2);
-		}
-	}
-
-	if (saved_files == 0)
-	{
-		std::stringstream filename;
-		filename << "post_body_" << std::time(NULL) << "_" << std::rand() << ".bin";
-		std::string output_path = upload_dir + "/" + filename.str();
-		std::ofstream output_file(output_path.c_str(), std::ios::binary);
-		if (!output_file.is_open())
+		std::ifstream temp_file(req.getBodyFilePath().c_str(), std::ios::binary);
+		if (!temp_file.is_open())
 		{
 			*this = generateErrorResponse(500);
 			return;
 		}
-		output_file.write(request_body.data(), request_body.size());
-		output_file.close();
-		saved_files = 1;
+
+		std::string search_boundary = boundary;
+		char buffer[8192];
+		std::string data_window = "";
+
+		bool header_parsed = false;
+		bool is_file = false; // "The Skipper" flag
+		bool is_eof = false;	// EOF safety flag
+
+		std::ofstream out_file;
+
+		// Loop forever until we explicitly break
+		while (true)
+		{
+			// 1. Scoop the data (only if we haven't hit EOF yet)
+			if (!is_eof)
+			{
+				temp_file.read(buffer, sizeof(buffer));
+				std::streamsize bytes_read = temp_file.gcount();
+				if (bytes_read > 0)
+				{
+					data_window.append(buffer, bytes_read);
+				}
+				if (temp_file.eof() || bytes_read == 0)
+				{
+					is_eof = true;
+				}
+			}
+
+			// 2. STATE A: Extract Headers & Filename
+			if (!header_parsed)
+			{
+				size_t header_end = data_window.find("\r\n\r\n");
+				if (header_end != std::string::npos)
+				{
+					std::string sub_headers = data_window.substr(0, header_end);
+
+					size_t filename_pos = sub_headers.find("filename=\"");
+					if (filename_pos != std::string::npos)
+					{
+						is_file = true;
+
+						filename_pos += 10;
+						size_t filename_end = sub_headers.find("\"", filename_pos);
+						std::string safe_filename = "default.bin";
+
+						if (filename_end != std::string::npos)
+						{
+							std::string raw_filename = sub_headers.substr(filename_pos, filename_end - filename_pos);
+							safe_filename = "";
+							for (size_t i = 0; i < raw_filename.size(); ++i)
+							{
+								char c = raw_filename[i];
+								if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '.' || c == '-' || c == '_')
+									safe_filename += c;
+								else
+									safe_filename += '_';
+							}
+						}
+
+						std::stringstream unique_name;
+						unique_name << std::time(NULL) << "_" << std::rand() << "_" << safe_filename;
+						std::string output_path = upload_dir + "/" + unique_name.str();
+
+						out_file.open(output_path.c_str(), std::ios::binary);
+						if (!out_file.is_open())
+						{
+							*this = generateErrorResponse(500);
+							return;
+						}
+					}
+					else
+					{
+						is_file = false;
+					}
+
+					data_window.erase(0, header_end + 4);
+					header_parsed = true;
+				}
+				else
+				{
+					if (is_eof)
+						break;
+					continue;
+				}
+			}
+
+			if (header_parsed)
+			{
+				size_t pos = data_window.find(search_boundary);
+
+				if (pos != std::string::npos)
+				{
+					if (is_file && out_file.is_open())
+					{
+						out_file.write(data_window.data(), pos);
+						out_file.close();
+					}
+
+					data_window.erase(0, pos + search_boundary.size());
+
+
+					if (data_window.size() >= 2 && data_window.substr(0, 2) == "--")
+					{
+						break;
+					}
+
+					header_parsed = false;
+				}
+				else
+				{
+					if (data_window.size() > search_boundary.size())
+					{
+						size_t safe_to_write = data_window.size() - search_boundary.size();
+						if (is_file && out_file.is_open())
+						{
+							out_file.write(data_window.data(), safe_to_write);
+						}
+						data_window.erase(0, safe_to_write);
+					}
+					else if (is_eof)
+					{
+						if (is_file && out_file.is_open())
+						{
+							out_file.write(data_window.data(), data_window.size());
+						}
+						break;
+					}
+				}
+			}
+		}
+
+		if (out_file.is_open())
+			out_file.close();
+		temp_file.close();
 	}
 
-	std::stringstream response_body;
-	response_body << "Created " << saved_files << " file";
-	if (saved_files != 1)
-		response_body << "s";
-	response_body << "\n";
+	else if (contentType.find("application/x-www-form-urlencoded") != std::string::npos ||
+					 contentType.find("text/plain") != std::string::npos ||
+					 contentType.find("application/json") != std::string::npos)
+	{
+		std::ifstream temp_file(req.getBodyFilePath().c_str(), std::ios::binary);
+		if (!temp_file.is_open())
+		{
+			*this = generateErrorResponse(500);
+			return;
+		}
 
-	this->setStatusCode(201);
-	this->setReasonPhrase("Created");
-	this->setBody(response_body.str());
-	this->setHeader("Content-Type", "text/plain");
-	std::stringstream content_length;
-	content_length << this->getBody().size();
-	this->setHeader("Content-Length", content_length.str());
+		std::stringstream unique_name;
+		unique_name << "post_" << std::time(NULL) << "_" << std::rand() << ".txt";
+		std::string output_path = upload_dir + "/" + unique_name.str();
+
+		std::ofstream out_file(output_path.c_str(), std::ios::binary);
+		if (!out_file.is_open())
+		{
+			*this = generateErrorResponse(500);
+			return;
+		}
+
+		char buffer[8192];
+		while (temp_file.read(buffer, sizeof(buffer)) || temp_file.gcount() > 0)
+		{
+			out_file.write(buffer, temp_file.gcount());
+		}
+
+		temp_file.close();
+		out_file.close();
+	}
+
+	else
+	{
+		*this = generateErrorResponse(415); // Unsupported Media Type
+		return;
+	}
+
+	this->setStatusCode(200);
+	this->setReasonPhrase("OK");
+	std::string success_body = "<html><body><h1>Upload Successful</h1></body></html>";
+	this->setBody(success_body);
+	this->setHeader("Content-Type", "text/html");
+	std::stringstream buuferLenght;
+	buuferLenght << this->getBody().size();
+	this->setHeader("Content-Length", buuferLenght.str());
 	this->setHeader("Date", this->current_http_date());
 	this->buildRawResponse();
 }

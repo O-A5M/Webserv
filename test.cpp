@@ -2,6 +2,32 @@
 #include <vector>
 #include <map>
 
+POST / upload HTTP / 1.1
+Host: localhost 8080
+User-Agent: Mozilla / 5.0
+Accept: */*
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Length: 345
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="username"; filename="bb.txt"
+
+Walid
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="profile_pic"; filename="test.txt"
+Content-Type: text/plain
+
+This is the raw content of the uploaded file.
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+
+
+
+
+
+
+
+
 
 int main ()
 {

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webserv | POST Test</title>
+    <style>
+        body {
+            background-color: #050505;
+            color: #00ff41; /* Hacker green */
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 10vh;
+        }
+        .container {
+            border: 2px dashed #00ff41;
+            padding: 30px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 0 10px rgba(0, 255, 65, 0.2);
+        }
+        h2 {
+            margin-top: 0;
+            text-transform: uppercase;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        /* Combined styling for both text and file inputs */
+        input[type="text"], input[type="file"] {
+            padding: 10px;
+            background: rgba(0, 255, 65, 0.1);
+            border: 1px solid #00ff41;
+            color: #00ff41;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        /* Adds a nice glow when typing in the text box */
+        input[type="text"]:focus {
+            outline: none;
+            box-shadow: 0 0 8px rgba(0, 255, 65, 0.6);
+        }
+        button {
+            background-color: #00ff41;
+            color: #050505;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: background-color 0.3s;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #00cc33;
+        }
+        .note {
+            font-size: 0.8em;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Initiate POST Request</h2>
+        <p>Test text fields and file uploads simultaneously.</p>
+
+        <form action="/upload" method="POST" enctype="multipart/form-data">
+
+            <label for="operator-name">Operator Name:</label>
+            <input type="text" id="operator-name" name="operator_name" placeholder="Enter your name..." required>
+
+            <label for="secret-message">Log Message:</label>
+            <input type="text" id="secret-message" name="log_message" placeholder="Enter message...">
+
+            <label for="file-upload">Select Files or Video:</label>
+            <input type="file" id="file-upload" name="uploads" multiple>
+
+            <button type="submit">Execute POST</button>
+
+        </form>
+    </div>
+
+    <p class="note">Status: Awaiting Upload...</p>
+
+</body>
+</html>
