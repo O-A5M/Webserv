@@ -18,6 +18,8 @@ CgiHandler::CgiHandler(int fd,
     uint32_t flags = EPOLLIN;
     if (!writeBuf.empty())
         flags |= EPOLLOUT;
+    else
+        shutdown(fd, SHUT_WR);
     loop.AddHandler(this, flags);
 }
 
@@ -48,7 +50,10 @@ void CgiHandler::OnWrite() {
         return;
     }
     writeBuf.erase(0, n);
-    DisableWrite();
+    if (writeBuf.empty()) {
+        shutdown(fd, SHUT_WR);
+        DisableWrite();
+    }
 }
 
 void CgiHandler::OnClose() {
@@ -111,9 +116,9 @@ CgiHandler* CgiHandler::Launch(
         close(sockPair[0]);
         close(sockPair[1]);
 
-        std::string dir = scriptPath.substr(0, scriptPath.rfind('/'));
-        if (!dir.empty())
-            chdir(dir.c_str());
+        // std::string dir = scriptPath.substr(0, scriptPath.rfind('/'));
+        // if (!dir.empty())
+        //     chdir(dir.c_str());
 
         std::vector<std::string> envStorage;
         std::vector<char*>       envp;

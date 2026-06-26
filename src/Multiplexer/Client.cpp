@@ -70,7 +70,7 @@ void ClientHandler::OnRead(void)
 				std::cout << "Allowed method: " << route_result.allow_methods[i] << std::endl;
 			}
 			if (route_result.is_cgi) {
-				std::cout << "script Path " << route_result.cgi_script_path << std::endl;
+				std::cout << "script Path " << route_result.cgi_env["SCRIPT_FILENAME"] << std::endl;
 				CgiHandler::Launch(route_result.cgi_script_path
 					, getInterpreterPath(), route_result.cgi_env
 					,req.getBody(), serverConf, loop, *this);
