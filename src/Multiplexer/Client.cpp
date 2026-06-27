@@ -100,6 +100,7 @@ void ClientHandler::OnRead(void)
 			}
 
 			this->req.route_result = this->router.route(this->req, this->GetServerConf().port);
+			std::cout << "path" << this->req.route_result.filesystem_path << std::endl;
 			if (this->req.route_result.matched_location == NULL)
 			{
 				this->error_code = this->req.route_result.status;
@@ -146,8 +147,8 @@ void ClientHandler::OnRead(void)
 		}
 		case STATE_COMPLETE:
 		{
-			std::cout << "Request Fully Parsed! Building response..." << std::endl;
-			this->req.display();
+			// std::cout << "Request Fully Parsed! Building response..." << std::endl;
+			// this->req.display();
 			Response res;
 			res.build(this->req, this->req.route_result);
 

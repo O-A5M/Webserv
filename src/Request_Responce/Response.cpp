@@ -233,12 +233,9 @@ void Response::serveFile(const RouteResult &context)
 	this->setHeader("Content-Length", buuferLenght.str());
 	this->setHeader("Date", this->current_http_date());
 	this->buildRawResponse();
-	std::cout << this->getRawResponse() << std::endl;
+	// std::cout << this->getRawResponse() << std::endl;
 }
 
-#include <dirent.h>
-#include <sys/stat.h>
-#include <string>
 
 std::string Response::buildAutoIndex(const std::string &physicalPath, const std::string &requestURI)
 {
@@ -293,10 +290,7 @@ std::string Response::buildAutoIndex(const std::string &physicalPath, const std:
 
 void Response::handlePost(const Request &req, const RouteResult &context)
 {
-	// =========================================================
-	// TASK 1: PRE-FLIGHT CHECKS
-	// =========================================================
-
+	
 	// 1. Method Check
 	if (context.allow_methods.size() > 0 &&
 			(std::find(context.allow_methods.begin(), context.allow_methods.end(), "POST") == context.allow_methods.end()))
@@ -325,7 +319,14 @@ void Response::handlePost(const Request &req, const RouteResult &context)
 	{
 		upload_dir.erase(upload_dir.size() - 1);
 	}
-
+	std::string uri = req.getUri();
+	if (context.matched_location && context.matched_location->root[context.matched_location->root.length() - 1] == '/' && uri[0] == '/') {
+	    upload_dir = context.matched_location->root + uri.substr(1);
+	} else if (context.matched_location && context.matched_location->root[context.matched_location->root.length() - 1] != '/' && uri[0] != '/') {
+	    upload_dir = context.matched_location->root + "/" + uri;
+	} else {
+	    upload_dir = context.matched_location->root + uri;
+	}
 	// 4. Directory Permissions
 	struct stat st;
 	if (stat(upload_dir.c_str(), &st) != 0 || !S_ISDIR(st.st_mode) || access(upload_dir.c_str(), W_OK) != 0)
@@ -333,10 +334,8 @@ void Response::handlePost(const Request &req, const RouteResult &context)
 		*this = generateErrorResponse(403);
 		return;
 	}
+	std::cout << "----------------------------------------------------------------------------------------------Upload directory: " << upload_dir << std::endl;
 
-	// =========================================================
-	// TASK 2: CONTENT-TYPE ROUTING
-	// =========================================================
 
 	std::string contentType = "";
 	std::map<std::string, std::string>::const_iterator it = req.getHeaders().find("content-type");
