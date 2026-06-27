@@ -70,41 +70,26 @@ void Request::setBody(const std::string &body)
 	this->body = body;
 }
 
-//void Request::setHeader(const std::string &key, const std::string &value)
-//{
-//	this->headers[key] = value;
-//}
-
-// Returns 0 on success, or -1 (or 400) if the request should be rejected
 int Request::setHeader(std::string key,std::string value) {
 
-    // Check if the header already exists in our map
     if (this->headers.find(key) != this->headers.end()) {
         if (key == "host")
-            return -1; // Trigger 400 Bad Request
-        // EDGE CASE 2: The "Content-Length" Header
-        // ---------------------------------------------------------
+            return -1; 
         if (key == "content-length") {
-            // If they are exactly the same, ignore the duplicate.
             if (this->headers[key] == value) {
                 return 0;
             }
-            return -2; // Trigger 400 Bad Request
+            return -2; 
         }
         if (key == "content-type") {
             if (this->headers[key] == value) {
                 return 0;
             }
-            return -1; // Trigger 400 Bad Request
+            return -1;
         }
-        // ---------------------------------------------------------
-        // STANDARD RULE: Combine with a comma
-        // ---------------------------------------------------------
-        // For Accept, Transfer-Encoding, etc.
         this->headers[key] += ", " + value;
 
     } else {
-        // It's the first time we are seeing this header. Just insert it.
         this->headers[key] = value;
     }
 
@@ -165,37 +150,6 @@ const std::map<std::string, std::string> &Request::getHeaders(void) const
 void Request::removeHeader(const std::string& key) {
     this->headers.erase(key);
 }
-
-// void Request::display(void) const
-// {
-// 	std::cout << "===== REQUEST =====" << std::endl;
-// 	if (this->Method == UNKNOWN)
-// 		std::cout << "Method:UNKNOWN" << std::endl;
-// 	else if (this->Method == GET)
-// 		std::cout << "Method:GET" << std::endl;
-// 	else if (this->Method == POST)
-// 		std::cout << "Method:POST" << std::endl;
-// 	else if (this->Method == DELETE)
-// 		std::cout << "Method:DELETE" << std::endl;
-// 	std::cout << "URI:" << this->uri << std::endl;
-// 	std::cout << "Version:" << this->version << std::endl;
-// 	std::cout << "Query String:" << this->query_string << std::endl;
-// 	std::cout << "Path:" << this->path << std::endl;
-
-// 	std::cout << "\n--- Headers ---" << std::endl;
-
-// 	std::map<std::string, std::string>::const_iterator it;
-
-// 	for (it = this->headers.begin(); it != this->headers.end(); ++it)
-// 	{
-// 		std::cout << it->first << ":" << it->second << std::endl;
-// 	}
-
-// 	std::cout << "\n--- Body ---" << std::endl;
-
-// 	std::cout << "===================" << std::endl;
-// }
-#include <fstream> // Make sure this is at the top of your file
 
 void Request::display(void) const
 {

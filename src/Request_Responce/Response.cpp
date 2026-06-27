@@ -1,34 +1,5 @@
 #include "../../inc/Response.hpp"
 
-// std::string Response::build_local_path(const std::string &root, const std::string &req_path)
-// {
-// 	std::string final_path = root;
-// 	if (!final_path.empty() && final_path[final_path.size() - 1] == '/')
-// 		final_path.erase(final_path.size() - 1);
-
-// 	if (!req_path.empty() && req_path[0] != '/')
-// 		final_path += "/";
-
-// 	final_path += req_path;
-// 	return final_path;
-// }
-
-// int Response::check_resource(const std::string &local_path)
-// {
-// 	std::cout << "Resource status for " << local_path << std::endl;
-// 	struct stat file_info;
-// 	if (stat(local_path.c_str(),fi &le_info) != 0)
-// 		return 404;
-// 	if (S_ISDIR(file_info.st_mode))
-// 		return 300;
-// 	if (access(local_path.c_str(), R_OK) != 0)
-// 	{
-// 		std::cout << "Permission denied for: " << local_path << std::endl;
-// 		return 403; // Forbidden
-// 	}
-// 	return 200;
-// }
-
 bool fileExists(const std::string &path)
 {
 	struct stat st;
@@ -43,57 +14,57 @@ std::string Response::buildErrorPage(int code, const std::string &reason)
 	oss << code;
 
 	std::string body =
-			"<!DOCTYPE html>"
-			"<html>"
-			"<head>"
-			"<meta charset=\"UTF-8\">"
-			"<title>" +
-			oss.str() + " " + reason + "</title>"
-																 "<style>"
-																 "body {"
-																 "margin: 0;"
-																 "font-family: Arial, sans-serif;"
-																 "background: #f5f5f5;"
-																 "color: #333;"
-																 "display: flex;"
-																 "justify-content: center;"
-																 "align-items: center;"
-																 "height: 100vh;"
-																 "}"
-																 ".box {"
-																 "text-align: center;"
-																 "padding: 40px;"
-																 "background: white;"
-																 "border-radius: 10px;"
-																 "box-shadow: 0 10px 30px rgba(0,0,0,0.1);"
-																 "max-width: 500px;"
-																 "}"
-																 "h1 {"
-																 "font-size: 48px;"
-																 "margin: 0;"
-																 "color: #e74c3c;"
-																 "}"
-																 "p {"
-																 "font-size: 18px;"
-																 "margin-top: 10px;"
-																 "}"
-																 ".code {"
-																 "font-size: 14px;"
-																 "color: #888;"
-																 "margin-top: 20px;"
-																 "}"
-																 "</style>"
-																 "</head>"
-																 "<body>"
-																 "<div class=\"box\">"
-																 "<h1>" +
-			oss.str() + "</h1>"
-									"<p>" +
-			reason + "</p>"
-							 "<div class=\"code\">Webserv Server</div>"
-							 "</div>"
-							 "</body>"
-							 "</html>";
+		"<!DOCTYPE html>"
+		"<html>"
+		"<head>"
+		"<meta charset=\"UTF-8\">"
+		"<title>" +
+		oss.str() + " " + reason + "</title>"
+								   "<style>"
+								   "body {"
+								   "margin: 0;"
+								   "font-family: Arial, sans-serif;"
+								   "background: #f5f5f5;"
+								   "color: #333;"
+								   "display: flex;"
+								   "justify-content: center;"
+								   "align-items: center;"
+								   "height: 100vh;"
+								   "}"
+								   ".box {"
+								   "text-align: center;"
+								   "padding: 40px;"
+								   "background: white;"
+								   "border-radius: 10px;"
+								   "box-shadow: 0 10px 30px rgba(0,0,0,0.1);"
+								   "max-width: 500px;"
+								   "}"
+								   "h1 {"
+								   "font-size: 48px;"
+								   "margin: 0;"
+								   "color: #e74c3c;"
+								   "}"
+								   "p {"
+								   "font-size: 18px;"
+								   "margin-top: 10px;"
+								   "}"
+								   ".code {"
+								   "font-size: 14px;"
+								   "color: #888;"
+								   "margin-top: 20px;"
+								   "}"
+								   "</style>"
+								   "</head>"
+								   "<body>"
+								   "<div class=\"box\">"
+								   "<h1>" +
+		oss.str() + "</h1>"
+					"<p>" +
+		reason + "</p>"
+				 "<div class=\"code\">Webserv Server</div>"
+				 "</div>"
+				 "</body>"
+				 "</html>";
 
 	return body;
 }
@@ -233,9 +204,7 @@ void Response::serveFile(const RouteResult &context)
 	this->setHeader("Content-Length", buuferLenght.str());
 	this->setHeader("Date", this->current_http_date());
 	this->buildRawResponse();
-	// std::cout << this->getRawResponse() << std::endl;
 }
-
 
 std::string Response::buildAutoIndex(const std::string &physicalPath, const std::string &requestURI)
 {
@@ -287,13 +256,12 @@ std::string Response::buildAutoIndex(const std::string &physicalPath, const std:
 	return html;
 }
 
-
 void Response::handlePost(const Request &req, const RouteResult &context)
 {
-	
+
 	// 1. Method Check
 	if (context.allow_methods.size() > 0 &&
-			(std::find(context.allow_methods.begin(), context.allow_methods.end(), "POST") == context.allow_methods.end()))
+		(std::find(context.allow_methods.begin(), context.allow_methods.end(), "POST") == context.allow_methods.end()))
 	{
 		*this = generateErrorResponse(405);
 		return;
@@ -306,7 +274,6 @@ void Response::handlePost(const Request &req, const RouteResult &context)
 	// 	return;
 	// }
 
-	// 3. Path Resolution
 	std::string upload_dir;
 	if (context.matched_location != NULL && !context.matched_location->root.empty())
 		upload_dir = context.matched_location->root;
@@ -320,12 +287,17 @@ void Response::handlePost(const Request &req, const RouteResult &context)
 		upload_dir.erase(upload_dir.size() - 1);
 	}
 	std::string uri = req.getUri();
-	if (context.matched_location && context.matched_location->root[context.matched_location->root.length() - 1] == '/' && uri[0] == '/') {
-	    upload_dir = context.matched_location->root + uri.substr(1);
-	} else if (context.matched_location && context.matched_location->root[context.matched_location->root.length() - 1] != '/' && uri[0] != '/') {
-	    upload_dir = context.matched_location->root + "/" + uri;
-	} else {
-	    upload_dir = context.matched_location->root + uri;
+	if (context.matched_location && context.matched_location->root[context.matched_location->root.length() - 1] == '/' && uri[0] == '/')
+	{
+		upload_dir = context.matched_location->root + uri.substr(1);
+	}
+	else if (context.matched_location && context.matched_location->root[context.matched_location->root.length() - 1] != '/' && uri[0] != '/')
+	{
+		upload_dir = context.matched_location->root + "/" + uri;
+	}
+	else
+	{
+		upload_dir = context.matched_location->root + uri;
 	}
 	// 4. Directory Permissions
 	struct stat st;
@@ -336,7 +308,6 @@ void Response::handlePost(const Request &req, const RouteResult &context)
 	}
 	std::cout << "----------------------------------------------------------------------------------------------Upload directory: " << upload_dir << std::endl;
 
-
 	std::string contentType = "";
 	std::map<std::string, std::string>::const_iterator it = req.getHeaders().find("content-type");
 
@@ -344,7 +315,6 @@ void Response::handlePost(const Request &req, const RouteResult &context)
 	{
 		contentType = it->second;
 	}
-
 
 	if (contentType.find("multipart/form-data") != std::string::npos)
 	{
@@ -366,15 +336,13 @@ void Response::handlePost(const Request &req, const RouteResult &context)
 		std::string data_window = "";
 
 		bool header_parsed = false;
-		bool is_file = false; // "The Skipper" flag
-		bool is_eof = false;	// EOF safety flag
+		bool is_file = false;
+		bool is_eof = false;
 
 		std::ofstream out_file;
 
-		// Loop forever until we explicitly break
 		while (true)
 		{
-			// 1. Scoop the data (only if we haven't hit EOF yet)
 			if (!is_eof)
 			{
 				temp_file.read(buffer, sizeof(buffer));
@@ -389,7 +357,6 @@ void Response::handlePost(const Request &req, const RouteResult &context)
 				}
 			}
 
-			// 2. STATE A: Extract Headers & Filename
 			if (!header_parsed)
 			{
 				size_t header_end = data_window.find("\r\n\r\n");
@@ -461,7 +428,6 @@ void Response::handlePost(const Request &req, const RouteResult &context)
 
 					data_window.erase(0, pos + search_boundary.size());
 
-
 					if (data_window.size() >= 2 && data_window.substr(0, 2) == "--")
 					{
 						break;
@@ -497,46 +463,46 @@ void Response::handlePost(const Request &req, const RouteResult &context)
 		temp_file.close();
 	}
 
-	else if (contentType.find("application/x-www-form-urlencoded") != std::string::npos ||
-					 contentType.find("text/plain") != std::string::npos ||
-					 contentType.find("application/json") != std::string::npos)
-	{
-		std::ifstream temp_file(req.getBodyFilePath().c_str(), std::ios::binary);
-		if (!temp_file.is_open())
-		{
-			*this = generateErrorResponse(500);
-			return;
-		}
-
-		std::stringstream unique_name;
-		unique_name << "post_" << std::time(NULL) << "_" << std::rand() << ".txt";
-		std::string output_path = upload_dir + "/" + unique_name.str();
-
-		std::ofstream out_file(output_path.c_str(), std::ios::binary);
-		if (!out_file.is_open())
-		{
-			*this = generateErrorResponse(500);
-			return;
-		}
-
-		char buffer[8192];
-		while (temp_file.read(buffer, sizeof(buffer)) || temp_file.gcount() > 0)
-		{
-			out_file.write(buffer, temp_file.gcount());
-		}
-
-		temp_file.close();
-		out_file.close();
-	}
-
 	else
 	{
-		*this = generateErrorResponse(415); // Unsupported Media Type
-		return;
-	}
+        std::ifstream temp_file(req.getBodyFilePath().c_str(), std::ios::binary);
+        if (!temp_file.is_open())
+        {
+            *this = generateErrorResponse(500);
+            return;
+        }
 
-	this->setStatusCode(200);
-	this->setReasonPhrase("OK");
+        std::string ext = ".bin"; 
+        if (contentType.find("video/mp4") != std::string::npos) ext = ".mp4";
+        else if (contentType.find("video/mpeg") != std::string::npos) ext = ".mpeg";
+        else if (contentType.find("image/jpeg") != std::string::npos) ext = ".jpg";
+        else if (contentType.find("image/png") != std::string::npos) ext = ".png";
+        else if (contentType.find("application/octet-stream") != std::string::npos) ext = ".bin";
+
+        std::stringstream unique_name;
+        unique_name << "upload_" << std::time(NULL) << "_" << std::rand() << ext;
+        std::string output_path = upload_dir + "/" + unique_name.str();
+
+        std::ofstream out_file(output_path.c_str(), std::ios::binary);
+        if (!out_file.is_open())
+        {
+            temp_file.close();
+            *this = generateErrorResponse(500);
+            return;
+        }
+
+        char buffer[8192];
+        while (temp_file.read(buffer, sizeof(buffer)) || temp_file.gcount() > 0)
+        {
+            out_file.write(buffer, temp_file.gcount());
+        }
+
+        temp_file.close();
+        out_file.close();
+    }
+
+	this->setStatusCode(201);
+	this->setReasonPhrase("Created");
 	std::string success_body = "<html><body><h1>Upload Successful</h1></body></html>";
 	this->setBody(success_body);
 	this->setHeader("Content-Type", "text/html");
@@ -633,18 +599,11 @@ void Response::buildRedirectResponse(const RouteResult &context)
 void Response::build(const Request &req, const RouteResult &context)
 {
 
-	// 1. Did the Router find a rule violation? (e.g., 405 Method Not Allowed)
-	// if (context.status != 200)
-	// {
-	// 	*this = generateErrorResponse(context.status);
-	// 	return;
-	// }
 	if (context.is_redirect)
 	{
 		buildRedirectResponse(context);
 		return;
 	}
-	// 4. If it is a normal file operation, pass it to the Dispatcher!
 	if (context.status == 200)
 	{
 		dispatchMethod(req, context);
@@ -654,25 +613,3 @@ void Response::build(const Request &req, const RouteResult &context)
 		*this = generateErrorResponse(context.status);
 	}
 }
-
-// void Response::build(const Request &req, const RouteContext context)
-// {
-// 	if (req.getMethod() == GET)
-// 	{
-// 		if (std::find(context.allow_methods.begin(), context.allow_methods.end(), "GET") != context.allow_methods.end())
-// 			handleGet(req, context);
-// 		else
-// 		{
-// 			*this = generateErrorResponse(405);
-// 			// std::cout << this->getRawResponse() << std::endl;
-// 		}
-// 	}
-// 	// else if (req.getMethod() == POST)
-// 	// 	handlePost(req);
-
-// 	// else if (req.getMethod() == DELETE)
-// 	// 	handleDelete(req);
-
-// 	// else
-// 	// 	generateErrorResponse(405);
-// }

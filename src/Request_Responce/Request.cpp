@@ -14,8 +14,32 @@ bool Request::is_traversal_attempt(const std::string &path)
 	return false;
 }
 
+std::string decodeURI(const std::string& encoded) {
+    std::string decoded;
+    decoded.reserve(encoded.length()); 
 
-
+    for (size_t i = 0; i < encoded.length(); ++i) {
+        if (encoded[i] == '%' && i + 2 < encoded.length()) {
+            
+            std::string hexStr = encoded.substr(i + 1, 2);
+            
+            
+            char decodedChar = static_cast<char>(std::strtol(hexStr.c_str(), NULL, 16));
+            
+            decoded += decodedChar;
+            i += 2; 
+        } 
+        else if (encoded[i] == '+') {
+            
+            decoded += ' ';
+        } 
+        else {
+            
+            decoded += encoded[i];
+        }
+    }
+    return decoded;
+}
 int Request::parse_request_line(const std::string &req_line)
 {
 	std::string method_str;
@@ -55,11 +79,15 @@ int Request::parse_request_line(const std::string &req_line)
 		this->setMethod(DELETE);
 	else
 		this->setMethod(UNKNOWN);
-	this->setUri(uri);
-	size_t pos = uri.find("?");
+	if (!uri.empty())
+	{
+	std::string SafeUri = decodeURI(uri);
+	this->setUri(SafeUri);
+	size_t pos = SafeUri.find("?");
 	if (pos != std::string::npos)
-		this->setQuery(uri.substr(pos + 1, uri.size() - pos - 1));
-	this->setPath(uri.substr(0, pos));
+		this->setQuery(SafeUri.substr(pos + 1, SafeUri.size() - pos - 1));
+	this->setPath(SafeUri.substr(0, pos));
+	}
 	this->setVersion(version);
 	return 0;
 }
@@ -205,71 +233,12 @@ int Request::convert_hex_to_dec(const std::string &hex)
 	return result;
 }
 
-// int Request::parse_body(const std::string &body, size_t &consumed_bytes)
-// {
-// 	if (this->getHeaders().find("content-length") != this->getHeaders().end())
-// 	{
-// 		size_t bSize = body.size();
-// 		char *end;
-// 		size_t expected_size = strtoul(this->getHeaders().find("content-length")->second.c_str(), &end, 10);
-
-// 		if (bSize < expected_size)
-// 		{
-// 			return 1;
-// 		}
-// 		else if (bSize == expected_size)
-// 		{
-// 			this->setBody(body);
-// 			consumed_bytes = expected_size;
-// 			return 0;
-// 		}
-// 		else
-// 		{
-// 			this->setBody(body.substr(0, expected_size));
-// 			consumed_bytes = expected_size;
-// 			return 0;
-// 		}
-// 	}
-// 	else if (this->getHeaders().find("transfer-encoding") != this->getHeaders().end())
-// 	{
-// 		std::string chunked_body;
-// 		size_t pos = 0;
-// 		while (true)
-// 		{
-// 			size_t crlf_pos = body.find("\r\n", pos);
-// 			if (crlf_pos == std::string::npos)
-// 				return 1;
-// 			std::string chunk_size_str = body.substr(pos, crlf_pos - pos);
-// 			int chunk_size = convert_hex_to_dec(chunk_size_str);
-// 			if (chunk_size < 0)
-// 				return -1; // Invalid chunk size
-// 			pos = crlf_pos + 2;
-// 			if (body.size() < pos + chunk_size + 2)
-// 				return 1; // Incomplete chunk data
-// 			chunked_body += body.substr(pos, chunk_size);
-// 			pos += chunk_size + 2; // Skip chunk data and trailing CRLF
-// 			if (chunk_size == 0)
-// 				break; // Last chunk
-// 		}
-// 		this->setBody(chunked_body);
-// 		consumed_bytes = pos;
-// 		return 0;
-// 	}
-// 	else
-// 	{
-// 		this->setBody("");
-// 		consumed_bytes = 0;
-// 		return 0;
-// 	}
-// }
 
 std::string Request::generate_unique_filename()
 {
 	static unsigned long counter = 0;
 	std::stringstream ss;
 
-	// Using /tmp/ is standard on Linux/Mac and guarantees the folder exists.
-	// If you prefer a local folder like "www/uploads/", ensure that folder exists first!
 	ss << "/tmp/body_"
 		 << std::time(NULL) << "_"
 		 << ++counter << "_"
@@ -298,35 +267,30 @@ int Request::parse_body(const std::string &body, size_t &consumed_bytes)
 			return -1;
 		}
 
-		// How many NEW bytes have arrived since the last time we checked?
 		size_t new_bytes = bSize - this->body_bytes_processed;
 
 		if (new_bytes > 0)
 		{
-			// Make sure we don't write more than the expected size
 			size_t bytes_to_write = new_bytes;
 			if (this->body_bytes_processed + new_bytes > expected_size)
 				bytes_to_write = expected_size - this->body_bytes_processed;
 
-			// Write ONLY the new bytes
 			body_file.write(body.data() + this->body_bytes_processed, bytes_to_write);
 
-			// Save our progress!
 			this->body_bytes_processed += bytes_to_write;
 		}
 
 		if (this->body_bytes_processed < expected_size)
 		{
 			body_file.close();
-			return 1; // Still waiting for more data
+			return 1; 
 		}
 
 		body_file.close();
 		consumed_bytes = expected_size;
-		return 0; // Done!
+		return 0; 
 	}
 
-	// 4. Handle Transfer-Encoding: chunked
 	else if (this->getHeaders().find("transfer-encoding") != this->getHeaders().end())
 	{
 		if (this->body_file_path.empty())
@@ -336,7 +300,6 @@ int Request::parse_body(const std::string &body, size_t &consumed_bytes)
 		if (!body_file.is_open())
 			return -1;
 
-		// START WHERE WE LEFT OFF, not at 0!
 		size_t pos = this->body_bytes_processed;
 
 		while (true)
@@ -345,7 +308,7 @@ int Request::parse_body(const std::string &body, size_t &consumed_bytes)
 			if (crlf_pos == std::string::npos)
 			{
 				body_file.close();
-				return 1; // Waiting for the rest of the chunk
+				return 1; 
 			}
 
 			std::string chunk_size_str = body.substr(pos, crlf_pos - pos);
@@ -354,7 +317,7 @@ int Request::parse_body(const std::string &body, size_t &consumed_bytes)
 			if (chunk_size < 0)
 			{
 				body_file.close();
-				return -1; // Invalid chunk
+				return -1; 
 			}
 
 			size_t data_start = crlf_pos + 2;
@@ -362,30 +325,26 @@ int Request::parse_body(const std::string &body, size_t &consumed_bytes)
 			if (body.size() < data_start + chunk_size + 2)
 			{
 				body_file.close();
-				return 1; // We have the size, but the actual chunk data isn't fully here yet
+				return 1; 
 			}
 
-			// Write this specific chunk directly to the file
 			if (chunk_size > 0)
 			{
 				body_file.write(body.data() + data_start, chunk_size);
 			}
 
-			// Move pos past the chunk data and its trailing "\r\n"
 			pos = data_start + chunk_size + 2;
 
-			// SAVE OUR PROGRESS!
 			this->body_bytes_processed = pos;
 
 			if (chunk_size == 0)
-				break; // 0-sized chunk means we are completely done
+				break; 
 		}
 
 		body_file.close();
 		consumed_bytes = pos;
 		return 0;
 	}
-	// 5. No body expected
 	else
 	{
 		consumed_bytes = 0;
@@ -410,136 +369,3 @@ ParseStatus Request::validateRequest()
 		return BAD_REQUEST;
 	return OK;
 }
-
-// int Request::parse_request(std::string &raw)
-// {
-
-// 	if (raw.empty())
-// 		return PARSE_WAITING;
-// 	size_t pos = raw.find("\r\n\r\n");
-// 	size_t pos_req_line = raw.find("\r\n");
-// 	if (pos_req_line == std::string::npos || pos == std::string::npos)
-// 		return PARSE_WAITING;
-// 	std::string request_line = raw.substr(0, pos_req_line);
-// 	std::string header = raw.substr(pos_req_line + 2, pos - (pos_req_line + 2));
-// 	if (header.size() > MAX_HEADER_SIZE)
-// 		return PARSE_HEADER_TOO_LARGE;
-// 	int typeOfError = this->parse_request_line(request_line);
-// 	if (typeOfError < 0)
-// 		return PARSE_BAD_REQUEST;
-// 	int typeOfError2 = this->parse_request_headers(header);
-// 	if (typeOfError2 < 0)
-// 		return PARSE_BAD_REQUEST;
-// 	size_t consumed_body_bytes = 0;
-// 	std::string body = raw.substr(pos + 4);
-// 	int bodyParseResult = this->parse_body(body, consumed_body_bytes);
-// 	if (bodyParseResult < 0)
-// 		return PARSE_BAD_REQUEST;
-// 	if (bodyParseResult == 1)
-// 		return PARSE_WAITING;
-// 	// this->display();
-// 	size_t total_parsed_bytes = (pos + 4) + consumed_body_bytes;
-// 	raw.erase(0, total_parsed_bytes);
-// 	return PARSE_SUCCESS;
-// }
-
-// int parse_request(std::string &raw, Request &req)
-// {
-// 	while (!raw.empty())
-// 	{
-// 		size_t pos = raw.find("\r\n\r\n");
-// 		size_t pos_req_line = raw.find("\r\n");
-// 		if (pos_req_line == std::string::npos || pos == std::string::npos)
-// 		{
-// 			std::cout << "Waiting for the rest of the headers..." << std::endl;
-// 			return 1;
-// 		}
-// 		std::string request_line = raw.substr(0, pos_req_line);
-// 		std::string header = raw.substr(pos_req_line + 2, pos - (pos_req_line + 2));
-// 		if (header.size() > MAX_HEADER_SIZE)
-// 		{
-// 			std::cout << "431 Request Header Fields Too Large" << std::endl;
-// 			return -1;
-// 		}
-// 		int typeOfError = parse_request_line(request_line, req);
-// 		int typeOfError2 = parse_request_headers(header, req);
-// 		if (typeOfError < 0 || typeOfError2 < 0)
-// 		{
-// 			std::cout << "400 Bad Request: Malformed HTTP" << std::endl;
-// 			return -1;
-// 		}
-// 		size_t consumed_body_bytes = 0;
-// 		std::string body = raw.substr(pos + 4);
-// 		int bodyParseResult = parse_body(body, req, consumed_body_bytes);
-// 		if (bodyParseResult < 0)
-// 		{
-// 			std::cout << "400 Bad Request: Malformed HTTP" << std::endl;
-// 			return -1;
-// 		}
-// 		if (bodyParseResult == 1)
-// 		{
-// 			std::cout << "Waiting for more data to complete the body..." << std::endl;
-// 			return 1;
-// 		}
-// 		req.display();
-// 		int validation_status = validateRequest(req);
-// 		std::cout << "Validation result: " << validation_status << std::endl;
-// 		if (validation_status == 200 && req.getMethod() == GET)
-// 		{
-// 			std::string path = req.getPath();
-// 			if (path.empty())
-// 				path = "/";
-// 			std::string local_path = build_local_path("www/", path);
-// 			int resource_status = check_resource(local_path);
-// 			if (resource_status == 200)
-// 			{
-// 				std::string content = execute_get(local_path);
-// 				std::cout << content << std::endl;
-// 			}
-// 			else if (resource_status == 300)
-// 			{
-// 				if (path[path.size() - 1] != '/')
-// 					std::cout << "301 Moved Permanently" << std::endl;
-// 				else.
-
-// 				{
-// 					// autoindexing logic not working yet :(
-// 					std::string index_path = build_local_path(local_path, "index.html");
-// 					if (check_resource(index_path) == 200)
-// 						std::cout << execute_get(index_path) << std::endl;
-// 					else
-// 						std::cout << "403 Forbidden" << std::endl;
-// 				}
-// 			}
-// 			else
-// 				std::cout << "404 Not Found" << std::endl;
-// 		}
-// 		size_t total_parsed_bytes = (pos + 4) + consumed_body_bytes;
-// 		raw.erase(0, total_parsed_bytes);
-// 		req = Request();
-// 	}
-// 	return 0;
-// }
-
-// int main()
-// {
-// 	Request req;
-// 	req.parse_request(raw);
-// 	Response res;
-// 	res.handleRequest(req);
-
-// 	// 	if ( result == -1)
-// 	// 		return -1;
-// 	// 	else if (result == 1)
-// 	// 	{
-// 	// 	std::cout << "Waiting for more data to complete the request..." << std::endl;
-// 	// }
-
-// 	// if (req.getMethod() == GET)
-// 	// {
-// 	// 	res.get()
-// 	// }
-
-// 	// std::cout << "Validation result: " << validateRequest(req) << std::endl;
-// 	//	req.display();
-// }

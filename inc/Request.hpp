@@ -40,27 +40,6 @@ enum ParseStatus
 	VERSION_NOT_SUPPORTED = 505
 };
 
-// enum ParseResult
-// {
-// 	STATE_READING_HEADERS,
-// 	STATE_HEADERS_DONE,
-// 	STATE_READING_BODY,
-// 	PARSE_WAITING,
-// 	PARSE_SUCCESS,
-// 	PARSE_BAD_REQUEST = 400,		 // 400
-// 	PARSE_HEADER_TOO_LARGE = 431 // 431
-// };
-
-// typedef  struct	s_Request {
-// 	e_Methodes							Methodes;
-// 	std::string							uri;
-// 	std::string							version;
-// 	std::string							content_type;
-// 	std::string 						content_size;
-// 	std::string							path;
-// 	std::map<std::string, std::string>	headers;
-// 	std::string							body;
-// } s_Request;
 
 class Request
 {
