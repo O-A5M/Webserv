@@ -13,6 +13,7 @@
 #include <cerrno>
 #include "RouteResult.hpp"
 #include <dirent.h>
+#include <cstdio>
 class Response
 {
 private:
@@ -21,11 +22,9 @@ private:
 	std::map<std::string, std::string> headers;
 	std::string body;
 	std::string raw_response;
-	std::string build_local_path(const std::string &root, const std::string &req_path);
-	int check_resource(const std::string &local_path);
 	void handleGet(const Request &req, const RouteResult &context);
 	void handlePost(const Request &req , const RouteResult &context);
-	void handleDelete(const Request &req);
+	void handleDelete(const RouteResult &context);
 
 	void setStatusCode(int code);
 	void setReasonPhrase(const std::string &phrase);

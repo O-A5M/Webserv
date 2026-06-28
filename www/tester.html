@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POST & DELETE Endpoint Tester</title>
+    <style>
+        :root {
+            --bg-beige: #F4F1EA;
+            --card-white: #FFFFFF;
+            --aegean-blue: #005B96;
+            --deep-blue: #03396c;
+            --light-blue: #E1F0F8;
+            --text-main: #2C3E50;
+            --text-muted: #7F8C8D;
+            --danger-red: #E74C3C;
+            --danger-hover: #C0392B;
+            --border-color: #EAE6DF;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background-color: var(--bg-beige);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            padding: 40px 20px;
+            margin: 0;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .hero {
+            background-color: var(--aegean-blue);
+            color: var(--card-white);
+            padding: 20px 30px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0, 91, 150, 0.15);
+        }
+
+        .hero h1 { margin: 0; font-size: 1.5rem; font-weight: 500; }
+        .back-link { color: var(--light-blue); text-decoration: none; }
+        .back-link:hover { color: var(--card-white); }
+
+        .card {
+            background-color: var(--card-white);
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 15px 25px;
+            border-bottom: 1px solid var(--border-color);
+            background-color: #FAFAFA;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-header h2 { margin: 0; font-size: 1.1rem; color: var(--deep-blue); }
+
+        .card-body { padding: 25px; }
+
+        /* Form Styles */
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; margin-bottom: 8px; font-weight: 500; }
+        input[type="file"] {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            border: 1px dashed var(--aegean-blue);
+            border-radius: 6px;
+            background-color: var(--light-blue);
+        }
+
+        .btn {
+            background-color: var(--aegean-blue);
+            color: var(--card-white);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        .btn:hover { background-color: var(--deep-blue); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        /* Directory List Styles */
+        .file-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .file-item:last-child { border-bottom: none; }
+        
+        .delete-btn {
+            background-color: var(--danger-red);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .delete-btn:hover { background-color: var(--danger-hover); }
+
+        .empty-state { text-align: center; color: var(--text-muted); padding: 20px; }
+
+        /* Console */
+        .console {
+            background-color: #1E1E1E;
+            color: #4AF626;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            margin-top: 15px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        .console h3 { margin: 0 0 10px 0; color: #FFF; font-size: 0.9rem; }
+        pre { margin: 0; white-space: pre-wrap; word-wrap: break-word; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header class="hero mini">
+            <h1>Endpoint Tester</h1>
+            <a href="index.html" class="back-link">← Back to Team</a>
+        </header>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>1. Upload File (POST)</h2>
+            </div>
+            <div class="card-body">
+                <form id="postForm">
+                    <div class="input-group">
+                        <label for="fileData">Select Files (Binary)</label>
+                        <input type="file" id="fileData" name="fileData[]" multiple required>
+                    </div>
+                    <button type="submit" class="btn" id="uploadBtn">Send POST Request</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>2. Manage Uploads (DELETE)</h2>
+                <button class="btn" onclick="fetchDirectory()" style="padding: 5px 10px; font-size: 0.8rem;">⟳ Refresh</button>
+            </div>
+            <div class="card-body" style="padding: 10px 25px;">
+                <ul class="file-list" id="fileList">
+                    <div class="empty-state">Loading files...</div>
+                </ul>
+            </div>
+        </div>
+
+        <div class="console">
+            <h3>Server Response Log:</h3>
+            <pre id="responseLog">Awaiting actions...</pre>
+        </div>
+    </div>
+
+    <script>
+        const targetDirectory = '/upload/';
+        const fileListElement = document.getElementById('fileList');
+        const logElement = document.getElementById('responseLog');
+        const form = document.getElementById('postForm');
+        const uploadBtn = document.getElementById('uploadBtn');
+
+        function log(message) {
+            const time = new Date().toLocaleTimeString();
+            logElement.textContent = `[${time}] ${message}\n` + logElement.textContent;
+        }
+
+        // --- 1. POST HANDLING ---
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault(); // Stop the page from reloading
+            
+            const formData = new FormData(form);
+            const files = document.getElementById('fileData').files;
+            
+            if (files.length === 0) return;
+
+            uploadBtn.textContent = 'Uploading...';
+            uploadBtn.disabled = true;
+
+            try {
+                const response = await fetch(targetDirectory, {
+                    method: 'POST',
+                    body: formData // Fetch automatically sets the correct multipart/form-data headers and boundaries
+                });
+
+                if (response.ok || response.status === 201) {
+                    log(`POST Success: ${response.status} ${response.statusText}`);
+                    form.reset(); // Clear the file input
+                    fetchDirectory(); // Immediately refresh the file list below
+                } else {
+                    log(`POST Error: ${response.status} ${response.statusText}`);
+                }
+            } catch (error) {
+                log(`POST Failed: ${error.message}`);
+            } finally {
+                uploadBtn.textContent = 'Send POST Request';
+                uploadBtn.disabled = false;
+            }
+        });
+
+        // --- 2. GET & PARSE DIRECTORY ---
+        async function fetchDirectory() {
+            try {
+                const response = await fetch(targetDirectory);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
+                const htmlText = await response.text();
+                parseAndRenderFiles(htmlText);
+            } catch (error) {
+                fileListElement.innerHTML = `<div class="empty-state">Could not load directory. Is autoindex on?</div>`;
+                log(`GET Error: ${error.message}`);
+            }
+        }
+
+        function parseAndRenderFiles(html) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const links = doc.querySelectorAll('a');
+            
+            let filesFound = 0;
+            fileListElement.innerHTML = ''; 
+
+            links.forEach(link => {
+                let rawHref = link.getAttribute('href');
+                if (rawHref && rawHref !== '../' && rawHref !== '/') {
+                    rawHref = rawHref.replace(/\/$/, '');
+                    
+                    // Extract exactly the filename, bypassing double-slash autoindex quirks
+                    const baseName = rawHref.substring(rawHref.lastIndexOf('/') + 1);
+                    
+                    if (baseName) {
+                        addFileToDOM(baseName);
+                        filesFound++;
+                    }
+                }
+            });
+
+            if (filesFound === 0) {
+                fileListElement.innerHTML = '<div class="empty-state">The directory is empty.</div>';
+            }
+        }
+
+        function addFileToDOM(filename) {
+            const li = document.createElement('li');
+            li.className = 'file-item';
+            li.id = `file-${filename}`;
+            li.innerHTML = `
+                <span>📄 ${filename}</span>
+                <button class="delete-btn" onclick="deleteFile('${filename}')">Delete</button>
+            `;
+            fileListElement.appendChild(li);
+        }
+
+        // --- 3. DELETE HANDLING ---
+        async function deleteFile(filename) {
+            const row = document.getElementById(`file-${filename}`);
+            const btn = row.querySelector('.delete-btn');
+            
+            btn.textContent = '...';
+            btn.disabled = true;
+
+            // Safe URI construction
+            const cleanUri = `${targetDirectory}/${filename}`.replace(/\/+/g, '/');
+
+            try {
+                const response = await fetch(cleanUri, { method: 'DELETE' });
+
+                if (response.ok || response.status === 204) {
+                    row.remove();
+                    log(`DELETE Success: Removed ${filename}`);
+                    if (fileListElement.children.length === 0) {
+                        fileListElement.innerHTML = '<div class="empty-state">The directory is empty.</div>';
+                    }
+                } else {
+                    throw new Error(`Server returned ${response.status}`);
+                }
+            } catch (error) {
+                btn.textContent = 'Delete';
+                btn.disabled = false;
+                log(`DELETE Failed: ${error.message}`);
+            }
+        }
+
+        // Initial load of the directory
+        window.onload = fetchDirectory;
+    </script>
+</body>
+</html>

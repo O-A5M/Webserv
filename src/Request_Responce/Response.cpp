@@ -299,14 +299,14 @@ void Response::handlePost(const Request &req, const RouteResult &context)
 	{
 		upload_dir = context.matched_location->root + uri;
 	}
-	// 4. Directory Permissions
+
 	struct stat st;
+
 	if (stat(upload_dir.c_str(), &st) != 0 || !S_ISDIR(st.st_mode) || access(upload_dir.c_str(), W_OK) != 0)
 	{
 		*this = generateErrorResponse(403);
 		return;
 	}
-	std::cout << "----------------------------------------------------------------------------------------------Upload directory: " << upload_dir << std::endl;
 
 	std::string contentType = "";
 	std::map<std::string, std::string>::const_iterator it = req.getHeaders().find("content-type");
@@ -465,41 +465,46 @@ void Response::handlePost(const Request &req, const RouteResult &context)
 
 	else
 	{
-        std::ifstream temp_file(req.getBodyFilePath().c_str(), std::ios::binary);
-        if (!temp_file.is_open())
-        {
-            *this = generateErrorResponse(500);
-            return;
-        }
+		std::ifstream temp_file(req.getBodyFilePath().c_str(), std::ios::binary);
+		if (!temp_file.is_open())
+		{
+			*this = generateErrorResponse(500);
+			return;
+		}
 
-        std::string ext = ".bin"; 
-        if (contentType.find("video/mp4") != std::string::npos) ext = ".mp4";
-        else if (contentType.find("video/mpeg") != std::string::npos) ext = ".mpeg";
-        else if (contentType.find("image/jpeg") != std::string::npos) ext = ".jpg";
-        else if (contentType.find("image/png") != std::string::npos) ext = ".png";
-        else if (contentType.find("application/octet-stream") != std::string::npos) ext = ".bin";
+		std::string ext = ".bin";
+		if (contentType.find("video/mp4") != std::string::npos)
+			ext = ".mp4";
+		else if (contentType.find("video/mpeg") != std::string::npos)
+			ext = ".mpeg";
+		else if (contentType.find("image/jpeg") != std::string::npos)
+			ext = ".jpg";
+		else if (contentType.find("image/png") != std::string::npos)
+			ext = ".png";
+		else if (contentType.find("application/octet-stream") != std::string::npos)
+			ext = ".bin";
 
-        std::stringstream unique_name;
-        unique_name << "upload_" << std::time(NULL) << "_" << std::rand() << ext;
-        std::string output_path = upload_dir + "/" + unique_name.str();
+		std::stringstream unique_name;
+		unique_name << "upload_" << std::time(NULL) << "_" << std::rand() << ext;
+		std::string output_path = upload_dir + "/" + unique_name.str();
 
-        std::ofstream out_file(output_path.c_str(), std::ios::binary);
-        if (!out_file.is_open())
-        {
-            temp_file.close();
-            *this = generateErrorResponse(500);
-            return;
-        }
+		std::ofstream out_file(output_path.c_str(), std::ios::binary);
+		if (!out_file.is_open())
+		{
+			temp_file.close();
+			*this = generateErrorResponse(500);
+			return;
+		}
 
-        char buffer[8192];
-        while (temp_file.read(buffer, sizeof(buffer)) || temp_file.gcount() > 0)
-        {
-            out_file.write(buffer, temp_file.gcount());
-        }
+		char buffer[8192];
+		while (temp_file.read(buffer, sizeof(buffer)) || temp_file.gcount() > 0)
+		{
+			out_file.write(buffer, temp_file.gcount());
+		}
 
-        temp_file.close();
-        out_file.close();
-    }
+		temp_file.close();
+		out_file.close();
+	}
 
 	this->setStatusCode(201);
 	this->setReasonPhrase("Created");
@@ -564,6 +569,54 @@ void Response::handleGet(const Request &req, const RouteResult &context)
 	}
 }
 
+void Response::handleDelete(const RouteResult &context)
+{
+	if (context.allow_methods.size() > 0 && 
+       (std::find(context.allow_methods.begin(), context.allow_methods.end(), "DELETE") == context.allow_methods.end()))
+    {
+        *this = generateErrorResponse(405);
+        return;
+    }
+
+    struct stat st;
+    if (stat(context.filesystem_path.c_str(), &st) != 0)
+    {
+        *this = generateErrorResponse(404);
+        return;
+    }
+
+    if (S_ISDIR(st.st_mode))
+    {
+        *this = generateErrorResponse(403);
+        return;
+    }
+
+    if (std::remove(context.filesystem_path.c_str()) != 0)
+    {
+        if (errno == EACCES || errno == EPERM) {
+            *this = generateErrorResponse(403);
+        } else {
+            *this = generateErrorResponse(500);
+        }
+        return;
+    }
+
+    this->setStatusCode(200); 
+    this->setReasonPhrase("OK");
+    
+    std::string success_body = "<html><body><h1>Delete Successful</h1></body></html>";
+    this->setBody(success_body);
+    this->setHeader("Content-Type", "text/html");
+    
+    std::stringstream bufferLength;
+    bufferLength << this->getBody().size();
+    this->setHeader("Content-Length", bufferLength.str());
+    this->setHeader("Date", this->current_http_date());
+    
+    this->buildRawResponse();
+
+}
+
 void Response::dispatchMethod(const Request &req, const RouteResult &context)
 {
 
@@ -575,10 +628,10 @@ void Response::dispatchMethod(const Request &req, const RouteResult &context)
 	{
 		handlePost(req, context);
 	}
-	// else if (req.getMethod() == DELETE)
-	// {
-	// 	handleDelete(context);
-	// }
+	else if (req.getMethod() == DELETE)
+	{
+		handleDelete(context);
+	}
 	// else
 	// {
 	// 	buildErrorResponse(501); // 501 Not Implemented
