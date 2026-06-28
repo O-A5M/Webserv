@@ -222,7 +222,7 @@ std::string Response::buildAutoIndex(const std::string &physicalPath, const std:
 
 		std::string itemName = entry->d_name;
 
-		if (itemName == ".")
+		if (itemName == "." || itemName == "..")
 		{
 			continue;
 		}
