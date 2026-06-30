@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebServ - Session Management</title>
+    <style> body { font-family: Arial; padding: 50px; } </style>
+</head>
+<body>
+    <h1>WebServ Session Demonstration</h1>
+    <p>You have visited this page: <strong>{{VISIT_COUNT}}</strong> times.</p>
+    <p>Your Session ID is: <code>{{SESSION_ID}}</code></p>
+    
+    <form action='/cookies' method='GET'>
+        <input type='hidden' name='action' value='clear'>
+        <button type='submit'>Clear My Session</button>
+    </form>
+</body>
+</html>

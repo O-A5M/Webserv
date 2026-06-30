@@ -1,4 +1,9 @@
 #include "../../inc/Response.hpp"
+#include "../../inc/sessionTracker.hpp"
+#include "../../inc/RouteResult.hpp"
+#include "../../inc/Request.hpp"
+
+static sessionTracker globalTracker; // about cookies
 
 // std::string Response::build_local_path(const std::string &root, const std::string &req_path)
 // {
@@ -28,6 +33,114 @@
 // 	}
 // 	return 200;
 // }
+
+std::string Response::readHtmlTemplate(const std::string& filepath)
+{
+	std::ifstream file(filepath.c_str());
+	if (!file.is_open()) 
+        return "<h1>Error: Could not open cookies.html template on disk.</h1>";
+	
+	std::stringstream buffer;
+	buffer << file.rdbuf();
+	return buffer.str();
+}
+
+void Response::replacePlaceholder(std::string& content, const std::string& placeholder, const std::string& replacement)
+{
+	size_t pos = content.find(placeholder);
+	while (pos != std::string::npos) {
+		content.replace(pos, placeholder.length(), replacement);
+		pos = content.find(placeholder, pos + replacement.length());
+	}
+}
+
+// Helper function to trim spaces
+// static std::string trimSpace(const std::string& str) {
+//     size_t first = str.find_first_not_of(' ');
+//     if (std::string::npos == first) return "";
+//     size_t last = str.find_last_not_of(' ');
+//     return str.substr(first, (last - first + 1));
+// }
+
+// Phase 1 Tokenizer
+// static std::map<std::string, std::string> parseCookies(const std::string& cookieHeader) {
+//     std::map<std::string, std::string> cookies;
+//     size_t start = 0, end = 0;
+
+//     while ((end = cookieHeader.find(';', start)) != std::string::npos) {
+//         std::string pair = cookieHeader.substr(start, end - start);
+//         size_t eq_pos = pair.find('=');
+//         if (eq_pos != std::string::npos) {
+//             cookies[trimSpace(pair.substr(0, eq_pos))] = trimSpace(pair.substr(eq_pos + 1));
+//         }
+//         start = end + 1;
+//     }
+//     std::string last_pair = cookieHeader.substr(start);
+//     size_t eq_pos = last_pair.find('=');
+//     if (eq_pos != std::string::npos) {
+//         cookies[trimSpace(last_pair.substr(0, eq_pos))] = trimSpace(last_pair.substr(eq_pos + 1));
+//     }
+//     return cookies;
+// }
+
+void Response::setCookie(const std::string &name, const std::string &value, const std::string &path, bool httpOnly) {
+    std::string cookieStr = name + "=" + value;
+    if (!path.empty()) cookieStr += "; Path=" + path;
+    if (httpOnly) cookieStr += "; HttpOnly";
+    
+    setCookieHeaders.push_back(cookieStr);
+}
+
+void Response::handleVisitCounter(const Request &req, const RouteResult &context) {
+    std::map<std::string, std::string> cookies = req.getCookies();
+    std::string sessionId = cookies["session_id"];
+
+    int visitCount = 0;
+    bool isNewSession = false;
+
+    if (req.getQuery() == "action=clear") {
+        globalTracker.destroySession(sessionId);
+        this->setHeader("Set-Cookie", "session_id=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/");
+        this->setStatusCode(302);
+        this->setHeader("Location", "/cookies");
+        this->buildRawResponse();
+        return;
+    }
+
+    if (globalTracker.isValidSession(sessionId)) {
+        visitCount = globalTracker.incrementvisit(sessionId);
+    } else {
+        sessionId = globalTracker.createSession();
+        visitCount = 1;
+        isNewSession = true;
+    }
+
+    // 4. Read HTML from DISK and inject data
+    std::string htmlBody = readHtmlTemplate(context.filesystem_path);
+    
+    // C++98 friendly int to string
+    std::stringstream ss;
+    ss << visitCount;
+    
+    replacePlaceholder(htmlBody, "{{VISIT_COUNT}}", ss.str());
+    replacePlaceholder(htmlBody, "{{SESSION_ID}}", sessionId);
+
+    // 5. Assemble headers and body
+    this->setStatusCode(200);
+    this->setReasonPhrase("OK");
+    this->setHeader("Content-Type", "text/html");
+    
+    std::stringstream len_ss;
+    len_ss << htmlBody.length();
+    this->setHeader("Content-Length", len_ss.str());
+    
+    if (isNewSession) {
+        this->setCookie("session_id", sessionId, "/", true);
+    }
+
+    this->setBody(htmlBody);
+    this->buildRawResponse();
+}
 
 bool fileExists(const std::string &path)
 {
@@ -187,16 +300,24 @@ std::string Response::get_mime_type(const std::string &path)
 	return "application/octet-stream";
 }
 
-void Response::buildRawResponse()
-{
-	std::stringstream response_stream;
-	response_stream << "HTTP/1.1 " << this->status_code << " " << this->reason_phrase << "\r\n";
-	std::map<std::string, std::string>::const_iterator it;
-	for (it = this->headers.begin(); it != this->headers.end(); ++it)
-		response_stream << it->first << ": " << it->second << "\r\n";
-	response_stream << "\r\n";
-	response_stream << this->body;
-	this->setRawResponse(response_stream.str());
+void Response::buildRawResponse() {
+    std::stringstream response_stream;
+    
+    // Status Line
+    response_stream << "HTTP/1.1 " << this->status_code << " " << this->reason_phrase << "\r\n";
+    
+    // Standard Headers
+    for (std::map<std::string, std::string>::const_iterator it = headers.begin(); it != headers.end(); ++it)
+        response_stream << it->first << ": " << it->second << "\r\n";
+    
+    // --- THIS PART IS VITAL ---
+    // Inject the cookies you just set
+    for (size_t i = 0; i < setCookieHeaders.size(); ++i)
+        response_stream << "Set-Cookie: " << setCookieHeaders[i] << "\r\n";
+    
+    response_stream << "\r\n" << this->body;
+    
+    this->setRawResponse(response_stream.str());
 }
 
 std::string Response::current_http_date()
@@ -387,6 +508,14 @@ void Response::build(const Request &req, const RouteResult &context)
 		buildRedirectResponse(context);
 		return;
 	}
+
+	// --- NEW: Trigger Phase 3 ---
+    if (context.is_session_test)
+    {
+        handleVisitCounter(req, context);
+        return;
+    }
+
 	// 4. If it is a normal file operation, pass it to the Dispatcher!
 	if (context.status == 200)
 	{

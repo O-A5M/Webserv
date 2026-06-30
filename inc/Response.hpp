@@ -13,6 +13,8 @@
 #include <cerrno>
 #include "RouteResult.hpp"
 #include <dirent.h>
+#include <vector> // [Cookies]
+
 class Response
 {
 private:
@@ -45,12 +47,21 @@ private:
 	static std::string buildErrorPage(int code, const std::string &reason);
 	std::string buildAutoIndex(const std::string &physicalPath, const std::string &requestURI);
 
+	// about cookies
+	void handleVisitCounter(const Request &req, const RouteResult &context);
+    std::string readHtmlTemplate(const std::string& filepath);
+    void replacePlaceholder(std::string& content, const std::string& placeholder, const std::string& replacement);
+
 public:
 	void buildRedirectResponse(const RouteResult &context);
 	const std::string &getRawResponse() const;
 	static Response generateErrorResponse(int code);
 	void serveFile(const RouteResult &context);
 	void build(const Request &req, const RouteResult &context);
+
+	// about cookies
+	void setCookie(const std::string &name, const std::string &value, const std::string &path = "/", bool httpOnly = true);
+	std::vector<std::string> setCookieHeaders; // Add this container
 };
 
 #endif

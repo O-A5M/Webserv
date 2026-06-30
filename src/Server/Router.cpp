@@ -203,6 +203,19 @@ std::string Router::build_filesystem_path(RouteResult &res, const ServerConfig &
 
 bool Router::validate_path(const std::string &path, const LocationConfig &location, RouteResult &result)
 {
+    if (path.length() >= 8 && path.substr(path.length() - 8) == "/cookies") 
+    {
+        result.is_session_test = true;
+        result.status = 200;
+        result.reason = "OK";
+        
+        // IMPORTANT: Set the path to your physical HTML template file.
+        // Update this to match the exact directory where your cookies.html is stored.
+        result.filesystem_path = "./www/cookies.html"; 
+        
+        return true; // Return early to bypass file checks
+    }
+    
     struct stat file_stat;
 
     if (stat(path.c_str(), &file_stat) != 0)

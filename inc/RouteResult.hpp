@@ -21,6 +21,7 @@ struct RouteResult {
     bool is_autoindex;                               // directory listing?
     bool is_directory;                               // is a directory?
     bool is_file;                                    // is a file?
+    bool is_session_test;
     bool is_redirect;                                // redirect response?
     std::string redirect_location;                   // where to redirect (301/302)
     std::vector<std::string> allow_methods;         // allowed methods (for 405)
