@@ -49,9 +49,15 @@ RouteResult Router::route(const Request& req, int incoming_port) {
     result.matched_location = location;
 
     result.allow_methods = location->allow_methods;
+    if (location->is_maxBody == false) { 
+        result.max_body_size = server->client_max_body_size;
+        std::cout << "DKHELLLLLLLLLLLLLLL: "<< result.max_body_size << std::endl;
+    } else {
+        result.max_body_size = location->client_max_body_size;
+    } 
 
-		if (apply_redirect_if_needed(*location, result))
-			return result;
+    if (apply_redirect_if_needed(*location, result))
+        return result;
 
     result.filesystem_path = build_filesystem_path(*server, *location, req.getPath());
 

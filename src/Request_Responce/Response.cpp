@@ -266,8 +266,8 @@ void Response::handlePost(const Request &req, const RouteResult &context)
 		*this = generateErrorResponse(405);
 		return;
 	}
-	std::cout << "size: " << context.matched_location->client_max_body_size << std::endl;
-	if (context.matched_location != NULL && req.getBody().size() > context.matched_location->client_max_body_size)
+	std::cout << "size------------------------: " << context.max_body_size << std::endl;
+	if (context.matched_location != NULL && req.getBody().size() > context.max_body_size)
 	{
 		*this = generateErrorResponse(413);
 		return;

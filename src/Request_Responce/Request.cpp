@@ -362,8 +362,6 @@ ParseStatus Request::validateRequest()
 		return URI_TOO_LONG;
 	if (this->is_traversal_attempt(this->getUri()))
 		return FORBIDDEN;
-	if (Client_max_body_size < this->getBody().size())
-		return PAYLOAD_TOO_LARGE;
 	std::map<std::string, std::string>::const_iterator it = this->getHeaders().find("host");
 	if (it == this->getHeaders().end() || it->second.empty())
 		return BAD_REQUEST;
