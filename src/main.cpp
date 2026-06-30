@@ -28,6 +28,17 @@ int main(int ac, char **av)
 
 		// Starting the connection for the servers
 		std::vector<Server>	servers;
+
+	
+
+		for (std::vector<ServerConfig>::iterator it = serverConf.begin(); it != serverConf.end(); ++it) {
+			std::cout << "Server: " << it->server_name << ", Port: " << it->port << std::endl;
+			std::cout << "Error Pages: " << std::endl;
+			std::cout << "  Root: " << it->locations[0].upload_store << std::endl;
+			for (std::map<int, std::string>::iterator epIt = it->error_pages.begin(); epIt != it->error_pages.end(); ++epIt) {
+				std::cout << "  " << epIt->first << ": " << epIt->second << std::endl;
+			}
+		}
 		servers.reserve(serverConf.size());
 		for (int i = 0; i < static_cast<int>(serverConf.size()); i++) {
 			servers.push_back(Server(serverConf[i]));

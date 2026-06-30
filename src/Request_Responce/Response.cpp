@@ -266,48 +266,41 @@ void Response::handlePost(const Request &req, const RouteResult &context)
 		*this = generateErrorResponse(405);
 		return;
 	}
-
-	// 2. Size Limit Check (Safe against NULL location)
-	// if (context.matched_location != NULL && req > context.matched_location->client_max_body_size)
-	// {
-	// 	*this = generateErrorResponse(413);
-	// 	return;
-	// }
-
+	std::cout << "size: " << context.matched_location->client_max_body_size << std::endl;
+	if (context.matched_location != NULL && req.getBody().size() > context.matched_location->client_max_body_size)
+	{
+		*this = generateErrorResponse(413);
+		return;
+	}
 	std::string upload_dir;
-	if (context.matched_location != NULL && !context.matched_location->root.empty())
-		upload_dir = context.matched_location->root;
-	else if (context.matched_server != NULL && !context.matched_server->root.empty())
-		upload_dir = context.matched_server->root;
+	std::cout << "upload_store: " << context.matched_location->upload_store << std::endl;
+	if (context.matched_location != NULL && !context.matched_location->upload_store.empty())
+		upload_dir = context.matched_location->upload_store;
 	else
-		upload_dir = ".";
-
-	if (!upload_dir.empty() && upload_dir[upload_dir.size() - 1] == '/')
-	{
-		upload_dir.erase(upload_dir.size() - 1);
-	}
-	std::string uri = req.getUri();
-	if (context.matched_location && context.matched_location->root[context.matched_location->root.length() - 1] == '/' && uri[0] == '/')
-	{
-		upload_dir = context.matched_location->root + uri.substr(1);
-	}
-	else if (context.matched_location && context.matched_location->root[context.matched_location->root.length() - 1] != '/' && uri[0] != '/')
-	{
-		upload_dir = context.matched_location->root + "/" + uri;
-	}
-	else
-	{
-		upload_dir = context.matched_location->root + uri;
-	}
-
+		upload_dir = "./www/uploads";
+	std::cout << "Upload directory: " << upload_dir << std::endl;
 	struct stat st;
-
-	if (stat(upload_dir.c_str(), &st) != 0 || !S_ISDIR(st.st_mode) || access(upload_dir.c_str(), W_OK) != 0)
+	if (stat(upload_dir.c_str(), &st) != 0)
+	{
+		if (mkdir(upload_dir.c_str(), 0755) != 0)
+		{
+			*this = generateErrorResponse(500);
+			return;
+		}
+	}
+	else
+	{
+		if (!S_ISDIR(st.st_mode))
+		{
+			*this = generateErrorResponse(403);
+			return;
+		}
+	}
+	if (access(upload_dir.c_str(), W_OK) != 0)
 	{
 		*this = generateErrorResponse(403);
 		return;
 	}
-
 	std::string contentType = "";
 	std::map<std::string, std::string>::const_iterator it = req.getHeaders().find("content-type");
 
@@ -571,50 +564,52 @@ void Response::handleGet(const Request &req, const RouteResult &context)
 
 void Response::handleDelete(const RouteResult &context)
 {
-	if (context.allow_methods.size() > 0 && 
-       (std::find(context.allow_methods.begin(), context.allow_methods.end(), "DELETE") == context.allow_methods.end()))
-    {
-        *this = generateErrorResponse(405);
-        return;
-    }
+	if (context.allow_methods.size() > 0 &&
+		(std::find(context.allow_methods.begin(), context.allow_methods.end(), "DELETE") == context.allow_methods.end()))
+	{
+		*this = generateErrorResponse(405);
+		return;
+	}
 
-    struct stat st;
-    if (stat(context.filesystem_path.c_str(), &st) != 0)
-    {
-        *this = generateErrorResponse(404);
-        return;
-    }
+	struct stat st;
+	if (stat(context.filesystem_path.c_str(), &st) != 0)
+	{
+		*this = generateErrorResponse(404);
+		return;
+	}
 
-    if (S_ISDIR(st.st_mode))
-    {
-        *this = generateErrorResponse(403);
-        return;
-    }
+	if (S_ISDIR(st.st_mode))
+	{
+		*this = generateErrorResponse(403);
+		return;
+	}
 
-    if (std::remove(context.filesystem_path.c_str()) != 0)
-    {
-        if (errno == EACCES || errno == EPERM) {
-            *this = generateErrorResponse(403);
-        } else {
-            *this = generateErrorResponse(500);
-        }
-        return;
-    }
+	if (std::remove(context.filesystem_path.c_str()) != 0)
+	{
+		if (errno == EACCES || errno == EPERM)
+		{
+			*this = generateErrorResponse(403);
+		}
+		else
+		{
+			*this = generateErrorResponse(500);
+		}
+		return;
+	}
 
-    this->setStatusCode(200); 
-    this->setReasonPhrase("OK");
-    
-    std::string success_body = "<html><body><h1>Delete Successful</h1></body></html>";
-    this->setBody(success_body);
-    this->setHeader("Content-Type", "text/html");
-    
-    std::stringstream bufferLength;
-    bufferLength << this->getBody().size();
-    this->setHeader("Content-Length", bufferLength.str());
-    this->setHeader("Date", this->current_http_date());
-    
-    this->buildRawResponse();
+	this->setStatusCode(200);
+	this->setReasonPhrase("OK");
 
+	std::string success_body = "<html><body><h1>Delete Successful</h1></body></html>";
+	this->setBody(success_body);
+	this->setHeader("Content-Type", "text/html");
+
+	std::stringstream bufferLength;
+	bufferLength << this->getBody().size();
+	this->setHeader("Content-Length", bufferLength.str());
+	this->setHeader("Date", this->current_http_date());
+
+	this->buildRawResponse();
 }
 
 void Response::dispatchMethod(const Request &req, const RouteResult &context)

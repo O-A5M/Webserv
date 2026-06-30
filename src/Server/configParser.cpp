@@ -121,6 +121,11 @@ void ConfigParser::parseDirectiveServerNameS(const std::vector<std::string> &wor
     server.server_name = words[1];
 }
 
+void ConfigParser::parseDirectiveUploadStoreL(const std::vector<std::string> &words, LocationConfig &location)
+{
+    location.upload_store = words[1];
+}
+
 void ConfigParser::parseDirectiveRootS(const std::vector<std::string> &words, ServerConfig &server)
 {
     server.root = words[1];
@@ -284,11 +289,6 @@ void ConfigParser::parseDirectiveCgiExtensionL(const std::vector<std::string> &w
 void ConfigParser::parseDirectiveCgiPathL(const std::vector<std::string> &words, LocationConfig &location)
 {
     location.cgi_path = words[1];
-}
-
-void ConfigParser::parseDirectiveUploadStoreL(const std::vector<std::string> &words, LocationConfig &location)
-{
-    location.upload_store = words[1];
 }
 
 void ConfigParser::parseDirectiveReturnRedirectL(const std::vector<std::string> &words, LocationConfig &location)
