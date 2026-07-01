@@ -69,7 +69,7 @@ std::string Response::buildErrorPage(int code, const std::string &reason)
 	return body;
 }
 
-Response Response::generateErrorResponse(int code)
+Response Response::generateErrorResponse(int code , const RouteResult &context)
 {
 	Response res;
 	std::string reason;
@@ -111,12 +111,32 @@ Response Response::generateErrorResponse(int code)
 		break;
 	}
 
-	std::ostringstream oss;
-	oss << code;
-	std::string code_str = oss.str();
-
+	std::map<int, std::string>::const_iterator it = context.matched_server->error_pages.find(code);	
+	if (it != context.matched_server->error_pages.end())
+	{
+		std::string custom_error_page_path = context.matched_server->root + "/" + it->second;
+		if (fileExists(custom_error_page_path))
+		{
+			std::ifstream file(custom_error_page_path.c_str(), std::ios::in | std::ios::binary);
+			if (file.is_open())
+			{
+				std::stringstream buffer;
+				buffer << file.rdbuf();
+				res.setStatusCode(code);
+				res.setReasonPhrase(reason);
+				res.setHeader("Content-Type", "text/html");
+				std::ostringstream len;
+				len << buffer.str().size();
+				res.setHeader("Content-Length", len.str());
+				res.setHeader("Connection", "close");
+				res.setBody(buffer.str());
+				res.buildRawResponse();
+				return res;
+			}
+		}
+	}
+	
 	std::string body = buildErrorPage(code, reason);
-
 	res.setStatusCode(code);
 	res.setReasonPhrase(reason);
 
@@ -185,11 +205,11 @@ void Response::serveFile(const RouteResult &context)
 	if (!file.is_open())
 	{
 		if (errno == EACCES)
-			*this = generateErrorResponse(403);
+			*this = generateErrorResponse(403 , context);
 		else if (errno == ENOENT)
-			*this = generateErrorResponse(404);
+			*this = generateErrorResponse(404 , context	);
 		else
-			*this = generateErrorResponse(500);
+			*this = generateErrorResponse(500, context);
 		return;
 	}
 
@@ -263,13 +283,13 @@ void Response::handlePost(const Request &req, const RouteResult &context)
 	if (context.allow_methods.size() > 0 &&
 		(std::find(context.allow_methods.begin(), context.allow_methods.end(), "POST") == context.allow_methods.end()))
 	{
-		*this = generateErrorResponse(405);
+		*this = generateErrorResponse(405, context);
 		return;
 	}
 	std::cout << "size------------------------: " << context.max_body_size << std::endl;
 	if (context.matched_location != NULL && req.getBody().size() > context.max_body_size)
 	{
-		*this = generateErrorResponse(413);
+		*this = generateErrorResponse(413, context);
 		return;
 	}
 	std::string upload_dir;
@@ -284,7 +304,7 @@ void Response::handlePost(const Request &req, const RouteResult &context)
 	{
 		if (mkdir(upload_dir.c_str(), 0755) != 0)
 		{
-			*this = generateErrorResponse(500);
+			*this = generateErrorResponse(500	, context);
 			return;
 		}
 	}
@@ -292,13 +312,13 @@ void Response::handlePost(const Request &req, const RouteResult &context)
 	{
 		if (!S_ISDIR(st.st_mode))
 		{
-			*this = generateErrorResponse(403);
+			*this = generateErrorResponse(403	, context);
 			return;
 		}
 	}
 	if (access(upload_dir.c_str(), W_OK) != 0)
 	{
-		*this = generateErrorResponse(403);
+		*this = generateErrorResponse(403	, context);
 		return;
 	}
 	std::string contentType = "";
@@ -314,13 +334,13 @@ void Response::handlePost(const Request &req, const RouteResult &context)
 		std::string boundary = req.getBoundary();
 		if (boundary.empty())
 		{
-			*this = generateErrorResponse(400);
+			*this = generateErrorResponse(400, context);
 			return;
 		}
 		std::ifstream temp_file(req.getBodyFilePath().c_str(), std::ios::binary);
 		if (!temp_file.is_open())
 		{
-			*this = generateErrorResponse(500);
+			*this = generateErrorResponse(500, context);
 			return;
 		}
 
@@ -387,7 +407,7 @@ void Response::handlePost(const Request &req, const RouteResult &context)
 						out_file.open(output_path.c_str(), std::ios::binary);
 						if (!out_file.is_open())
 						{
-							*this = generateErrorResponse(500);
+							*this = generateErrorResponse(500, context);
 							return;
 						}
 					}
@@ -461,7 +481,7 @@ void Response::handlePost(const Request &req, const RouteResult &context)
 		std::ifstream temp_file(req.getBodyFilePath().c_str(), std::ios::binary);
 		if (!temp_file.is_open())
 		{
-			*this = generateErrorResponse(500);
+			*this = generateErrorResponse(500, context);
 			return;
 		}
 
@@ -485,7 +505,7 @@ void Response::handlePost(const Request &req, const RouteResult &context)
 		if (!out_file.is_open())
 		{
 			temp_file.close();
-			*this = generateErrorResponse(500);
+			*this = generateErrorResponse(500, context);
 			return;
 		}
 
@@ -517,7 +537,7 @@ void Response::handleGet(const Request &req, const RouteResult &context)
 	(void)req;
 	if (context.allow_methods.size() > 0 && (std::find(context.allow_methods.begin(), context.allow_methods.end(), "GET") == context.allow_methods.end()))
 	{
-		*this = generateErrorResponse(405);
+		*this = generateErrorResponse(405	, context);
 		return;
 	}
 	if (context.is_file)
@@ -536,7 +556,7 @@ void Response::handleGet(const Request &req, const RouteResult &context)
 			std::string autoIndexContent = buildAutoIndex(context.physicalPath, req.getUri());
 			if (autoIndexContent.empty())
 			{
-				*this = generateErrorResponse(500);
+				*this = generateErrorResponse(500, context);
 				return;
 			}
 			this->setStatusCode(200);
@@ -551,13 +571,13 @@ void Response::handleGet(const Request &req, const RouteResult &context)
 		}
 		else
 		{
-			*this = generateErrorResponse(403);
+			*this = generateErrorResponse(403, context);
 			return;
 		}
 	}
 	else
 	{
-		*this = generateErrorResponse(403);
+		*this = generateErrorResponse(403, context);
 		return;
 	}
 }
@@ -567,20 +587,20 @@ void Response::handleDelete(const RouteResult &context)
 	if (context.allow_methods.size() > 0 &&
 		(std::find(context.allow_methods.begin(), context.allow_methods.end(), "DELETE") == context.allow_methods.end()))
 	{
-		*this = generateErrorResponse(405);
+		*this = generateErrorResponse(405, context);
 		return;
 	}
 
 	struct stat st;
 	if (stat(context.filesystem_path.c_str(), &st) != 0)
 	{
-		*this = generateErrorResponse(404);
+		*this = generateErrorResponse(404	, context);
 		return;
 	}
 
 	if (S_ISDIR(st.st_mode))
 	{
-		*this = generateErrorResponse(403);
+		*this = generateErrorResponse(403, context);
 		return;
 	}
 
@@ -588,11 +608,11 @@ void Response::handleDelete(const RouteResult &context)
 	{
 		if (errno == EACCES || errno == EPERM)
 		{
-			*this = generateErrorResponse(403);
+			*this = generateErrorResponse(403, context);
 		}
 		else
 		{
-			*this = generateErrorResponse(500);
+			*this = generateErrorResponse(500, context);
 		}
 		return;
 	}
@@ -658,6 +678,6 @@ void Response::build(const Request &req, const RouteResult &context)
 	}
 	else
 	{
-		*this = generateErrorResponse(context.status);
+		*this = generateErrorResponse(context.status, context);
 	}
 }

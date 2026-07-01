@@ -124,20 +124,6 @@
         .delete-btn:hover { background-color: var(--danger-hover); }
 
         .empty-state { text-align: center; color: var(--text-muted); padding: 20px; }
-
-        /* Console */
-        .console {
-            background-color: #1E1E1E;
-            color: #4AF626;
-            padding: 15px;
-            border-radius: 8px;
-            font-family: monospace;
-            margin-top: 15px;
-            max-height: 150px;
-            overflow-y: auto;
-        }
-        .console h3 { margin: 0 0 10px 0; color: #FFF; font-size: 0.9rem; }
-        pre { margin: 0; white-space: pre-wrap; word-wrap: break-word; }
     </style>
 </head>
 <body>
@@ -174,28 +160,25 @@
                 </ul>
             </div>
         </div>
-
-        <div class="console">
-            <h3>Server Response Log:</h3>
-            <pre id="responseLog">Awaiting actions...</pre>
-        </div>
     </div>
 
     <script>
         const targetDirectory = '/upload/';
         const fileListElement = document.getElementById('fileList');
-        const logElement = document.getElementById('responseLog');
         const form = document.getElementById('postForm');
         const uploadBtn = document.getElementById('uploadBtn');
 
-        function log(message) {
-            const time = new Date().toLocaleTimeString();
-            logElement.textContent = `[${time}] ${message}\n` + logElement.textContent;
+        // Helper function to render server error pages
+        async function renderErrorPage(response) {
+            const errorHtml = await response.text();
+            document.open();
+            document.write(errorHtml);
+            document.close();
         }
 
         // --- 1. POST HANDLING ---
         form.addEventListener('submit', async (e) => {
-            e.preventDefault(); // Stop the page from reloading
+            e.preventDefault(); 
             
             const formData = new FormData(form);
             const files = document.getElementById('fileData').files;
@@ -208,18 +191,18 @@
             try {
                 const response = await fetch(targetDirectory, {
                     method: 'POST',
-                    body: formData // Fetch automatically sets the correct multipart/form-data headers and boundaries
+                    body: formData
                 });
 
                 if (response.ok || response.status === 201) {
-                    log(`POST Success: ${response.status} ${response.statusText}`);
-                    form.reset(); // Clear the file input
-                    fetchDirectory(); // Immediately refresh the file list below
+                    form.reset(); 
+                    fetchDirectory(); 
                 } else {
-                    log(`POST Error: ${response.status} ${response.statusText}`);
+                    // SERVER RETURNED AN ERROR: Replace the page with the error HTML
+                    await renderErrorPage(response);
                 }
             } catch (error) {
-                log(`POST Failed: ${error.message}`);
+                alert(`Network Error: ${error.message}`);
             } finally {
                 uploadBtn.textContent = 'Send POST Request';
                 uploadBtn.disabled = false;
@@ -230,13 +213,16 @@
         async function fetchDirectory() {
             try {
                 const response = await fetch(targetDirectory);
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
+                if (!response.ok) {
+                    await renderErrorPage(response);
+                    return;
+                }
                 
                 const htmlText = await response.text();
                 parseAndRenderFiles(htmlText);
             } catch (error) {
                 fileListElement.innerHTML = `<div class="empty-state">Could not load directory. Is autoindex on?</div>`;
-                log(`GET Error: ${error.message}`);
             }
         }
 
@@ -252,8 +238,6 @@
                 let rawHref = link.getAttribute('href');
                 if (rawHref && rawHref !== '../' && rawHref !== '/') {
                     rawHref = rawHref.replace(/\/$/, '');
-                    
-                    // Extract exactly the filename, bypassing double-slash autoindex quirks
                     const baseName = rawHref.substring(rawHref.lastIndexOf('/') + 1);
                     
                     if (baseName) {
@@ -287,7 +271,6 @@
             btn.textContent = '...';
             btn.disabled = true;
 
-            // Safe URI construction
             const cleanUri = `${targetDirectory}/${filename}`.replace(/\/+/g, '/');
 
             try {
@@ -295,17 +278,17 @@
 
                 if (response.ok || response.status === 204) {
                     row.remove();
-                    log(`DELETE Success: Removed ${filename}`);
                     if (fileListElement.children.length === 0) {
                         fileListElement.innerHTML = '<div class="empty-state">The directory is empty.</div>';
                     }
                 } else {
-                    throw new Error(`Server returned ${response.status}`);
+                    // SERVER RETURNED AN ERROR: Replace the page with the error HTML
+                    await renderErrorPage(response);
                 }
             } catch (error) {
                 btn.textContent = 'Delete';
                 btn.disabled = false;
-                log(`DELETE Failed: ${error.message}`);
+                alert(`DELETE Failed: ${error.message}`);
             }
         }
 

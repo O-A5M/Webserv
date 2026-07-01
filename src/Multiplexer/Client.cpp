@@ -166,7 +166,7 @@ void ClientHandler::OnRead(void)
 		{
 			std::cout << "Error encountered: " << this->error_code << std::endl;
 
-			Response res = Response::generateErrorResponse(this->error_code);
+			Response res = Response::generateErrorResponse(this->error_code , this->req.route_result);
 			this->writeBuf = res.getRawResponse();
 			if (!this->writeBuf.empty())
 			{

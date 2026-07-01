@@ -47,7 +47,7 @@ private:
 public:
 	void buildRedirectResponse(const RouteResult &context);
 	const std::string &getRawResponse() const;
-	static Response generateErrorResponse(int code);
+	static Response generateErrorResponse(int code , const RouteResult &context);
 	void serveFile(const RouteResult &context);
 	void build(const Request &req, const RouteResult &context);
 };
