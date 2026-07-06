@@ -28,8 +28,7 @@
   <component name="ChangeListManager">
     <list default="true" id="2520d05e-25a8-4337-a2b2-e68e37f8dced" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Config/configFile.conf" beforeDir="false" afterPath="$PROJECT_DIR$/Config/configFile.conf" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Multiplexer/Client.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/Multiplexer/Client.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inc/CommoneGatewayInterface.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/inc/CommoneGatewayInterface.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Multiplexer/CommoneGatewayInterface.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/Multiplexer/CommoneGatewayInterface.cpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -95,6 +94,13 @@
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
+  <component name="RunManager">
+    <configuration default="true" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+  </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
       <changelist id="2520d05e-25a8-4337-a2b2-e68e37f8dced" name="Changes" comment="" />
@@ -122,7 +128,9 @@
       <workItem from="1781879567337" duration="2028000" />
       <workItem from="1781886428853" duration="6679000" />
       <workItem from="1782170079684" duration="9305000" />
-      <workItem from="1782481367652" duration="1484000" />
+      <workItem from="1782481367652" duration="7537000" />
+      <workItem from="1782578125998" duration="4824000" />
+      <workItem from="1783257858124" duration="6493000" />
     </task>
     <servers />
   </component>

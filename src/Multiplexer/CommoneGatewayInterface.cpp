@@ -6,20 +6,23 @@
 #include <vector>
 
 CgiHandler::CgiHandler(int fd,
+                       int WriteFd,
                        pid_t pid,
                        ServerConfig& config,
                        EventLoop& loop,
                        ClientHandler& client,
                        const std::string& body)
     : AHandler(fd, config, loop)
+    , WriteFd(WriteFd)
     , client(client)
     , pid(pid)
-    , writeBuf(body) {
+    , writeBuf(body)
+    , cgiWrite(NULL) {
     uint32_t flags = EPOLLIN;
     if (!writeBuf.empty())
-        flags |= EPOLLOUT;
+        cgiWrite = new CgiWriteHandler(WriteFd, config, loop, *this);
     else
-        shutdown(fd, SHUT_WR);
+        close(WriteFd);
     loop.AddHandler(this, flags);
 }
 
@@ -51,36 +54,24 @@ void CgiHandler::OnWrite() {
     }
     writeBuf.erase(0, n);
     if (writeBuf.empty()) {
-        shutdown(fd, SHUT_WR);
+        // shutdown(fd, SHUT_WR);
         DisableWrite();
     }
 }
 
-void CgiHandler::OnClose() {
-    KillChild();
-    loop.RemoveHandler(this);
-    // TODO: tell client to send 502
-    delete this;
-}
-
-void CgiHandler::Finalize() {
-    if (pid != -1) {
-        int status = 0;
-        waitpid(pid, &status, WNOHANG);
-        pid = -1;
+void CgiHandler::OnWriteFd() {
+    ssize_t n = write(cgiWrite->GetFd(), writeBuf.data(), writeBuf.size());
+    if (n == -1) {
+        if (errno == EAGAIN || errno == EWOULDBLOCK)
+            return;
+        OnClose();
+        return;
     }
-
-    loop.RemoveHandler(this);
-    std::cout << readBuf << std::endl;
-    // client.OnCgiResponse(readBuf);
-    delete this;
-}
-
-void CgiHandler::KillChild() {
-    if (pid != -1) {
-        kill(pid, SIGTERM);
-        waitpid(pid, NULL, 0);
-        pid = -1;
+    writeBuf.erase(0, n);
+    if (writeBuf.empty()) {
+        loop.RemoveHandler(cgiWrite);
+        delete cgiWrite;
+        cgiWrite = NULL;
     }
 }
 
@@ -91,30 +82,30 @@ CgiHandler* CgiHandler::Launch(
     const std::string&                      body,
     ServerConfig&                           config,
     EventLoop&                              loop,
-    ClientHandler&                          client) {
+    ClientHandler&                          client)
+{
+    int stdinPipe[2];
+    int stdoutPipe[2];
 
-    int sockPair[2];
-
-    if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockPair) == -1) {
-        std::cerr << "CgiHandler::Launch socketpair: " << strerror(errno) << "\n";
-        // TODO: server error 500
+    if (pipe(stdinPipe) == -1 || pipe(stdoutPipe) == -1) {
+        std::cerr << "CgiHandler::Launch pipe: " << strerror(errno) << "\n";
         return NULL;
     }
 
     pid_t pid = fork();
     if (pid == -1) {
         std::cerr << "CgiHandler::Launch fork: " << strerror(errno) << "\n";
-        close(sockPair[0]);  close(sockPair[1]);
-        // TODO: server error 500
+        close(stdinPipe[0]);  close(stdinPipe[1]);
+        close(stdoutPipe[0]); close(stdoutPipe[1]);
         return NULL;
     }
 
     if (pid == 0) {
-        dup2(sockPair[0],  STDIN_FILENO);
-        dup2(sockPair[0], STDOUT_FILENO);
+        dup2(stdinPipe[0],  STDIN_FILENO);
+        dup2(stdoutPipe[1], STDOUT_FILENO);
 
-        close(sockPair[0]);
-        close(sockPair[1]);
+        close(stdinPipe[0]);  close(stdinPipe[1]);
+        close(stdoutPipe[0]); close(stdoutPipe[1]);
 
         // std::string dir = scriptPath.substr(0, scriptPath.rfind('/'));
         // if (!dir.empty())
@@ -135,13 +126,60 @@ CgiHandler* CgiHandler::Launch(
             NULL
         };
 
-        execve(interpreter.c_str(), argv, &envp[0]);
+        execve(interpreter.c_str(), argv, envp.data());
         std::cerr << "CgiHandler::Launch execve: " << strerror(errno) << "\n";
         exit(1);
     }
 
-    close(sockPair[0]);
+    close(stdinPipe[0]);
+    close(stdoutPipe[1]);
 
-    return new CgiHandler(sockPair[1], pid, config,
-                          loop, client, body);
+    return new CgiHandler(stdoutPipe[0], stdinPipe[1],
+                          pid, config, loop, client, body);
+}
+
+void CgiHandler::OnClose() {
+    KillChild();
+    loop.RemoveHandler(this);
+    // TODO: tell client to send 502
+    delete this;
+}
+
+void CgiHandler::Finalize() {
+    if (pid != -1) {
+        int status = 0;
+        waitpid(pid, &status, WNOHANG);
+        pid = -1;
+    }
+
+    std::cout << readBuf << std::endl;
+    // client.OnCgiResponse(readBuf);
+    OnClose();
+}
+
+void CgiHandler::KillChild() {
+    if (pid != -1) {
+        kill(pid, SIGTERM);
+        waitpid(pid, NULL, 0);
+        pid = -1;
+    }
+}
+
+CgiWriteHandler::CgiWriteHandler(int fd, ServerConfig& config, EventLoop& loop, CgiHandler& cgi)
+    : AHandler(fd, config, loop)
+    , cgi(cgi) {
+    loop.AddHandler(this, EPOLLOUT);
+}
+
+CgiWriteHandler::~CgiWriteHandler() {}
+
+void    CgiWriteHandler::OnRead() {}
+
+void    CgiWriteHandler::OnWrite() {
+    cgi.OnWriteFd();
+}
+
+void    CgiWriteHandler::OnClose() {
+    loop.RemoveHandler(this);
+    delete this;
 }

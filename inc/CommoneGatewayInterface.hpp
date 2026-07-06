@@ -10,16 +10,20 @@
 #include <signal.h>
 
 class ClientHandler;
+class CgiWriteHandler;
 
 class CgiHandler : public AHandler {
 private:
-    ClientHandler&  client;
+    int             WriteFd;
+    ClientHandler   &client;
     pid_t           pid;
     std::string     writeBuf;
     std::string     readBuf;
+    CgiWriteHandler *cgiWrite;
 
 public:
     CgiHandler(int fd,
+               int writeFd,
                pid_t pid,
                ServerConfig& config,
                EventLoop& loop,
@@ -30,6 +34,7 @@ public:
     void OnRead();
     void OnWrite();
     void OnClose();
+    void OnWriteFd();
 
     static CgiHandler* Launch(
         const std::string&                      scriptPath,
@@ -43,6 +48,18 @@ public:
 private:
     void Finalize();
     void KillChild();
+};
+
+class CgiWriteHandler : public AHandler {
+private:
+    CgiHandler&  cgi;
+public:
+    CgiWriteHandler(int fd, ServerConfig& config, EventLoop& loop, CgiHandler& cgi);
+    ~CgiWriteHandler();
+
+    void    OnRead();
+    void    OnWrite();
+    void    OnClose();
 };
 
 #endif
