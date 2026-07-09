@@ -233,7 +233,7 @@ void Response::serveFile(const RouteResult &context)
 	this->setHeader("Content-Length", buuferLenght.str());
 	this->setHeader("Date", this->current_http_date());
 	this->buildRawResponse();
-	std::cout << this->getRawResponse() << std::endl;
+	// std::cout << this->getRawResponse() << std::endl;
 }
 
 #include <dirent.h>

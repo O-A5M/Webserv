@@ -68,11 +68,12 @@ void EventLoop::Loop() {
             AHandler* handler = static_cast<AHandler*>(events[i].data.ptr);
             uint32_t ev = events[i].events;
 
-            if (ev & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)) {
+            if (ev & EPOLLERR) {
                 handler->OnClose();
                 continue;
             }
-            if (ev & EPOLLIN)
+
+            if (ev & (EPOLLIN | EPOLLHUP | EPOLLRDHUP))
                 handler->OnRead();
 
             else if (ev & EPOLLOUT)

@@ -107,10 +107,6 @@ CgiHandler* CgiHandler::Launch(
         close(stdinPipe[0]);  close(stdinPipe[1]);
         close(stdoutPipe[0]); close(stdoutPipe[1]);
 
-        // std::string dir = scriptPath.substr(0, scriptPath.rfind('/'));
-        // if (!dir.empty())
-        //     chdir(dir.c_str());
-
         std::vector<std::string> envStorage;
         std::vector<char*>       envp;
         for (std::map<std::string,std::string>::const_iterator it = env.begin();
