@@ -1,0 +1,104 @@
+- parsing configFile
+- set up socket()
+- handel routing
+- implementing cookies
+
+# Webserver Concepts
+
+About HTTP
+
+- What is HTTP/1.1 and how does a request/response look in raw text?
+- What is the difference between `GET`, `POST`, and `DELETE`?
+- What are HTTP headers and which ones are mandatory?
+
+**About Sockets**
+
+- What is a socket and how does TCP work?
+- What is the difference between `socket()`, `bind()`, `listen()`, `accept()`?
+
+**About I/O Multiplexing**
+
+- What is `poll()` / `select()` / `epoll()` and why do we need it?
+- What is the difference between `POLLIN` and `POLLOUT`?
+
+## 🧠 Phase 1 — Understand the Project
+
+### About HTTP
+
+- What is HTTP/1.1 and how does a request/response look in raw text?
+- What is the difference between `GET`, `POST`, and `DELETE`?
+- What are HTTP headers and which ones are mandatory?
+- What is `Content-Length` and `Transfer-Encoding: chunked`?
+- What does a status code mean? (200, 301, 400, 403, 404, 405, 413, 500...)
+- What is `Keep-Alive` vs `Connection: close`?
+
+### About Sockets
+
+- What is a socket and how does TCP work?
+- What is the difference between `socket()`, `bind()`, `listen()`, `accept()`?
+- What does **non-blocking** mean and why does webserv require it?
+- What happens if you call `read()` on an empty socket?
+- What is a **file descriptor**?
+
+### About I/O Multiplexing
+
+- What is `poll()` / `select()` / `epoll()` and why do we need it?
+- What is the difference between `POLLIN` and `POLLOUT`?
+- Why can't we use one thread per client in this project?
+
+### About CGI
+
+- What is CGI and how does a web server execute a script?
+- What is `fork()` and `execve()`?
+- How does the server pass data to a CGI script (env variables, stdin)?
+- How does the server read the CGI output (stdout)?
+
+---
+
+## ⚙️ Phase 2 — Understand the Config File
+
+- What is an `nginx`style config file?
+- What is a `server {}` block vs a `location {}` block?
+- What does `listen`, `server_name`, `root`, `index` mean?
+- What is `client_max_body_size`?
+- What is `autoindex` and when does it trigger?
+- What does `return` do in a location block (redirects)?
+- How do you match a request URI to the right `location`?
+- What happens if no location matches?
+
+---
+
+## 🛠️ Phase 3 — Understand C++ Tools You'll Use
+
+- How do `std::map`, `std::vector`, `std::string` work?
+- How do you read/write files in C++ (`ifstream`, `ofstream`)?
+- What is `std::stringstream` and when do you use it?
+- How does `fork()` + `execve()` work in C++?
+- What is `pipe()` and how do you redirect stdin/stdout with it?
+- What is `dup2()` and why is it needed for CGI?
+- How do you list directory contents in C (`opendir`, `readdir`)?
+
+---
+
+## 👥 Phase 4 — Understand Your Team Setup
+
+- Who is responsible for which part?
+- What are the **shared data structures** we all depend on?
+- Who writes `HttpRequest.hpp`, `HttpResponse.hpp`, `Config.hpp`?
+- Who owns the `Makefile`?
+- What is our Git branching strategy?
+- How do we communicate blockers?
+- When do we integrate for the first time?
+
+---
+
+## 🧪 Phase 5 — Understand How to Test
+
+- How do I send a raw HTTP request with `nc` (netcat)?
+- How do I use `curl -v` to debug responses?
+- How do I test multiple connections at once?
+- How do I check for memory leaks with `valgrind`?
+- How do I stress test with `siege`?
+- What does the 42 tester check exactly? (read the subject carefully)
+
+About Cookies.
