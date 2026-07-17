@@ -121,6 +121,11 @@ void ConfigParser::parseDirectiveServerNameS(const std::vector<std::string> &wor
     server.server_name = words[1];
 }
 
+void ConfigParser::parseDirectiveUploadStoreL(const std::vector<std::string> &words, LocationConfig &location)
+{
+    location.upload_store = words[1];
+}
+
 void ConfigParser::parseDirectiveRootS(const std::vector<std::string> &words, ServerConfig &server)
 {
     server.root = words[1];
@@ -137,6 +142,7 @@ void ConfigParser::parseDirectiveClientMaxBodySizeS(const std::vector<std::strin
     if (!is_all_digits(words[1]))
         throw std::runtime_error("Invalid client_max_body_size value: " + words[1]);
     server.client_max_body_size = static_cast<std::size_t>(std::atoi(words[1].c_str()));
+    server.is_maxBody = true;
 }
 
 void ConfigParser::parseDirectiveErrorPageS(const std::vector<std::string> &words, ServerConfig &server)
@@ -234,7 +240,9 @@ void ConfigParser::parseDirectiveClientMaxBodySizeL(const std::vector<std::strin
 {
     if (!is_all_digits(words[1]))
         throw std::runtime_error("Invalid client_max_body_size value: " + words[1]);
+    
     location.client_max_body_size = static_cast<std::size_t>(std::atoi(words[1].c_str()));
+    location.is_maxBody = true;
 }
 
 void ConfigParser::parseDirectiveAllowMethodsL(const std::vector<std::string> &words, LocationConfig &location)
@@ -284,11 +292,6 @@ void ConfigParser::parseDirectiveCgiExtensionL(const std::vector<std::string> &w
 void ConfigParser::parseDirectiveCgiPathL(const std::vector<std::string> &words, LocationConfig &location)
 {
     location.cgi_path = words[1];
-}
-
-void ConfigParser::parseDirectiveUploadStoreL(const std::vector<std::string> &words, LocationConfig &location)
-{
-    location.upload_store = words[1];
 }
 
 void ConfigParser::parseDirectiveReturnRedirectL(const std::vector<std::string> &words, LocationConfig &location)

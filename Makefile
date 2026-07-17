@@ -24,7 +24,8 @@ SRCS = $(SRC_DIR)/main.cpp \
 	$(SERVER_DIR)/Server.cpp \
 	$(SERVER_DIR)/Router.cpp \
 	$(SERVER_DIR)/RouteResult.cpp \
-	$(MPLEXER_DIR)/CommoneGatewayInterface.cpp
+	$(MPLEXER_DIR)/CommoneGatewayInterface.cpp \
+	$(SERVER_DIR)/sessionTracker.cpp 
 
 # Object files
 OBJS = $(SRCS:.cpp=.o)

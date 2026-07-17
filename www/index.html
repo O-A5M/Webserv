@@ -1,63 +1,41 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Webserv Creator Team</title>
-    <link
-      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="style.css" />
-  </head>
-  <body>
-    <div class="scanlines"></div>
-    <canvas id="networkCanvas"></canvas>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Server Team</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="hero">
+        <h1>HTTP/1.1 Server Project</h1>
+        <p>Engineered by</p>
+    </header>
 
-    <div id="matrix-intro" class="matrix-intro">
-      <span id="typewriter"></span><span class="cursor">_</span>
-    </div>
+    <main class="team-container">
+        <div class="team-card">
+            <div class="profile-pic" id="pic-achraf"></div>
+            <h3>Acharf</h3>
+            <p>Core Developer</p>
+        </div>
+        <div class="team-card">
+            <div class="profile-pic" id="pic-walid"></div>
+            <h3>Walid</h3>
+            <p>Core Developer</p>
+        </div>
+        <div class="team-card">
+            <div class="profile-pic" id="pic-othman"></div>
+            <h3>Othman</h3>
+            <p>Core Developer</p>
+        </div>
+    </main>
 
-    <div class="server-status init-hidden">
-      <span class="status-dot"></span>
-      <span class="status-code">HTTP/1.1 200 OK_</span>
-    </div>
-
-    <div class="content-wrapper init-hidden">
-      <header>
-        <h1>Meet the Webserv Creators</h1>
-      </header>
-
-      <main class="team-container">
-        <article class="team-member">
-          <div class="img-wrapper">
-            <img src="/img/walid.png" alt="Walid - Core Developer" />
-            <div class="overlay"></div>
-          </div>
-          <h2>Walid</h2>
-          <span class="role">Core Developer</span>
-        </article>
-
-        <article class="team-member">
-          <div class="img-wrapper">
-            <img src="/img/achraf.png" alt="Achraf - Core Developer" />
-            <div class="overlay"></div>
-          </div>
-          <h2>Achraf</h2>
-          <span class="role">Core Developer</span>
-        </article>
-
-        <article class="team-member">
-          <div class="img-wrapper">
-            <img src="/img/othman.png" alt="Othman - Core Developer" />
-            <div class="overlay"></div>
-          </div>
-          <h2>Othman</h2>
-          <span class="role">Core Developer</span>
-        </article>
-      </main>
-    </div>
-
-    <script src="main.js"></script>
-  </body>
+    <section class="action-section">
+        <a href="tester.html" class="primary-btn">POST && DELETE</a>
+    </section>
+    <footer class="server-status">
+        <span class="pulse"></span>
+        System Online &nbsp;|&nbsp; C++98 &nbsp;|&nbsp; POSIX Sockets &nbsp;|&nbsp; HTTP/1.1
+    </footer>
+</body>
 </html>

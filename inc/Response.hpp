@@ -13,6 +13,8 @@
 #include <cerrno>
 #include "RouteResult.hpp"
 #include <dirent.h>
+#include <cstdio>
+#include <vector>
 class Response
 {
 private:
@@ -21,11 +23,9 @@ private:
 	std::map<std::string, std::string> headers;
 	std::string body;
 	std::string raw_response;
-	std::string build_local_path(const std::string &root, const std::string &req_path);
-	int check_resource(const std::string &local_path);
 	void handleGet(const Request &req, const RouteResult &context);
-	void handlePost(const Request &req);
-	void handleDelete(const Request &req);
+	void handlePost(const Request &req , const RouteResult &context);
+	void handleDelete(const RouteResult &context);
 
 	void setStatusCode(int code);
 	void setReasonPhrase(const std::string &phrase);
@@ -45,12 +45,21 @@ private:
 	static std::string buildErrorPage(int code, const std::string &reason);
 	std::string buildAutoIndex(const std::string &physicalPath, const std::string &requestURI);
 
+	// about cookies
+	void handleVisitCounter(const Request &req, const RouteResult &context);
+    std::string readHtmlTemplate(const std::string& filepath);
+    void replacePlaceholder(std::string& content, const std::string& placeholder, const std::string& replacement);
+
 public:
 	void buildRedirectResponse(const RouteResult &context);
 	const std::string &getRawResponse() const;
-	static Response generateErrorResponse(int code);
+	static Response generateErrorResponse(int code , const RouteResult &context);
 	void serveFile(const RouteResult &context);
 	void build(const Request &req, const RouteResult &context);
+
+	// about cookies
+	void setCookie(const std::string &name, const std::string &value, const std::string &path = "/", bool httpOnly = true);
+	std::vector<std::string> setCookieHeaders; // Add this container
 };
 
 #endif

@@ -7,24 +7,15 @@ ClientHandler::ClientHandler(int fd, ServerConfig &config, EventLoop &loop)
 		: AHandler(fd, config, loop), serverConfigs(1, config), router(serverConfigs)
 {
 	loop.AddHandler(this, EPOLLIN);
+	this->state = STATE_READING_REQUEST_LINE;
+	this->error_code = 0;
 }
 
-ClientHandler::~ClientHandler(void) {
-    if (fd != -1)
-        close(fd);
-}
-
-std::string	ClientHandler::getInterpreterPath(void) const {
-	std::vector<LocationConfig>::iterator it = serverConf.locations.begin();
-	std::vector<LocationConfig>::iterator itEnd = serverConf.locations.end();
-
-	while (it != itEnd) {
-		if (!it->cgi_path.empty())
-			break;
-		++it;
-	}
-	std::cout << "Interpreter path: " << it->cgi_path << std::endl;
-	return (it->cgi_path);
+ClientHandler::~ClientHandler(void)
+{
+	if (fd != -1)
+		close(fd);
+	// delete this;
 }
 
 void ClientHandler::OnRead(void)
@@ -46,56 +37,152 @@ void ClientHandler::OnRead(void)
 	}
 
 	readBuf.append(buff, nread);
-	int parse_status = this->req.parse_request(readBuf);
-	if (parse_status == PARSE_WAITING)
-		return;
 
-	Response res;
-
-	if (parse_status == PARSE_BAD_REQUEST)
+	// THE STATE MACHINE LOOP
+	bool keep_parsing = true;
+	while (keep_parsing)
 	{
-		res = Response::generateErrorResponse(400);
-	}
-	else if (parse_status == 1)
-	{
-		int status = this->req.validateRequest();
-		if (status != OK)
-			res = Response::generateErrorResponse(status);
-		else
+		switch (this->state)
 		{
-			// RouteContext context = getMockRouteContext(1);
-			RouteResult route_result = this->router.route(this->req, this->GetServerConf().port);
-			for (size_t i = 0; i < route_result.allow_methods.size(); ++i)
+		case STATE_READING_REQUEST_LINE:
+		{
+			while (readBuf.compare(0, 2, "\r\n") == 0)
+				readBuf.erase(0, 2);
+			size_t pos = readBuf.find("\r\n");
+			if (pos == std::string::npos)
 			{
-				std::cout << "Allowed method: " << route_result.allow_methods[i] << std::endl;
+				keep_parsing = false;
+				break;
 			}
-			if (route_result.is_cgi) {
-				std::cout << "script Path " << route_result.cgi_env["SCRIPT_FILENAME"] << std::endl;
-				CgiHandler::Launch(route_result.cgi_script_path
-					, getInterpreterPath(), route_result.cgi_env
-					,req.getBody(), serverConf, loop, *this);
+			std::string request_line = readBuf.substr(0, pos);
+			int line_status = this->req.parse_request_line(request_line);
+			if (line_status < 0)
+			{
+				this->error_code = 400;
+				this->state = STATE_ERROR;
 			}
-			// std::cout << "status=" << route_result.status
-			// 					<< "max body length" << route_result.matched_location->client_max_body_size
-			// 					<< ", physique_path=" << route_result.physicalPath
-			// 					<< ", victore size=" << route_result.allow_methods.size()
-			// 					<< ", filesystem_path=" << route_result.filesystem_path
-			// 					<< ", is_cgi=" << route_result.is_cgi
-			// 					<< ", is_autoindex=" << route_result.is_autoindex
-			// 					<< ", is_directory=" << route_result.is_directory
-			// 					<< ", is_file=" << route_result.is_file
-			// 					<< ", is_redirect=" << route_result.is_redirect
-			// 					<< ", redirect_location=" << route_result.redirect_location
-			// 					<< ", reason=" << route_result.reason
-			// 					<< std::endl;
-			res.build(this->req, route_result);
+			else
+			{
+				readBuf.erase(0, pos + 2);
+				this->state = STATE_READING_HEADERS;
+			}
+			break;
+		}
+		case STATE_READING_HEADERS:
+		{
+
+			size_t pos = readBuf.find("\r\n\r\n");
+			if (pos == std::string::npos)
+			{
+				keep_parsing = false;
+				break;
+			}
+			std::string header_data = readBuf.substr(0, pos + 4);
+			int header_status = this->req.parse_request_headers(header_data);
+
+			if (header_status < 0)
+			{
+				this->error_code = 400;
+				this->state = STATE_ERROR;
+			}
+			else
+			{
+				readBuf.erase(0, pos + 4);
+				this->state = STATE_HEADERS_DONE;
+			}
+			break;
+		}
+		case STATE_HEADERS_DONE:
+		{
+			int status = this->req.validateRequest();
+			if (status != OK)
+			{
+				this->error_code = status;
+				this->state = STATE_ERROR;
+				break;
+			}
+
+			this->req.route_result = this->router.route(this->req, this->GetServerConf().port);
+			std::cout << "path" << this->req.route_result.filesystem_path << std::endl;
+			if (this->req.route_result.matched_location == NULL)
+			{
+				this->error_code = this->req.route_result.status;
+				if (this->error_code == 0)
+					this->error_code = 500;
+				this->state = STATE_ERROR;
+				break;
+			}
+
+			size_t expected_size = 0;
+			if (this->req.getHeaders().find("content-length") != this->req.getHeaders().end())
+			{
+				expected_size = strtoul(this->req.getHeaders().at("content-length").c_str(), NULL, 10);
+			}
+			if (expected_size > this->req.route_result.max_body_size)
+			{
+				this->error_code = 413;
+				this->state = STATE_ERROR;
+				break;
+			}
+			this->state = STATE_READING_BODY;
+			break;
+		}
+		case STATE_READING_BODY:
+		{
+			size_t consumed_bytes = 0;
+
+			int body_status = this->req.parse_body(readBuf, consumed_bytes);
+			if (body_status < 0)
+			{
+				this->error_code = 400;
+				this->state = STATE_ERROR;
+			}
+			else if (body_status == 1)
+			{
+				keep_parsing = false;
+			}
+			else
+			{
+				readBuf.erase(0, consumed_bytes);
+				this->state = STATE_COMPLETE;
+			}
+			break;
+		}
+		case STATE_COMPLETE:
+		{
+			// std::cout << "Request Fully Parsed! Building response..." << std::endl;
+			this->req.display();
+			Response res;
+			res.build(this->req, this->req.route_result);
+
+			this->writeBuf = res.getRawResponse();
+			if (!this->writeBuf.empty())
+			{
+				EnableWrite();
+			}
+			this->req.clear();
+			this->state = STATE_READING_REQUEST_LINE;
+			keep_parsing = !readBuf.empty();
+			break;
+		}
+		case STATE_ERROR:
+		{
+			std::cout << "Error encountered: " << this->error_code << std::endl;
+
+			Response res = Response::generateErrorResponse(this->error_code , this->req.route_result);
+			this->writeBuf = res.getRawResponse();
+			if (!this->writeBuf.empty())
+			{
+				EnableWrite();
+			}
+			keep_parsing = false;
+			break;
+		}
 		}
 	}
-	this->writeBuf = res.getRawResponse();
-	if (!writeBuf.empty())
-		EnableWrite();
-	this->req.clear();
 }
+
+
 
 void ClientHandler::OnWrite(void)
 {

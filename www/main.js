@@ -1,112 +1,50 @@
-document.addEventListener("DOMContentLoaded", () => {
-  // Setup interactions and ONLY start the text intro first
-  setupCardInteractions();
-  runTypewriterIntro();
-});
+document.addEventListener('DOMContentLoaded', initForm);
 
-async function runTypewriterIntro() {
-  const phrases = [
-    "wake up walid...",
-    "wake up achraf...",
-    "wake up othman..."
-  ];
-
-  const textElem = document.getElementById("typewriter");
-  const introDiv = document.getElementById("matrix-intro");
-  const hiddenElements = document.querySelectorAll(".init-hidden");
-
-  const typePhrase = async (phrase) => {
-    for (let i = 0; i < phrase.length; i++) {
-      textElem.innerHTML += phrase[i];
-      // Randomize typing speed for realism
-      await new Promise((r) => setTimeout(r, 60 + Math.random() * 80));
+function initForm() {
+    const form = document.getElementById('postForm');
+    if (form) {
+        form.addEventListener('submit', handlePostRequest);
     }
-    // Wait before clearing
-    await new Promise((r) => setTimeout(r, 1200));
-    textElem.innerHTML = "";
-  };
-
-  // Initial black screen pause
-  await new Promise((r) => setTimeout(r, 1000));
-
-  for (const phrase of phrases) {
-    await typePhrase(phrase);
-  }
-
-  // Hide the typing div entirely
-  introDiv.classList.add("hidden");
-
-  // Reveal the normal UI
-  hiddenElements.forEach((el) => el.classList.add("visible"));
-
-  // Start the Matrix digital rain ONLY after the intro text finishes
-  initMatrixRain();
 }
 
-function setupCardInteractions() {
-  const cards = document.querySelectorAll(".team-member");
-  cards.forEach((card) => {
-    card.addEventListener("mousedown", () => {
-      card.style.transform = "scale(0.95)";
-    });
+async function handlePostRequest(event) {
+    event.preventDefault();
+    const form = event.target;
+    const log = document.getElementById('responseLog');
+    const fileInput = document.getElementById('fileData');
+    
+    log.textContent = "Sending request to " + form.action + "...";
 
-    card.addEventListener("mouseup", () => {
-      card.style.transform = "translateY(-10px)";
-    });
+    // Create empty FormData payload
+    const formData = new FormData();
+    
+    // Append each selected file explicitly into the payload loop
+    if (fileInput && fileInput.files.length > 0) {
+        for (let i = 0; i < fileInput.files.length; i++) {
+            formData.append('fileData[]', fileInput.files[i]);
+        }
+    }
 
-    card.addEventListener("mouseleave", () => {
-      card.style.transform = ""; // resets to hover CSS transition
-    });
-  });
+    try {
+        const response = await fetch(form.action, {
+            method: 'POST',
+            body: formData
+        });
+        
+        displayResult(response, log);
+    } catch (error) {
+        log.textContent = "Connection Error:\n" + error.message;
+    }
 }
 
-function initMatrixRain() {
-  const canvas = document.getElementById("networkCanvas");
-  const ctx = canvas.getContext("2d");
-
-  let columns, drops;
-  const fontSize = 18;
-  const chars =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*()ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ".split(
-      "",
-    );
-
-  function resize() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    columns = Math.floor(canvas.width / fontSize);
-    drops = [];
-    for (let i = 0; i < columns; i++) {
-      drops[i] = 1;
-    }
-  }
-
-  function draw() {
-    // Translucent black background creates the fading effect
-    ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    ctx.fillStyle = "#0F0"; // The Matrix Green
-    ctx.font = fontSize + "px monospace";
-
-    for (let i = 0; i < drops.length; i++) {
-      const text = chars[Math.floor(Math.random() * chars.length)];
-
-      // x = i*fontSize, y = value of drops[i]*fontSize
-      ctx.fillText(text, i * fontSize, drops[i] * fontSize);
-
-      // Sending the drop back to the top randomly after it has crossed the screen
-      if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
-        drops[i] = 0;
-      }
-
-      // Incrementing y coordinate
-      drops[i]++;
-    }
-  }
-
-  window.addEventListener("resize", resize);
-
-  resize();
-  setInterval(draw, 35);
+function displayResult(response, logElement) {
+    let output = "Status: " + response.status + "\n";
+    output += "Status Text: " + response.statusText + "\n\n";
+    output += "Headers:\n";
+    
+    response.headers.forEach((value, key) => {
+        output += key + ": " + value + "\n";
+    });
+    
+    logElement.textContent = output;
 }

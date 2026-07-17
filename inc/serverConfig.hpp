@@ -15,6 +15,7 @@ struct ServerConfig
 	std::string root;
 	std::vector<std::string> index; // READ
 	std::size_t client_max_body_size;
+	bool is_maxBody;
 	std::map<int, std::string> error_pages; // READ
 	std::vector<LocationConfig> locations;
 	int port;

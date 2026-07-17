@@ -1,3 +1,4 @@
-work with vect and map
-begin pasr of req
-
+fix errore page : still need to
+get a defualt page if index not in location and autoindex off : still need to
+made a upload store : done
+fix max body size : done
