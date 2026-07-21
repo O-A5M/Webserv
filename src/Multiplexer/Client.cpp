@@ -151,6 +151,35 @@ void ClientHandler::OnRead(void)
 		case STATE_COMPLETE:
 		{
 			// std::cout << "Request Fully Parsed! Building response..." << std::endl;
+			if (this->req.route_result.is_cgi)
+			{
+				// Body was streamed to disk during parse_body(), not kept in req.body,
+				// so read it back before handing it to the CGI process.
+				std::string cgiBody;
+				if (!this->req.getBodyFilePath().empty())
+				{
+					std::ifstream bodyFile(this->req.getBodyFilePath().c_str(), std::ios::binary);
+					std::stringstream ss;
+					ss << bodyFile.rdbuf();
+					cgiBody = ss.str();
+				}
+
+				CgiHandler::Launch(
+					this->req.route_result.cgi_script_path,
+					this->req.route_result.matched_location->cgi_path,   // interpreter
+					this->req.route_result.cgi_env,
+					cgiBody,
+					this->GetServerConf(),
+					this->loop,
+					*this
+				);
+
+				this->req.clear();
+				this->state = STATE_READING_REQUEST_LINE;
+				keep_parsing = !readBuf.empty();
+				break;   // <-- don't fall through to the synchronous response build below
+			}
+
 			this->req.display();
 			Response res;
 			res.build(this->req, this->req.route_result);
