@@ -10,10 +10,10 @@ CgiHandler::CgiHandler(int fd,
                        pid_t pid,
                        ServerConfig& config,
                        EventLoop& loop,
-                    //    ClientHandler& client,
+                       ClientHandler& client,
                        const std::string& body)
     : AHandler(fd, config, loop)
-    // , client(client)
+    , client(client)
     , pid(pid)
     , writeBuf(body)
     , cgiWrite(NULL) {
@@ -80,8 +80,8 @@ CgiHandler* CgiHandler::Launch(
     const std::map<std::string, std::string>& env,
     const std::string&                      body,
     ServerConfig&                           config,
-    EventLoop&                              loop
-    // ClientHandler&                          client
+    EventLoop&                              loop,
+    ClientHandler&                          client
 )
 {
     int stdinPipe[2];
@@ -131,9 +131,7 @@ CgiHandler* CgiHandler::Launch(
     close(stdoutPipe[1]);
 
     return new CgiHandler(stdoutPipe[0], stdinPipe[1],
-                          pid, config, loop,
-                        //    client,
-                           body);
+                          pid, config, loop, client, body);
 }
 
 void CgiHandler::OnClose() {
