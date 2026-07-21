@@ -1,9 +1,13 @@
 #include "../../inc/AHandler.hpp"
 
+#include <ctime>
+
 AHandler::AHandler(int fd, ServerConfig &config, EventLoop& loop)
     : fd(fd)
     , serverConf(config)
-    , loop(loop) {
+    , loop(loop)
+    , lastActivity(std::time(NULL))
+    , timeoutSeconds(0) {
     SetNonBlocking();
     // if (fd == -1) {
     //     std::cerr << "Webserv: invalid fd\n";
@@ -53,3 +57,13 @@ void    AHandler::SetNonBlocking() const {
         throw std::runtime_error("fcntl failed");
     }
 }
+
+void AHandler::Touch() { lastActivity = std::time(NULL); }
+
+bool AHandler::IsTimedOut(time_t now) const {
+    return timeoutSeconds > 0 && (now - lastActivity) >= timeoutSeconds;
+}
+
+void AHandler::SetTimeout(int seconds) { timeoutSeconds = seconds; }
+
+void AHandler::OnTimeout() { OnClose(); }   // sensible default

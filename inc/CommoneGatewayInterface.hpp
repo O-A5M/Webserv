@@ -35,6 +35,7 @@ public:
     void OnWrite();
     void OnClose();
     void OnWriteFd();
+    void OnTimeout();
 
     static CgiHandler* Launch(
         const std::string&                      scriptPath,
@@ -60,6 +61,7 @@ public:
     void    OnRead();
     void    OnWrite();
     void    OnClose();
+    void    OnTimeout() {}
 };
 
 #endif

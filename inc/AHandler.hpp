@@ -17,6 +17,9 @@ protected:
     int             fd;
     ServerConfig    &serverConf;
     EventLoop       &loop;
+    time_t          lastActivity;
+    int             timeoutSeconds;
+
     void    SetNonBlocking() const;
 public:
     AHandler(int fd, ServerConfig &config, EventLoop& loop);
@@ -25,6 +28,11 @@ public:
     virtual void    OnRead() = 0;
     virtual void    OnWrite() = 0;
     virtual void    OnClose() = 0;
+    virtual void    OnTimeout() = 0;
+
+    void Touch();
+    bool IsTimedOut(time_t now) const;
+    void SetTimeout(int seconds);
 
     void    EnableWrite();
     void    DisableWrite();

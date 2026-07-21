@@ -7,6 +7,8 @@
 #include "AHandler.hpp"
 #include <unistd.h>
 #include <sys/epoll.h>
+#include <set>
+#include <ctime>
 
 class AHandler;
 
@@ -15,6 +17,7 @@ private:
     static const int                MAX_EVENTS = 1024;
     int                             fd;
     epoll_event                     events[MAX_EVENTS];
+    std::set<AHandler*>             handlers;
 
 public:
     EventLoop()
@@ -38,10 +41,11 @@ public:
         return fd;
     }
 
-    void AddHandler(AHandler* handler, uint32_t flags) const;
+    void AddHandler(AHandler* handler, uint32_t flags);
     void ModHandler(AHandler* handler, uint32_t flags) const;
-    void RemoveHandler(AHandler* handler) const;
+    void RemoveHandler(AHandler* handler);
 
+    void CheckTimeouts(void);
     void Loop();
 };
 #endif

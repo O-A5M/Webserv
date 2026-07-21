@@ -17,6 +17,7 @@ public:
     void OnRead(void);
     void OnWrite(void);
     void OnClose(void);
+    void OnTimeout(void) {}
 };
 
 #endif

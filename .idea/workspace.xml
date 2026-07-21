@@ -27,7 +27,16 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="2520d05e-25a8-4337-a2b2-e68e37f8dced" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inc/AHandler.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/inc/AHandler.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inc/Client.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/inc/Client.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inc/CommoneGatewayInterface.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/inc/CommoneGatewayInterface.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inc/EventLoop.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/inc/EventLoop.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inc/Server_Handler.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/inc/Server_Handler.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Multiplexer/AHandler.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/Multiplexer/AHandler.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Multiplexer/Client.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/Multiplexer/Client.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Multiplexer/CommoneGatewayInterface.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/Multiplexer/CommoneGatewayInterface.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Multiplexer/EventLoop.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/Multiplexer/EventLoop.cpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

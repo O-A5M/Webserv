@@ -1,6 +1,6 @@
 #include "../../inc/EventLoop.hpp"
 
-void EventLoop::AddHandler(AHandler* handler, uint32_t flags) const {
+void EventLoop::AddHandler(AHandler* handler, uint32_t flags) {
     epoll_event ev;
 
     ev.events = flags;
@@ -16,6 +16,7 @@ void EventLoop::AddHandler(AHandler* handler, uint32_t flags) const {
 
         throw std::runtime_error("epoll_ctl add failed");
     }
+    handlers.insert(handler);
 }
 
 void EventLoop::ModHandler(AHandler* handler, uint32_t flags) const {
@@ -36,7 +37,7 @@ void EventLoop::ModHandler(AHandler* handler, uint32_t flags) const {
     }
 }
 
-void EventLoop::RemoveHandler(AHandler* handler) const {
+void EventLoop::RemoveHandler(AHandler* handler) {
     if (epoll_ctl(fd,
                   EPOLL_CTL_DEL,
                   handler->GetFd(),
@@ -45,6 +46,20 @@ void EventLoop::RemoveHandler(AHandler* handler) const {
         std::cerr << "Webserv: epoll_ctl DEL: "
                   << strerror(errno) << "\n";
     }
+    handlers.erase(handler);
+}
+
+void EventLoop::CheckTimeouts() {
+    time_t now = std::time(NULL);
+    std::vector<AHandler*> expired;
+
+    for (std::set<AHandler*>::iterator it = handlers.begin(); it != handlers.end(); ++it) {
+        if ((*it)->IsTimedOut(now))
+            expired.push_back(*it);
+    }
+
+    for (size_t i = 0; i < expired.size(); ++i)
+        expired[i]->OnTimeout();
 }
 
 void EventLoop::Loop() {
@@ -53,7 +68,7 @@ void EventLoop::Loop() {
         ready = epoll_wait(fd,
                                events,
                                MAX_EVENTS,
-                               -1);
+                               1000);
 
         if (ready == -1) {
             if (errno == EINTR)
@@ -79,5 +94,6 @@ void EventLoop::Loop() {
             else if (ev & EPOLLOUT)
                 handler->OnWrite();
         }
+        CheckTimeouts();
     }
 }

@@ -23,6 +23,7 @@ CgiHandler::CgiHandler(int fd,
     else
         close(WriteFd);
     loop.AddHandler(this, flags);
+    SetTimeout(20);
 }
 
 CgiHandler::~CgiHandler() {
@@ -176,6 +177,13 @@ void    CgiWriteHandler::OnWrite() {
 }
 
 void    CgiWriteHandler::OnClose() {
+    loop.RemoveHandler(this);
+    delete this;
+}
+
+void CgiHandler::OnTimeout() {
+    KillChild();
+    client.OnCgiTimeout();
     loop.RemoveHandler(this);
     delete this;
 }

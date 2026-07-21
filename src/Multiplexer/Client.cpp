@@ -9,6 +9,7 @@ ClientHandler::ClientHandler(int fd, ServerConfig &config, EventLoop &loop)
 	loop.AddHandler(this, EPOLLIN);
 	this->state = STATE_READING_REQUEST_LINE;
 	this->error_code = 0;
+	SetTimeout(20);
 }
 
 ClientHandler::~ClientHandler(void)
@@ -247,3 +248,19 @@ void ClientHandler::OnClose(void)
 // 	if (!writeBuf.empty())
 // 		EnableWrite();
 // }
+
+void ClientHandler::OnTimeout() {
+	if (state != STATE_READING_REQUEST_LINE && req.route_result.matched_server != NULL) {
+		Response res = Response::generateErrorResponse(408, req.route_result);
+		writeBuf = res.getRawResponse();
+		send(fd, writeBuf.data(), writeBuf.size(), MSG_NOSIGNAL);
+	}
+	OnClose();
+}
+
+void ClientHandler::OnCgiTimeout() {
+	Response res = Response::generateErrorResponse(504, req.route_result);
+	writeBuf = res.getRawResponse();
+	if (!writeBuf.empty())
+		EnableWrite();
+}

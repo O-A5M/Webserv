@@ -35,12 +35,16 @@ public:
     ClientHandler(int fd, ServerConfig& config, EventLoop& loop);
 		ClientHandler();
     ~ClientHandler(void);
-		ParseResult state;
-		int error_code;
-		void OnRead();
+
+	void OnRead();
     void OnWrite();
     void OnClose();
+	void OnTimeout();
+	void OnCgiTimeout();
     // void OnCgiResponse(const std::string &cgiResponse);
+
+	ParseResult state;
+	int error_code;
 };
 
 #endif
