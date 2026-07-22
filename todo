@@ -1,4 +1,5 @@
-fix errore page : still need to
-get a defualt page if index not in location and autoindex off : still need to
-made a upload store : done
-fix max body size : done
+[configFile]: [valid]
+[socket]
+[non-bloking]
+[router]
+[cookies an session managment]

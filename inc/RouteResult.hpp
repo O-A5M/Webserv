@@ -23,7 +23,6 @@ struct RouteResult
   bool is_directory;                      // is a directory?
   size_t max_body_size;
   bool is_file;                               // is a file?
-  bool is_session_test;
   bool is_redirect;                           // redirect response?
   std::string redirect_location;              // where to redirect (301/302)
   std::vector<std::string> allow_methods;     // allowed methods (for 405)

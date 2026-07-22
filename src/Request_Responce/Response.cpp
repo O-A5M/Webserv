@@ -3,24 +3,20 @@
 
 static sessionTracker globalTracker; // about cookies
 
-std::string Response::readHtmlTemplate(const std::string& filepath)
+void Response::manageGlobalSession(const Request &req)
 {
-	std::ifstream file(filepath.c_str());
-	if (!file.is_open()) 
-        return "<h1>Error: Could not open cookies.html template on disk.</h1>";
-	
-	std::stringstream buffer;
-	buffer << file.rdbuf();
-	return buffer.str();
-}
+    std::map<std::string, std::string> cookies = req.getCookies();
+    std::string sessionId = cookies["session_id"];
 
-void Response::replacePlaceholder(std::string& content, const std::string& placeholder, const std::string& replacement)
-{
-	size_t pos = content.find(placeholder);
-	while (pos != std::string::npos) {
-		content.replace(pos, placeholder.length(), replacement);
-		pos = content.find(placeholder, pos + replacement.length());
-	}
+    if (globalTracker.isValidSession(sessionId))
+        this->currentSessionId = sessionId;
+    else
+    {
+        // new session
+        this->currentSessionId = globalTracker.createSession();
+        // send cookies to browser bach l mera jaya ybe9a nefes l ID dima 
+        this->setCookie("session_id", this->currentSessionId, "/", true);
+    }
 }
 
 void Response::setCookie(const std::string &name, const std::string &value, const std::string &path, bool httpOnly) {
@@ -29,62 +25,6 @@ void Response::setCookie(const std::string &name, const std::string &value, cons
     if (httpOnly) cookieStr += "; HttpOnly";
     
     setCookieHeaders.push_back(cookieStr);
-}
-
-
-void Response::handleVisitCounter(const Request &req, const RouteResult &context) {
-    std::map<std::string, std::string> cookies = req.getCookies();
-    std::string sessionId = cookies["session_id"];
-
-    int visitCount = 0;
-    bool isNewSession = false;
-
-    if (req.getQuery() == "action=clear") {
-    globalTracker.destroySession(sessionId);
-    this->setHeader("Set-Cookie", "session_id=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/");
-    this->setStatusCode(302);
-    this->setReasonPhrase("Found");
-    this->setHeader("Location", "/cookies");
-    this->setHeader("Content-Length", "0");
-    this->setHeader("Connection", "close");
-    this->setBody("");
-    this->buildRawResponse();
-    return;
-}
-
-    if (globalTracker.isValidSession(sessionId)) {
-        visitCount = globalTracker.incrementvisit(sessionId);
-    } else {
-        sessionId = globalTracker.createSession();
-        visitCount = 1;
-        isNewSession = true;
-    }
-
-    // 4. Read HTML from DISK and inject data
-    std::string htmlBody = readHtmlTemplate(context.filesystem_path);
-    
-    // C++98 friendly int to string
-    std::stringstream ss;
-    ss << visitCount;
-    
-    replacePlaceholder(htmlBody, "{{VISIT_COUNT}}", ss.str());
-    replacePlaceholder(htmlBody, "{{SESSION_ID}}", sessionId);
-
-    // 5. Assemble headers and body
-    this->setStatusCode(200);
-    this->setReasonPhrase("OK");
-    this->setHeader("Content-Type", "text/html");
-    
-    std::stringstream len_ss;
-    len_ss << htmlBody.length();
-    this->setHeader("Content-Length", len_ss.str());
-    
-    if (isNewSession) {
-        this->setCookie("session_id", sessionId, "/", true);
-    }
-
-    this->setBody(htmlBody);
-    this->buildRawResponse();
 }
 
 bool fileExists(const std::string &path)
@@ -760,19 +700,13 @@ void Response::buildRedirectResponse(const RouteResult &context)
 }
 void Response::build(const Request &req, const RouteResult &context)
 {
+	manageGlobalSession(req);
 
 	if (context.is_redirect)
 	{
 		buildRedirectResponse(context);
 		return;
 	}
-	
-	// --- NEW: Trigger Phase 3 ---
-    if (context.is_session_test)
-    {
-        handleVisitCounter(req, context);
-        return;
-    }
 
 	if (context.status == 200)
 	{

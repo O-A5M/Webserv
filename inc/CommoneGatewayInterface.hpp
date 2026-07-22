@@ -20,10 +20,9 @@ private:
     std::string     readBuf;
     CgiWriteHandler *cgiWrite;
 
-    void Finalize();
-    void KillChild();
-
 public:
+    int             WriteFd;
+
     CgiHandler(int fd,
                int writeFd,
                pid_t pid,
@@ -32,8 +31,6 @@ public:
                ClientHandler& client,
                const std::string& body);
     ~CgiHandler();
-
-    int             WriteFd;
 
     void OnRead();
     void OnWrite();
@@ -51,6 +48,10 @@ public:
         ClientHandler&                          client);
 
     void detachClient(void);
+
+private:
+    void Finalize();
+    void KillChild();
 };
 
 class CgiWriteHandler : public AHandler {
