@@ -39,7 +39,7 @@ void ClientHandler::OnRead(void)
 		OnClose();
 		return;
 	}
-
+	Touch();
 	readBuf.append(buff, nread);
 
 	// THE STATE MACHINE LOOP
