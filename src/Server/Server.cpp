@@ -56,15 +56,15 @@ void Server::initialize_socket()
 
     struct addrinfo *res = NULL;
 
-    const char *serv_name;
-    if (!srv.server_name.empty())
-        serv_name = srv.server_name.c_str();
+    const char *host;
+    if (!srv.host.empty())
+        host = srv.host.c_str();
     else
-        serv_name = NULL;
+        host = NULL;
 
     std::string portStr = intToString(srv.port);
 
-    int status = getaddrinfo(serv_name, portStr.c_str(), &hints, &res);
+    int status = getaddrinfo(host, portStr.c_str(), &hints, &res);
     if (status != 0)
         throw std::runtime_error("getaddrinfo failed!");
 
