@@ -23,7 +23,7 @@ CgiHandler::CgiHandler(int fd,
     else
         close(WriteFd);
     loop.AddHandler(this, flags);
-    SetTimeout(5);
+    SetTimeout(60);
 }
 
 CgiHandler::~CgiHandler() {

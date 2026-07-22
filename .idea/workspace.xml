@@ -28,15 +28,7 @@
   <component name="ChangeListManager">
     <list default="true" id="2520d05e-25a8-4337-a2b2-e68e37f8dced" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/inc/Client.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/inc/Client.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/inc/CommoneGatewayInterface.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/inc/CommoneGatewayInterface.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/inc/Response.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/inc/Response.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Multiplexer/Client.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/Multiplexer/Client.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Multiplexer/CommoneGatewayInterface.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/Multiplexer/CommoneGatewayInterface.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Multiplexer/EventLoop.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/Multiplexer/EventLoop.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Request_Responce/Response.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/Request_Responce/Response.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/www/cgi-bin/testTimeout.py" beforeDir="false" afterPath="$PROJECT_DIR$/www/cgi-bin/testTimeout.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -52,9 +44,6 @@
   <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Debug" />
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
-  </component>
-  <component name="HighlightingSettingsPerFile">
-    <setting file="file://$PROJECT_DIR$/src/Client/Client.cpp" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="MacroExpansionManager">
     <option name="directoryName" value="XnewLYz8" />

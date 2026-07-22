@@ -57,6 +57,7 @@ int main(int ac, char **av)
 			new ServerHandler(servers[i].GetFd(), servers[i].GetConfig(), loop);
 		}
 		loop.Loop();
+		loop.shutdown();
 	}
 	catch (const std::exception &e)
 	{
