@@ -44,7 +44,7 @@ public:
     void OnClose();
 	void OnTimeout();
 	void OnCgiTimeout();
-    // void OnCgiResponse(const std::string &cgiResponse);
+    void OnCgiResponse(const std::string &cgiResponse);
 
 	void SetActiveCgi(CgiHandler *cgi);
 	void ClearActiveCgi(void);

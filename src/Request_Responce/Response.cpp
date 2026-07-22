@@ -783,3 +783,89 @@ void Response::build(const Request &req, const RouteResult &context)
 		*this = generateErrorResponse(context.status, context);
 	}
 }
+
+void Response::buildFromCgi(const std::string &cgiOutput, const RouteResult &context)
+{
+	if (cgiOutput.empty())
+	{
+		*this = generateErrorResponse(502, context);
+		return;
+	}
+
+	size_t headerEnd = cgiOutput.find("\r\n\r\n");
+	size_t sepLen = 4;
+	if (headerEnd == std::string::npos)
+	{
+		headerEnd = cgiOutput.find("\n\n");
+		sepLen = 2;
+	}
+
+	std::string headerBlock;
+	std::string cgiBody;
+	if (headerEnd == std::string::npos)
+	{
+		cgiBody = cgiOutput;
+	}
+	else
+	{
+		headerBlock = cgiOutput.substr(0, headerEnd);
+		cgiBody = cgiOutput.substr(headerEnd + sepLen);
+	}
+
+	int statusCode = 200;
+	std::string reasonPhrase = "OK";
+	bool haveContentType = false;
+
+	std::stringstream headerStream(headerBlock);
+	std::string line;
+	while (std::getline(headerStream, line))
+	{
+		if (!line.empty() && line[line.size() - 1] == '\r')
+			line.erase(line.size() - 1);
+		if (line.empty())
+			continue;
+
+		size_t colon = line.find(':');
+		if (colon == std::string::npos)
+			continue;
+
+		std::string key = line.substr(0, colon);
+		std::string value = line.substr(colon + 1);
+
+		size_t start = value.find_first_not_of(" \t");
+		value = (start == std::string::npos) ? "" : value.substr(start);
+
+		std::string lowerKey = key;
+		for (size_t i = 0; i < lowerKey.size(); ++i)
+			lowerKey[i] = std::tolower(static_cast<unsigned char>(lowerKey[i]));
+
+		if (lowerKey == "status")
+		{
+			std::stringstream ss(value);
+			ss >> statusCode;
+			size_t sp = value.find(' ');
+			if (sp != std::string::npos)
+				reasonPhrase = value.substr(sp + 1);
+		}
+		else
+		{
+			if (lowerKey == "content-type")
+				haveContentType = true;
+			this->setHeader(key, value);
+		}
+	}
+
+	if (!haveContentType)
+		this->setHeader("Content-Type", "text/html");
+
+	this->setStatusCode(statusCode);
+	this->setReasonPhrase(reasonPhrase);
+	this->setBody(cgiBody);
+
+	std::stringstream len;
+	len << cgiBody.size();
+	this->setHeader("Content-Length", len.str());
+	this->setHeader("Date", this->current_http_date());
+
+	this->buildRawResponse();
+}

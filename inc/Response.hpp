@@ -23,6 +23,7 @@ private:
 	std::map<std::string, std::string> headers;
 	std::string body;
 	std::string raw_response;
+
 	void handleGet(const Request &req, const RouteResult &context);
 	void handlePost(const Request &req , const RouteResult &context);
 	void handleDelete(const RouteResult &context);
@@ -60,6 +61,8 @@ public:
 	// about cookies
 	void setCookie(const std::string &name, const std::string &value, const std::string &path = "/", bool httpOnly = true);
 	std::vector<std::string> setCookieHeaders; // Add this container
+
+	void	buildFromCgi(const std::string &cgiOutput, const RouteResult &context);
 };
 
 #endif

@@ -159,10 +159,11 @@ void CgiHandler::Finalize() {
         pid = -1;
     }
 
-    std::cout << readBuf << std::endl;
-    if (client)
+    // std::cout << readBuf << std::endl;
+    if (client) {
+        client->OnCgiResponse(readBuf);
         client->ClearActiveCgi();
-        // client.OnCgiResponse(readBuf);
+    }
     OnClose();
 }
 

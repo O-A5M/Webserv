@@ -14,12 +14,14 @@ class CgiWriteHandler;
 
 class CgiHandler : public AHandler {
 private:
-    int             WriteFd;
     ClientHandler   *client;
     pid_t           pid;
     std::string     writeBuf;
     std::string     readBuf;
     CgiWriteHandler *cgiWrite;
+
+    void Finalize();
+    void KillChild();
 
 public:
     CgiHandler(int fd,
@@ -30,6 +32,8 @@ public:
                ClientHandler& client,
                const std::string& body);
     ~CgiHandler();
+
+    int             WriteFd;
 
     void OnRead();
     void OnWrite();
@@ -47,10 +51,6 @@ public:
         ClientHandler&                          client);
 
     void detachClient(void);
-
-private:
-    void Finalize();
-    void KillChild();
 };
 
 class CgiWriteHandler : public AHandler {
