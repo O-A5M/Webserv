@@ -58,12 +58,19 @@ void    AHandler::SetNonBlocking() const {
     }
 }
 
-void AHandler::Touch() { lastActivity = std::time(NULL); }
+void AHandler::Touch() {
+    lastActivity = std::time(NULL);
+}
 
 bool AHandler::IsTimedOut(time_t now) const {
     return timeoutSeconds > 0 && (now - lastActivity) >= timeoutSeconds;
 }
 
-void AHandler::SetTimeout(int seconds) { timeoutSeconds = seconds; }
+void AHandler::SetTimeout(int seconds) {
+    timeoutSeconds = seconds;
+    // std::cout << "timeoutSeconds: " << timeoutSeconds << "\n";
+}
 
-void AHandler::OnTimeout() { OnClose(); }   // sensible default
+void AHandler::OnTimeout() {
+    OnClose();
+}

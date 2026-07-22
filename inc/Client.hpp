@@ -6,11 +6,12 @@
 #include <sys/socket.h>
 #include <sys/epoll.h>
 #include <netinet/in.h>
+#include <vector>
 
 #include "AHandler.hpp"
 #include "Request.hpp"
 #include "Router.hpp"
-#include <vector>
+#include "CommoneGatewayInterface.hpp"
 
 enum ParseResult
 {
@@ -29,11 +30,13 @@ private:
     std::vector<ServerConfig> serverConfigs;
     Router              router;
     Request             req;
+	CgiHandler			*activeCgi;
+	RouteResult			activeCgiRouteResult;
+
     std::string getInterpreterPath(void) const;
 
 public:
     ClientHandler(int fd, ServerConfig& config, EventLoop& loop);
-		ClientHandler();
     ~ClientHandler(void);
 
 	void OnRead();
@@ -42,6 +45,9 @@ public:
 	void OnTimeout();
 	void OnCgiTimeout();
     // void OnCgiResponse(const std::string &cgiResponse);
+
+	void SetActiveCgi(CgiHandler *cgi);
+	void ClearActiveCgi(void);
 
 	ParseResult state;
 	int error_code;

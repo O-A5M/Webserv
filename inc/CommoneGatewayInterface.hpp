@@ -15,7 +15,7 @@ class CgiWriteHandler;
 class CgiHandler : public AHandler {
 private:
     int             WriteFd;
-    ClientHandler   &client;
+    ClientHandler   *client;
     pid_t           pid;
     std::string     writeBuf;
     std::string     readBuf;
@@ -45,6 +45,8 @@ public:
         ServerConfig&                           config,
         EventLoop&                              loop,
         ClientHandler&                          client);
+
+    void detachClient(void);
 
 private:
     void Finalize();

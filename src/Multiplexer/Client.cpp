@@ -4,12 +4,15 @@
 #include "../../inc/Response.hpp"
 
 ClientHandler::ClientHandler(int fd, ServerConfig &config, EventLoop &loop)
-		: AHandler(fd, config, loop), serverConfigs(1, config), router(serverConfigs)
+		: AHandler(fd, config, loop)
+		, serverConfigs(1, config)
+		, router(serverConfigs)
+		, activeCgi(NULL)
 {
 	loop.AddHandler(this, EPOLLIN);
 	this->state = STATE_READING_REQUEST_LINE;
 	this->error_code = 0;
-	SetTimeout(20);
+	SetTimeout(60);
 }
 
 ClientHandler::~ClientHandler(void)
@@ -164,16 +167,18 @@ void ClientHandler::OnRead(void)
 					ss << bodyFile.rdbuf();
 					cgiBody = ss.str();
 				}
+				this->activeCgiRouteResult = this->req.route_result;
 
-				CgiHandler::Launch(
+				CgiHandler *cgi = CgiHandler::Launch(
 					this->req.route_result.cgi_script_path,
-					this->req.route_result.matched_location->cgi_path,   // interpreter
+					this->req.route_result.matched_location->cgi_path,
 					this->req.route_result.cgi_env,
 					cgiBody,
 					this->GetServerConf(),
 					this->loop,
 					*this
 				);
+				SetActiveCgi(cgi);
 
 				this->req.clear();
 				this->state = STATE_READING_REQUEST_LINE;
@@ -236,6 +241,12 @@ void ClientHandler::OnWrite(void)
 
 void ClientHandler::OnClose(void)
 {
+	if (activeCgi) {
+		activeCgi->detachClient();
+		activeCgi->OnTimeout();
+
+		activeCgi = NULL;
+	}
 	loop.RemoveHandler(this);
 	delete this;
 }
@@ -259,8 +270,16 @@ void ClientHandler::OnTimeout() {
 }
 
 void ClientHandler::OnCgiTimeout() {
-	Response res = Response::generateErrorResponse(504, req.route_result);
+	Response res = Response::generateErrorResponse(504, activeCgiRouteResult);
 	writeBuf = res.getRawResponse();
 	if (!writeBuf.empty())
 		EnableWrite();
+}
+
+void ClientHandler::SetActiveCgi(CgiHandler *cgi) {
+	activeCgi = cgi;
+}
+
+void ClientHandler::ClearActiveCgi() {
+	activeCgi = NULL;
 }

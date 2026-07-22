@@ -13,7 +13,7 @@ CgiHandler::CgiHandler(int fd,
                        ClientHandler& client,
                        const std::string& body)
     : AHandler(fd, config, loop)
-    , client(client)
+    , client(&client)
     , pid(pid)
     , writeBuf(body)
     , cgiWrite(NULL) {
@@ -23,12 +23,17 @@ CgiHandler::CgiHandler(int fd,
     else
         close(WriteFd);
     loop.AddHandler(this, flags);
-    SetTimeout(20);
+    SetTimeout(5);
 }
 
 CgiHandler::~CgiHandler() {
     if (fd != -1)
         close(fd);
+    if (cgiWrite) {
+        loop.RemoveHandler(cgiWrite);
+        delete cgiWrite;
+        cgiWrite = NULL;
+    }
 }
 
 void CgiHandler::OnRead() {
@@ -110,6 +115,9 @@ CgiHandler* CgiHandler::Launch(
 
         std::vector<std::string> envStorage;
         std::vector<char*>       envp;
+
+        envStorage.reserve(env.size());
+        envp.reserve(env.size() + 1);
         for (std::map<std::string,std::string>::const_iterator it = env.begin();
              it != env.end(); ++it) {
             envStorage.push_back(it->first + "=" + it->second);
@@ -138,6 +146,8 @@ CgiHandler* CgiHandler::Launch(
 void CgiHandler::OnClose() {
     KillChild();
     loop.RemoveHandler(this);
+    if (client)
+        client->ClearActiveCgi();
     // TODO: tell client to send 502
     delete this;
 }
@@ -150,7 +160,9 @@ void CgiHandler::Finalize() {
     }
 
     std::cout << readBuf << std::endl;
-    // client.OnCgiResponse(readBuf);
+    if (client)
+        client->ClearActiveCgi();
+        // client.OnCgiResponse(readBuf);
     OnClose();
 }
 
@@ -183,7 +195,14 @@ void    CgiWriteHandler::OnClose() {
 
 void CgiHandler::OnTimeout() {
     KillChild();
-    client.OnCgiTimeout();
+    if (client) {
+        client->ClearActiveCgi();
+        client->OnCgiTimeout();
+    }
     loop.RemoveHandler(this);
     delete this;
+}
+
+void CgiHandler::detachClient() {
+    client = NULL;
 }
