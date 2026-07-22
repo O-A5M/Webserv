@@ -26,6 +26,8 @@ private:
 	void handleGet(const Request &req, const RouteResult &context);
 	void handlePost(const Request &req , const RouteResult &context);
 	void handleDelete(const RouteResult &context);
+	// [cookies]
+	std::string currentSessionId;
 
 	void setStatusCode(int code);
 	void setReasonPhrase(const std::string &phrase);
@@ -45,10 +47,10 @@ private:
 	static std::string buildErrorPage(int code, const std::string &reason);
 	std::string buildAutoIndex(const std::string &physicalPath, const std::string &requestURI);
 
-	// about cookies
-	void handleVisitCounter(const Request &req, const RouteResult &context);
-    std::string readHtmlTemplate(const std::string& filepath);
-    void replacePlaceholder(std::string& content, const std::string& placeholder, const std::string& replacement);
+	// [cookies]
+	void manageGlobalSession(const Request &req);
+
+
 
 public:
 	void buildRedirectResponse(const RouteResult &context);

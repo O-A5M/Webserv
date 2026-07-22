@@ -38,12 +38,6 @@ std::string sessionTracker::createSession()
     return newId;
 }
 
-int sessionTracker::incrementvisit(const std::string& sessionId)
-{
-    _visits[sessionId] += 1;
-    return _visits[sessionId];
-}
-
 void sessionTracker::destroySession(const std::string& sessionId) {
     if (isValidSession(sessionId)) {
         _visits.erase(sessionId);

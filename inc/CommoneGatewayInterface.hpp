@@ -12,23 +12,24 @@
 class ClientHandler;
 class CgiWriteHandler;
 
-class CgiHandler : public AHandler {
+class CgiHandler : public AHandler
+{
 private:
-    int             WriteFd;
-    ClientHandler   *client;
-    pid_t           pid;
-    std::string     writeBuf;
-    std::string     readBuf;
+    ClientHandler *client;
+    pid_t pid;
+    std::string writeBuf;
+    std::string readBuf;
     CgiWriteHandler *cgiWrite;
 
 public:
+    int WriteFd;
     CgiHandler(int fd,
                int writeFd,
                pid_t pid,
-               ServerConfig& config,
-               EventLoop& loop,
-               ClientHandler& client,
-               const std::string& body);
+               ServerConfig &config,
+               EventLoop &loop,
+               ClientHandler &client,
+               const std::string &body);
     ~CgiHandler();
 
     void OnRead();
@@ -37,14 +38,14 @@ public:
     void OnWriteFd();
     void OnTimeout();
 
-    static CgiHandler* Launch(
-        const std::string&                      scriptPath,
-        const std::string&                      interpreter,
-        const std::map<std::string, std::string>& env,
-        const std::string&                      body,
-        ServerConfig&                           config,
-        EventLoop&                              loop,
-        ClientHandler&                          client);
+    static CgiHandler *Launch(
+        const std::string &scriptPath,
+        const std::string &interpreter,
+        const std::map<std::string, std::string> &env,
+        const std::string &body,
+        ServerConfig &config,
+        EventLoop &loop,
+        ClientHandler &client);
 
     void detachClient(void);
 
@@ -53,17 +54,19 @@ private:
     void KillChild();
 };
 
-class CgiWriteHandler : public AHandler {
+class CgiWriteHandler : public AHandler
+{
 private:
-    CgiHandler&  cgi;
+    CgiHandler &cgi;
+
 public:
-    CgiWriteHandler(int fd, ServerConfig& config, EventLoop& loop, CgiHandler& cgi);
+    CgiWriteHandler(int fd, ServerConfig &config, EventLoop &loop, CgiHandler &cgi);
     ~CgiWriteHandler();
 
-    void    OnRead();
-    void    OnWrite();
-    void    OnClose();
-    void    OnTimeout() {}
+    void OnRead();
+    void OnWrite();
+    void OnClose();
+    void OnTimeout() {}
 };
 
 #endif

@@ -19,7 +19,6 @@ class sessionTracker {
         // Condition A: New User Logic
         std::string createSession();
         // Condition B: Returning User Logic
-        int incrementvisit(const std::string& sessionId);
         void destroySession(const std::string& sessionId);
 };
 
