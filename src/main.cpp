@@ -1,3 +1,6 @@
+#include <csignal>
+#include <cstring>
+
 #include "configParser.hpp"
 #include "serverConfig.hpp"
 #include "Server.hpp"
@@ -7,6 +10,10 @@
 #include "Server_Handler.hpp"
 
 
+static void handleShutdownSignal(int) {
+	EventLoop::running = 0;
+}
+
 int main(int ac, char **av)
 {
 	if (ac != 2)
@@ -14,6 +21,16 @@ int main(int ac, char **av)
 		std::cerr << "Usage: " << av[0] << " <config_file>" << std::endl;
 		return 1;
 	}
+
+	struct sigaction sa;
+	std::memset(&sa, 0, sizeof(sa));
+	sa.sa_handler = handleShutdownSignal;
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = 0;
+	sigaction(SIGINT, &sa, NULL);
+	sigaction(SIGTERM, &sa, NULL);
+
+	signal(SIGPIPE, SIG_IGN);
 
 	try
 	{

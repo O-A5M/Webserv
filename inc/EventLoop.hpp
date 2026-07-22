@@ -4,6 +4,7 @@
 #include <iostream>
 #include <cstring>
 #include <cerrno>
+#include <csignal>
 #include "AHandler.hpp"
 #include <unistd.h>
 #include <sys/epoll.h>
@@ -47,5 +48,9 @@ public:
 
     void CheckTimeouts(void);
     void Loop();
+
+    void shutdown();
+
+    static volatile sig_atomic_t running;
 };
 #endif

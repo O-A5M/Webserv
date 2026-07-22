@@ -1,5 +1,7 @@
 #include "../../inc/EventLoop.hpp"
 
+volatile sig_atomic_t EventLoop::running = 1;
+
 void EventLoop::AddHandler(AHandler* handler, uint32_t flags) {
     epoll_event ev;
 
@@ -64,7 +66,7 @@ void EventLoop::CheckTimeouts() {
 
 void EventLoop::Loop() {
     int ready = 0;
-    while (true) {
+    while (running) {
         ready = epoll_wait(fd,
                                events,
                                MAX_EVENTS,
@@ -95,5 +97,12 @@ void EventLoop::Loop() {
                 handler->OnWrite();
         }
         CheckTimeouts();
+    }
+}
+
+void EventLoop::shutdown() {
+    while (!handlers.empty()) {
+        AHandler* handler = *handlers.begin();
+        handler->OnClose();
     }
 }
