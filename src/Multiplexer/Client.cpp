@@ -199,9 +199,10 @@ void ClientHandler::OnRead(void)
 		}
 		case STATE_ERROR:
 		{
-			std::cout << "Error encountered: " << this->error_code << std::endl;
 
 			Response res = Response::generateErrorResponse(this->error_code , this->req.route_result);
+			req.clear();
+			this->state = STATE_READING_REQUEST_LINE;
 			this->writeBuf = res.getRawResponse();
 			if (!this->writeBuf.empty())
 			{
