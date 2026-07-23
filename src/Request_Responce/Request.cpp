@@ -101,8 +101,8 @@ int Request::parse_request_line(const std::string &req_line)
 	{
 		if (req_line[i] == '\r')
 			continue;
-		if (req_line[i] == ' ' && (i + 1 < req_line.size() && req_line[i + 1] == ' '))
-			return -1;
+		// if (req_line[i] == ' ' && (i + 1 < req_line.size() && req_line[i + 1] == ' '))
+			// return -1;
 		if (req_line[i] == ' ')
 		{
 			space_count++;
@@ -118,8 +118,8 @@ int Request::parse_request_line(const std::string &req_line)
 			return -1;
 	}
 
-	if (space_count != 2 || method_str.empty() || uri.empty() || version.empty())
-		return -1;
+	if (method_str.empty() || uri.empty() || version.empty())
+		return -2;
 	if (method_str == "GET")
 		this->setMethod(GET);
 	else if (method_str == "POST")
@@ -238,11 +238,11 @@ int Request::parse_request_headers(const std::string &header)
 		}
 	}
 	}
-	if (this->getHeaders().find("host") == this->getHeaders().end())
-	{
-		std::cout << "Host header does not exist" << std::endl;
-		return -3;
-	}
+	// if (this->getHeaders().find("host") == this->getHeaders().end())
+	// {
+	// 	std::cout << "Host header does not exist" << std::endl;
+	// 	return -3;
+	// }
 	if ((this->getHeaders().find("transfer-encoding") != this->getHeaders().end()))
 	{
 		if (this->getHeaders().find("content-length") != this->getHeaders().end())
@@ -401,17 +401,21 @@ int Request::parse_body(const std::string &body, size_t &consumed_bytes)
 		return 0;
 	}
 }
-
-ParseStatus Request::validateRequest()
+ParseStatus Request::validateRequestLine()
 {
-	if (this->getVersion() != "HTTP/1.1")
-		return VERSION_NOT_SUPPORTED;
 	if (this->getMethod() == UNKNOWN)
 		return METHOD_NOT_ALLOWED;
 	if (this->getUri().size() > MAX_URI_LENGTH)
 		return URI_TOO_LONG;
 	if (this->is_traversal_attempt(this->getUri()))
 		return FORBIDDEN;
+	if (this->getVersion() != "HTTP/1.1")
+		return VERSION_NOT_SUPPORTED;
+	return OK;
+}
+ParseStatus Request::validateHeaders()
+{
+	
 	std::map<std::string, std::string>::const_iterator it = this->getHeaders().find("host");
 	if (it == this->getHeaders().end() || it->second.empty())
 		return BAD_REQUEST;

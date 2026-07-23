@@ -97,7 +97,8 @@ public:
 	void removeHeader(const std::string &key);
 	void display(void) const;
 	bool is_traversal_attempt(const std::string &path);
-	ParseStatus validateRequest();
+	ParseStatus validateRequestLine();
+	ParseStatus validateHeaders();
 	const std::string &getBodyFilePath() const { return body_file_path; }
 };
 

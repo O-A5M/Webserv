@@ -137,10 +137,9 @@ Response Response::generateErrorResponse(int code , const RouteResult &context)
 		reason = "Unknown Error";
 		break;
 	}
-	if (context.matched_server == NULL)
+	if (context.matched_server)
 	{
-		return res;
-	}
+	
 	std::map<int, std::string>::const_iterator it = context.matched_server->error_pages.find(code);	
 	if (it != context.matched_server->error_pages.end())
 	{
@@ -165,7 +164,7 @@ Response Response::generateErrorResponse(int code , const RouteResult &context)
 			}
 		}
 	}
-	
+	}	
 	std::string body = buildErrorPage(code, reason);
 	res.setStatusCode(code);
 	res.setReasonPhrase(reason);

@@ -12,14 +12,15 @@ ClientHandler::ClientHandler(int fd, ServerConfig &config, EventLoop &loop)
 	loop.AddHandler(this, EPOLLIN);
 	this->state = STATE_READING_REQUEST_LINE;
 	this->error_code = 0;
-	SetTimeout(TIMEOUT_SECONDS + 10);
+	SetTimeout(60);
 }
 
 ClientHandler::~ClientHandler(void)
 {
 	if (fd != -1)
 		close(fd);
-	// std::cout << "ClientHandler::~ClientHandler()" << std::endl;
+
+	std::cout << "ClientHandler destroyed" << std::endl;
 	// delete this;
 }
 
@@ -43,7 +44,6 @@ void ClientHandler::OnRead(void)
 	Touch();
 	readBuf.append(buff, nread);
 
-	// THE STATE MACHINE LOOP
 	bool keep_parsing = true;
 	while (keep_parsing)
 	{
@@ -61,10 +61,15 @@ void ClientHandler::OnRead(void)
 			}
 			std::string request_line = readBuf.substr(0, pos);
 			int line_status = this->req.parse_request_line(request_line);
-			if (line_status < 0)
+			int validation_status = this->req.validateRequestLine();
+			if (line_status < 0 || validation_status != OK)
 			{
-				this->error_code = 400;
+				if (validation_status != OK)
+					this->error_code = validation_status;
+				else
+					this->error_code = 400;
 				this->state = STATE_ERROR;
+				break;
 			}
 			else
 			{
@@ -99,7 +104,7 @@ void ClientHandler::OnRead(void)
 		}
 		case STATE_HEADERS_DONE:
 		{
-			int status = this->req.validateRequest();
+			int status = this->req.validateHeaders();
 			if (status != OK)
 			{
 				this->error_code = status;
@@ -200,7 +205,7 @@ void ClientHandler::OnRead(void)
 		}
 		case STATE_ERROR:
 		{
-
+			std::cout << "skhaaaaaaaaaaaaaal"  << std::endl;
 			Response res = Response::generateErrorResponse(this->error_code , this->req.route_result);
 			req.clear();
 			this->state = STATE_READING_REQUEST_LINE;
@@ -220,23 +225,15 @@ void ClientHandler::OnRead(void)
 
 void ClientHandler::OnWrite(void)
 {
-	int	Connection = 1;
 	while (!writeBuf.empty())
 	{
-		// std::cout << writeBuf << std::endl;
-		size_t connectionPos = writeBuf.find("Connection: ");
-		if (connectionPos != std::string::npos) {
-			std::string tmp = writeBuf.substr(connectionPos + 12, 5);
-			std::cout << connectionPos << std::endl;
-			if (tmp == "close")
-				Connection = 0;
-		}
 		ssize_t nwrite = send(fd, writeBuf.data(), writeBuf.size(), 0);
 		if (nwrite == -1)
 		{
 			if (errno == EAGAIN || errno == EWOULDBLOCK)
 				return;
 			std::cerr << "ClientHandler: OnWrite() error: "
+			
 								<< strerror(errno) << std::endl;
 			OnClose();
 			return;
@@ -245,8 +242,6 @@ void ClientHandler::OnWrite(void)
 	}
 	writeBuf.clear();
 	DisableWrite();
-	if (!Connection)
-		OnClose();
 }
 
 void ClientHandler::OnClose(void)
