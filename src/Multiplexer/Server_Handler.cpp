@@ -7,8 +7,10 @@ ServerHandler::ServerHandler(int fd, ServerConfig &config, EventLoop &loop)
 }
 
 ServerHandler::~ServerHandler() {
-    if (fd != -1)
+    if (fd != -1) {
         close (fd);
+        // fd = -1;
+    }
 }
 
 void    ServerHandler::OnRead() {

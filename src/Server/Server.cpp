@@ -13,8 +13,10 @@ Server::Server(ServerConfig& servers)
 
 Server::~Server()
 {
-    if (_serverFds >= 0)
-        close (_serverFds);
+    // if (_serverFds != 1) {
+    //     close (_serverFds);
+    //     _serverFds = -1;
+    // }
 }
 
 void    Server::SetNonBlocking() const {
