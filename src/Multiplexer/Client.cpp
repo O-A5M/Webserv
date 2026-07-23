@@ -9,10 +9,10 @@ ClientHandler::ClientHandler(int fd, ServerConfig &config, EventLoop &loop)
 		, router(serverConfigs)
 		, activeCgi(NULL)
 		, Connection(1)
+		, state(STATE_READING_REQUEST_LINE)
+		, error_code(0)
 {
 	loop.AddHandler(this, EPOLLIN);
-	this->state = STATE_READING_REQUEST_LINE;
-	this->error_code = 0;
 	SetTimeout(60);
 }
 
@@ -163,16 +163,21 @@ void ClientHandler::OnRead(void)
 		}
 		case STATE_COMPLETE:
 		{
+
 			std::map<std::string, std::string> tmp = this->req.getHeaders();
 			std::map<std::string, std::string>::iterator iter = tmp.find("connection");
+			if (iter != tmp.end()){
 			std::string value = iter->second;
 			for (size_t i = 0; i < value.size(); i++) {
 				value[i] = std::tolower(iter->second[i]);
 			}
 
 			if (value == "close")
+			{
 				Connection = 0;
-
+				req.con = 0;
+			}
+			}
 			if (this->req.route_result.is_cgi)
 			{
 				std::string cgiBody;
@@ -234,13 +239,11 @@ void ClientHandler::OnRead(void)
 	}
 }
 
-
-
 void ClientHandler::OnWrite(void)
 {
 	while (!writeBuf.empty())
 	{
-		size_t connectionPos = writeBuf.find("Connection: ");
+		size_t connectionPos = writeBuf.find("Connection : ");
 		if (connectionPos != std::string::npos) {
 			std::string tmp = writeBuf.substr(connectionPos + 12, 5);
 			for (size_t i = 0; i < tmp.size(); i++) {

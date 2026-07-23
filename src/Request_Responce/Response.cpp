@@ -235,7 +235,7 @@ std::string Response::current_http_date()
 	return std::string(buffer);
 }
 
-void Response::serveFile(const RouteResult &context)
+void Response::serveFile(const RouteResult &context , const Request &req)
 {
 	std::ifstream file(context.filesystem_path.c_str(), std::ios::in | std::ios::binary);
 	if (!file.is_open())
@@ -259,6 +259,10 @@ void Response::serveFile(const RouteResult &context)
 	buuferLenght << this->getBody().size();
 	this->setHeader("Content-Length", buuferLenght.str());
 	this->setHeader("Date", this->current_http_date());
+	if (req.con == 0)
+		this->setHeader("Connection", "close");
+	else
+		this->setHeader("Connection", "keep-alive");
 	this->buildRawResponse();
 }
 
@@ -564,6 +568,10 @@ void Response::handlePost(const Request &req, const RouteResult &context)
 	buuferLenght << this->getBody().size();
 	this->setHeader("Content-Length", buuferLenght.str());
 	this->setHeader("Date", this->current_http_date());
+	if (req.con == 0)
+		this->setHeader("Connection", "close");
+	else
+		this->setHeader("Connection", "keep-alive");
 	this->buildRawResponse();
 }
 
@@ -578,13 +586,13 @@ void Response::handleGet(const Request &req, const RouteResult &context)
 	}
 	if (context.is_file)
 	{
-		serveFile(context);
+		serveFile(context , req);
 	}
 	else if (context.is_directory)
 	{
 		if (fileExists(context.filesystem_path))
 		{
-			serveFile(context);
+			serveFile(context , req);
 			return;
 		}
 		else if (context.is_autoindex)
@@ -603,6 +611,10 @@ void Response::handleGet(const Request &req, const RouteResult &context)
 			buuferLenght << this->getBody().size();
 			this->setHeader("Content-Length", buuferLenght.str());
 			this->setHeader("Date", this->current_http_date());
+			if (req.con == 0)
+				this->setHeader("Connection", "close");
+			else
+				this->setHeader("Connection", "keep-alive");
 			this->buildRawResponse();
 		}
 		else
@@ -618,7 +630,7 @@ void Response::handleGet(const Request &req, const RouteResult &context)
 	}
 }
 
-void Response::handleDelete(const RouteResult &context)
+void Response::handleDelete(const RouteResult &context , const Request &req)
 {
 	if (context.allow_methods.size() > 0 &&
 		(std::find(context.allow_methods.begin(), context.allow_methods.end(), "DELETE") == context.allow_methods.end()))
@@ -664,7 +676,10 @@ void Response::handleDelete(const RouteResult &context)
 	bufferLength << this->getBody().size();
 	this->setHeader("Content-Length", bufferLength.str());
 	this->setHeader("Date", this->current_http_date());
-
+	if (req.con == 0)
+		this->setHeader("Connection", "close");
+	else
+		this->setHeader("Connection", "keep-alive");
 	this->buildRawResponse();
 }
 
@@ -681,7 +696,7 @@ void Response::dispatchMethod(const Request &req, const RouteResult &context)
 	}
 	else if (req.getMethod() == DELETE)
 	{
-		handleDelete(context);
+		handleDelete(context, req);
 	}
 	// else
 	// {
@@ -689,14 +704,17 @@ void Response::dispatchMethod(const Request &req, const RouteResult &context)
 	// }
 }
 
-void Response::buildRedirectResponse(const RouteResult &context)
+void Response::buildRedirectResponse(const RouteResult &context , const Request &req)
 {
 	this->setStatusCode(context.status);
 	this->setReasonPhrase("Moved Permanently");
 	this->setHeader("Location", context.redirect_location);
 	this->setHeader("Date", this->current_http_date());
 	this->setHeader("Content-Length", "0");
-	this->setHeader("Connection", "keep-alive");
+	if (req.con == 0)
+		this->setHeader("Connection", "close");
+	else
+		this->setHeader("Connection", "keep-alive");
 	this->setHeader("Server", "Webserv/1.0 (Ubuntu)");
 	this->buildRawResponse();
 }
@@ -706,7 +724,7 @@ void Response::build(const Request &req, const RouteResult &context)
 
 	if (context.is_redirect)
 	{
-		buildRedirectResponse(context);
+		buildRedirectResponse(context , req);
 		return;
 	}
 

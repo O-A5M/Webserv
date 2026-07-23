@@ -26,7 +26,7 @@ private:
 
 	void handleGet(const Request &req, const RouteResult &context);
 	void handlePost(const Request &req , const RouteResult &context);
-	void handleDelete(const RouteResult &context);
+	void handleDelete(const RouteResult &context , const Request &req);
 	// [cookies]
 	std::string currentSessionId;
 
@@ -54,10 +54,10 @@ private:
 
 
 public:
-	void buildRedirectResponse(const RouteResult &context);
+	void buildRedirectResponse(const RouteResult &context , const Request &req);
 	const std::string &getRawResponse() const;
 	static Response generateErrorResponse(int code , const RouteResult &context);
-	void serveFile(const RouteResult &context);
+	void serveFile(const RouteResult &context , const Request &req);
 	void build(const Request &req, const RouteResult &context);
 
 	// about cookies

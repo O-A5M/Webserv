@@ -101,11 +101,12 @@ int Request::parse_request_line(const std::string &req_line)
 	{
 		if (req_line[i] == '\r')
 			continue;
-		// if (req_line[i] == ' ' && (i + 1 < req_line.size() && req_line[i + 1] == ' '))
-			// return -1;
 		if (req_line[i] == ' ')
 		{
-			space_count++;
+			if (i > 0 && req_line[i - 1] != ' ')
+			{
+				space_count++;
+			}
 			continue;
 		}
 		if (space_count == 0)
@@ -117,7 +118,6 @@ int Request::parse_request_line(const std::string &req_line)
 		else
 			return -1;
 	}
-
 	if (method_str.empty() || uri.empty() || version.empty())
 		return -2;
 	if (method_str == "GET")

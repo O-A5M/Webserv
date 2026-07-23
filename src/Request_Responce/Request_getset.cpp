@@ -16,7 +16,8 @@ Request::Request(void) : Method(UNKNOWN),
       headers(),
       body(""),
       body_file_path(""),
-      body_bytes_processed(0)
+      body_bytes_processed(0),
+	  con(1)
 {
 }
 Request::~Request(void)
@@ -37,6 +38,7 @@ void Request::clear(void)
 	this->cookies.clear(); // ADD about (Cookie) parsing
 	this->body_bytes_processed = 0;
 	this->route_result = RouteResult();
+	this->con = 1;
 }
 void Request::setUri(const std::string &uri)
 {

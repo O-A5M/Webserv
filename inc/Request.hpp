@@ -61,6 +61,7 @@ private:
 	size_t body_bytes_processed;
 
 public:
+	int con;
 	std::string trim_cookie_part(const std::string &value) const; // ADD about (Cookie) parsing
 	void parse_cookies(void);									  // ADD about (Cookie) parsing
 	int parse_request_line(const std::string &req_line);
