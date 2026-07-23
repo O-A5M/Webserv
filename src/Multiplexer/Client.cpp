@@ -8,6 +8,7 @@ ClientHandler::ClientHandler(int fd, ServerConfig &config, EventLoop &loop)
 		, serverConfigs(1, config)
 		, router(serverConfigs)
 		, activeCgi(NULL)
+		, Connection(1)
 {
 	loop.AddHandler(this, EPOLLIN);
 	this->state = STATE_READING_REQUEST_LINE;
@@ -23,6 +24,8 @@ ClientHandler::~ClientHandler(void)
 	std::cout << "ClientHandler destroyed" << std::endl;
 	// delete this;
 }
+
+
 
 void ClientHandler::OnRead(void)
 {
@@ -160,6 +163,16 @@ void ClientHandler::OnRead(void)
 		}
 		case STATE_COMPLETE:
 		{
+			std::map<std::string, std::string> tmp = this->req.getHeaders();
+			std::map<std::string, std::string>::iterator iter = tmp.find("connection");
+			std::string value = iter->second;
+			for (size_t i = 0; i < value.size(); i++) {
+				value[i] = std::tolower(iter->second[i]);
+			}
+
+			if (value == "close")
+				Connection = 0;
+
 			if (this->req.route_result.is_cgi)
 			{
 				std::string cgiBody;
@@ -227,6 +240,15 @@ void ClientHandler::OnWrite(void)
 {
 	while (!writeBuf.empty())
 	{
+		size_t connectionPos = writeBuf.find("Connection: ");
+		if (connectionPos != std::string::npos) {
+			std::string tmp = writeBuf.substr(connectionPos + 12, 5);
+			for (size_t i = 0; i < tmp.size(); i++) {
+				tmp[i] = std::tolower(tmp[i]);
+			}
+			if (tmp == "close")
+				Connection = 0;
+		}
 		ssize_t nwrite = send(fd, writeBuf.data(), writeBuf.size(), 0);
 		if (nwrite == -1)
 		{
@@ -242,6 +264,8 @@ void ClientHandler::OnWrite(void)
 	}
 	writeBuf.clear();
 	DisableWrite();
+	if (!Connection)
+		OnClose();
 }
 
 void ClientHandler::OnClose(void)

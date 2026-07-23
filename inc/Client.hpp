@@ -32,6 +32,7 @@ private:
     Request             req;
 	CgiHandler			*activeCgi;
 	RouteResult			activeCgiRouteResult;
+	int					Connection;
 
     std::string getInterpreterPath(void) const;
 
