@@ -10,6 +10,8 @@
 #include "EventLoop.hpp"
 #include "Server.hpp"
 
+#define TIMEOUT_SECONDS 10
+
 class EventLoop;
 
 class AHandler {

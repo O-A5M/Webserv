@@ -101,11 +101,8 @@ void EventLoop::Loop() {
 }
 
 void EventLoop::shutdown() {
-    std::cout << "Shutdown: handlers.size() = " << handlers.size() << std::endl;
     while (!handlers.empty()) {
         AHandler* handler = *handlers.begin();
-        std::cout << "Closing handler at " << handler << " fd=" << handler->GetFd() << std::endl;
         handler->OnClose();
     }
-    std::cout << "Shutdown: handlers.size() = " << handlers.size() << " (after)" << std::endl;
 }

@@ -12,13 +12,14 @@ ClientHandler::ClientHandler(int fd, ServerConfig &config, EventLoop &loop)
 	loop.AddHandler(this, EPOLLIN);
 	this->state = STATE_READING_REQUEST_LINE;
 	this->error_code = 0;
-	SetTimeout(60);
+	SetTimeout(TIMEOUT_SECONDS + 10);
 }
 
 ClientHandler::~ClientHandler(void)
 {
 	if (fd != -1)
 		close(fd);
+	// std::cout << "ClientHandler::~ClientHandler()" << std::endl;
 	// delete this;
 }
 
@@ -218,8 +219,17 @@ void ClientHandler::OnRead(void)
 
 void ClientHandler::OnWrite(void)
 {
+	int	Connection = 1;
 	while (!writeBuf.empty())
 	{
+		// std::cout << writeBuf << std::endl;
+		size_t connectionPos = writeBuf.find("Connection: ");
+		if (connectionPos != std::string::npos) {
+			std::string tmp = writeBuf.substr(connectionPos + 12, 5);
+			std::cout << connectionPos << std::endl;
+			if (tmp == "close")
+				Connection = 0;
+		}
 		ssize_t nwrite = send(fd, writeBuf.data(), writeBuf.size(), 0);
 		if (nwrite == -1)
 		{
@@ -234,6 +244,8 @@ void ClientHandler::OnWrite(void)
 	}
 	writeBuf.clear();
 	DisableWrite();
+	if (!Connection)
+		OnClose();
 }
 
 void ClientHandler::OnClose(void)
