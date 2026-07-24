@@ -753,16 +753,13 @@ void Response::buildFromCgi(const std::string &cgiOutput, const RouteResult &con
 
 	std::string headerBlock;
 	std::string cgiBody;
-	if (headerEnd == std::string::npos)
-	{
-		cgiBody = cgiOutput;
-	}
-	else
-	{
-		headerBlock = cgiOutput.substr(0, headerEnd);
-		cgiBody = cgiOutput.substr(headerEnd + sepLen);
-	}
-
+	 if (headerEnd == std::string::npos)
+    {
+        *this = generateErrorResponse(502, context);
+        return;
+    }
+    headerBlock = cgiOutput.substr(0, headerEnd);
+    cgiBody = cgiOutput.substr(headerEnd + sepLen);
 	int statusCode = 200;
 	std::string reasonPhrase = "OK";
 	bool haveContentType = false;

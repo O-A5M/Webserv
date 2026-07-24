@@ -269,7 +269,7 @@ def test_5xx_status_codes():
     # 500 / 502: Invalid/malformed CGI response headers (missing headers)
     t0 = time.time()
     try:
-        r = requests.get(BASE_URL + "/cgi-bin/testNoHeader.py", timeout=TIMEOUT)
+        r = requests.get(BASE_URL + "/cgi-bin/testNoHeader.py", timeout=TIMEOUT, allow_redirects=False)
         passed = check_status(r.status_code, [500, 502])
         print_result("502/500 Bad Gateway (Malformed CGI output)", passed, [500, 502], str(r.status_code), (time.time()-t0)*1000)
     except Exception as e:
