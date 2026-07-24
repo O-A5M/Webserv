@@ -44,22 +44,20 @@ void CgiHandler::OnRead() {
         readBuf.append(buf, n);
         return;
     }
-    if (n == 0 || (n == -1 && errno != EAGAIN && errno != EWOULDBLOCK))
+    if (n == 0)
         Finalize();
+    if (n == -1)
+        OnClose();
 }
 
 void CgiHandler::OnWrite() {
     ssize_t n = write(fd, writeBuf.data(), writeBuf.size());
     if (n == -1) {
-        if (errno == EAGAIN || errno == EWOULDBLOCK)
-            return;
-        std::cerr << "CgiHandler::OnWrite: " << strerror(errno) << "\n";
         OnClose();
         return;
     }
     writeBuf.erase(0, n);
     if (writeBuf.empty()) {
-        // shutdown(fd, SHUT_WR);
         DisableWrite();
     }
 }
@@ -67,8 +65,6 @@ void CgiHandler::OnWrite() {
 void CgiHandler::OnWriteFd() {
     ssize_t n = write(cgiWrite->GetFd(), writeBuf.data(), writeBuf.size());
     if (n == -1) {
-        if (errno == EAGAIN || errno == EWOULDBLOCK)
-            return;
         OnClose();
         return;
     }
@@ -148,7 +144,6 @@ void CgiHandler::OnClose() {
     loop.RemoveHandler(this);
     if (client)
         client->ClearActiveCgi();
-    // TODO: tell client to send 502
     delete this;
 }
 
@@ -159,7 +154,6 @@ void CgiHandler::Finalize() {
         pid = -1;
     }
 
-    // std::cout << readBuf << std::endl;
     if (client) {
         client->OnCgiResponse(readBuf);
         client->ClearActiveCgi();

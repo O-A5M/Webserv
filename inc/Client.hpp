@@ -7,7 +7,6 @@
 #include <sys/epoll.h>
 #include <netinet/in.h>
 #include <vector>
-
 #include "AHandler.hpp"
 #include "Request.hpp"
 #include "Router.hpp"

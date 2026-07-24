@@ -20,8 +20,7 @@ ClientHandler::~ClientHandler(void)
 {
 	if (fd != -1)
 		close(fd);
-
-	std::cout << "ClientHandler destroyed" << std::endl;
+	// std::cout << "ClientHandler destroyed" << std::endl;
 	// delete this;
 }
 
@@ -37,14 +36,12 @@ void ClientHandler::OnRead(void)
 		OnClose();
 		return;
 	}
-	if (nread == -1 && errno != EAGAIN && errno != EWOULDBLOCK)
+	if (nread == -1)
 	{
-		std::cerr << "ClientHandler::OnRead() error: "
-							<< strerror(errno) << std::endl;
 		OnClose();
 		return;
 	}
-	Touch();
+	// Touch();
 	readBuf.append(buff, nread);
 
 	bool keep_parsing = true;
@@ -255,11 +252,6 @@ void ClientHandler::OnWrite(void)
 		ssize_t nwrite = send(fd, writeBuf.data(), writeBuf.size(), 0);
 		if (nwrite == -1)
 		{
-			if (errno == EAGAIN || errno == EWOULDBLOCK)
-				return;
-			std::cerr << "ClientHandler: OnWrite() error: "
-			
-								<< strerror(errno) << std::endl;
 			OnClose();
 			return;
 		}
@@ -269,6 +261,8 @@ void ClientHandler::OnWrite(void)
 	DisableWrite();
 	if (!Connection)
 		OnClose();
+	else
+		Touch();
 }
 
 void ClientHandler::OnClose(void)
@@ -285,7 +279,6 @@ void ClientHandler::OnClose(void)
 
 void ClientHandler::OnCgiResponse(const std::string &cgiRequest) {
 	Response res;
-
 
 	res.buildFromCgi(cgiRequest, this->activeCgiRouteResult);
 	this->writeBuf = res.getRawResponse();

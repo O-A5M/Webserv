@@ -73,12 +73,7 @@ void EventLoop::Loop() {
                                1000);
 
         if (ready == -1) {
-            if (errno == EINTR)
-                continue;
-            std::cerr << "Webserv: epoll_wait: "
-                      << strerror(errno) << "\n";
             continue;
-            // TODO: handle the error cleanly without stoping the server
         }
 
         for (int i = 0; i < ready; ++i) {

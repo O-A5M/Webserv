@@ -9,16 +9,9 @@ AHandler::AHandler(int fd, ServerConfig &config, EventLoop& loop)
     , lastActivity(std::time(NULL))
     , timeoutSeconds(0) {
     SetNonBlocking();
-    // if (fd == -1) {
-    //     std::cerr << "Webserv: invalid fd\n";
-    //     throw std::runtime_error("invalid fd");
-    // }
 }
 
-AHandler::~AHandler(void) {
-    // if (fd != -1)
-    //     close(fd);
-}
+AHandler::~AHandler(void) {}
 
 void    AHandler::EnableWrite(void) {
     loop.ModHandler(this, EPOLLIN | EPOLLOUT);
@@ -68,7 +61,6 @@ bool AHandler::IsTimedOut(time_t now) const {
 
 void AHandler::SetTimeout(int seconds) {
     timeoutSeconds = seconds;
-    // std::cout << "timeoutSeconds: " << timeoutSeconds << "\n";
 }
 
 void AHandler::OnTimeout() {

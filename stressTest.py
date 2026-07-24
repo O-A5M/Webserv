@@ -155,7 +155,7 @@ def test_slowloris(n_conns=30, delay=1.0, hold=30):
 # 4. Malformed requests — check parser doesn't crash / leak on bad input
 # ---------------------------------------------------------------------------
 MALFORMED_REQUESTS = [
-    b"GET / HTTP/1.1\r\n\r\n",                                 # missing Host
+    b"GET / HTTP/1.1\r\n\r\n",                                  # missing Host
     b"GET  / HTTP/1.1\r\nHost: x\r\n\r\n",                      # double space
     b"GETT / HTTP/1.1\r\nHost: x\r\n\r\n",                      # unknown method
     b"GET / HTTP/9.9\r\nHost: x\r\n\r\n",                       # bad version
@@ -166,7 +166,7 @@ MALFORMED_REQUESTS = [
     b" GET / HTTP/1.1\r\nHost: x\r\n\r\n",                      # leading space
     b"GET " + b"/a" * 5000 + b" HTTP/1.1\r\nHost: x\r\n\r\n",   # very long URI
     b"\r\n\r\nGET / HTTP/1.1\r\nHost: x\r\n\r\n",               # leading CRLF junk
-    b"",                                                          # empty / immediate close
+    b"",                                                        # empty / immediate close
 ]
 
 
@@ -256,7 +256,7 @@ def test_fd_leak(n=500):
 # ---------------------------------------------------------------------------
 # 8. Concurrent CGI hits
 # ---------------------------------------------------------------------------
-def test_cgi(path="/cgi-bin/script.py", n=50, threads=10):
+def test_cgi(path="/cgi-bin/test.py", n=50, threads=10):
     print(f"[cgi] {threads} threads x {n} requests to {path}")
     test_flood(threads=threads, per_thread=n, path=path)
 
