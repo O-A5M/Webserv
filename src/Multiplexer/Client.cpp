@@ -84,7 +84,12 @@ void ClientHandler::OnRead(void)
 		}
 		case STATE_READING_HEADERS:
 		{
-
+			 if (readBuf.compare(0, 2, "\r\n") == 0)
+            {
+                readBuf.erase(0, 2);
+                this->state = STATE_HEADERS_DONE;
+                break;
+            }
 			size_t pos = readBuf.find("\r\n\r\n");
 			if (pos == std::string::npos)
 			{
@@ -164,13 +169,12 @@ void ClientHandler::OnRead(void)
 
 			int body_status = this->req.parse_body(readBuf, consumed_bytes);
 			if (this->req.route_result.max_body_size > 0 && 
-    this->req.getBodyBytesProcessed() > this->req.route_result.max_body_size)
+    		this->req.getBodyBytesProcessed() > this->req.route_result.max_body_size)
             {
                 this->error_code = 413;
-                
-                this->Connection = 0;
-                this->req.con = 0;
-                this->readBuf.clear();
+                // this->Connection = 0;
+                // this->req.con = 0;
+                // this->readBuf.clear();
                 
                 this->state = STATE_ERROR;
                 break;
