@@ -84,7 +84,6 @@ void EventLoop::Loop() {
                 handler->OnClose();
                 continue;
             }
-
             if (ev & (EPOLLIN | EPOLLHUP | EPOLLRDHUP))
                 handler->OnRead();
 

@@ -126,7 +126,19 @@ void ClientHandler::OnRead(void)
 				this->state = STATE_ERROR;
 				break;
 			}
-
+			if (this->req.getMethod() == POST)
+			{
+				bool has_cl = (this->req.getHeaders().find("content-length") != this->req.getHeaders().end());
+				bool has_te = (this->req.getHeaders().find("transfer-encoding") != this->req.getHeaders().end());
+				
+				if (!has_cl && !has_te)
+				{
+					this->error_code = 411;					
+					this->readBuf.clear();					
+					this->state = STATE_ERROR;
+					break;
+				}
+			}
 			size_t expected_size = 0;
 			if (this->req.getHeaders().find("content-length") != this->req.getHeaders().end())
 			{
@@ -246,7 +258,7 @@ void ClientHandler::OnRead(void)
             this->readBuf.clear();
 			Response res = Response::generateErrorResponse(this->error_code , this->req.route_result);
 			req.clear();
-			this->state = STATE_READING_REQUEST_LINE;
+			// this->state = STATE_READING_REQUEST_LINE;
 			this->writeBuf = res.getRawResponse();
 			if (!this->writeBuf.empty())
 			{

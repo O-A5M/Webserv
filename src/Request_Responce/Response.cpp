@@ -115,6 +115,9 @@ Response Response::generateErrorResponse(int code , const RouteResult &context)
 	case 405:
 		reason = "Method Not Allowed";
 		break;
+	case 411:
+		reason = "Length Required";
+		break;
 	case 413:
 		reason = "Payload Too Large";
 		break;
