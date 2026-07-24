@@ -28,7 +28,7 @@ private:
                                      const LocationConfig& location,
                                      const std::string& request_path);
     
-    bool validate_path(const std::string& path, const LocationConfig& location, RouteResult& result);
+    bool validate_path(const std::string& path, const ServerConfig& server,  const LocationConfig& location, RouteResult& result);
     
     const std::vector<ServerConfig>& servers; 
 };

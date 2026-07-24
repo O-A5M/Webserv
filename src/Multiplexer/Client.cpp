@@ -33,12 +33,16 @@ void ClientHandler::OnRead(void)
 
 	if (nread == 0)
 	{
-		OnClose();
+		// OnClose();
 		return;
 	}
 	if (nread == -1)
 	{
-		OnClose();
+		// OnClose();
+		return;
+	}
+	if (this->Connection == 0) {
+		this->readBuf.clear();
 		return;
 	}
 	// Touch();
@@ -129,11 +133,16 @@ void ClientHandler::OnRead(void)
 				expected_size = strtoul(this->req.getHeaders().at("content-length").c_str(), NULL, 10);
 			}
 			if (expected_size > this->req.route_result.max_body_size)
-			{
-				this->error_code = 413;
-				this->state = STATE_ERROR;
-				break;
-			}
+            {
+                this->error_code = 413;
+                
+                this->Connection = 0;       
+                this->req.con = 0;          
+                this->readBuf.clear();      
+
+                this->state = STATE_ERROR;
+                break;
+            }
 			this->state = STATE_READING_BODY;
 			break;
 		}
@@ -142,6 +151,18 @@ void ClientHandler::OnRead(void)
 			size_t consumed_bytes = 0;
 
 			int body_status = this->req.parse_body(readBuf, consumed_bytes);
+			if (this->req.route_result.max_body_size > 0 && 
+    this->req.getBodyBytesProcessed() > this->req.route_result.max_body_size)
+            {
+                this->error_code = 413;
+                
+                this->Connection = 0;
+                this->req.con = 0;
+                this->readBuf.clear();
+                
+                this->state = STATE_ERROR;
+                break;
+            }
 			if (body_status < 0)
 			{
 				this->error_code = 400;
@@ -204,7 +225,7 @@ void ClientHandler::OnRead(void)
 				break;
 			}
 
-			this->req.display();
+			// this->req.display();
 			Response res;
 			res.build(this->req, this->req.route_result);
 
@@ -220,7 +241,9 @@ void ClientHandler::OnRead(void)
 		}
 		case STATE_ERROR:
 		{
-			std::cout << "skhaaaaaaaaaaaaaal"  << std::endl;
+			this->Connection = 0;
+            this->req.con = 0;
+            this->readBuf.clear();
 			Response res = Response::generateErrorResponse(this->error_code , this->req.route_result);
 			req.clear();
 			this->state = STATE_READING_REQUEST_LINE;

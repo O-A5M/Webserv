@@ -101,6 +101,8 @@ public:
 	ParseStatus validateRequestLine();
 	ParseStatus validateHeaders();
 	const std::string &getBodyFilePath() const { return body_file_path; }
+
+    size_t getBodyBytesProcessed() const { return this->body_bytes_processed; } 
 };
 
 #endif

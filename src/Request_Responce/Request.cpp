@@ -138,6 +138,7 @@ int Request::parse_request_line(const std::string &req_line)
 	this->setPath(SafeUri.substr(0, pos));
 	}
 	this->setVersion(version);
+	// std::cout << "Parsed Request Line: Method=" << method_str << ", URI=" << uri << ", Version=" << version << std::endl;
 	return 0;
 }
 
@@ -403,8 +404,11 @@ int Request::parse_body(const std::string &body, size_t &consumed_bytes)
 }
 ParseStatus Request::validateRequestLine()
 {
+	std::cout << "Validating Request Line: Method=" << this->getMethod() << ", URI=" << this->getUri() << ", Version=" << this->getVersion() << std::endl;
 	if (this->getMethod() == UNKNOWN)
+	{
 		return METHOD_NOT_ALLOWED;
+	}
 	if (this->getUri().size() > MAX_URI_LENGTH)
 		return URI_TOO_LONG;
 	if (this->is_traversal_attempt(this->getUri()))

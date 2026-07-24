@@ -318,18 +318,12 @@ std::string Response::buildAutoIndex(const std::string &physicalPath, const std:
 
 void Response::handlePost(const Request &req, const RouteResult &context)
 {
-
-	// 1. Method Check
+	std::cout << "Handling POST request..." << std::endl;
 	if (context.allow_methods.size() > 0 &&
 		(std::find(context.allow_methods.begin(), context.allow_methods.end(), "POST") == context.allow_methods.end()))
 	{
+		std::cout << "Method POST not allowed for this location." << std::endl;
 		*this = generateErrorResponse(405, context);
-		return;
-	}
-	std::cout << "size------------------------: " << context.max_body_size << std::endl;
-	if (context.matched_location != NULL && req.getBody().size() > context.max_body_size)
-	{
-		*this = generateErrorResponse(413, context);
 		return;
 	}
 	std::string upload_dir;

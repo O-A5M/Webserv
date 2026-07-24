@@ -92,7 +92,7 @@ RouteResult Router::route(const Request& req, int incoming_port) {
 
     result.filesystem_path = build_filesystem_path(result, *server, *location, req.getPath());
 
-    validate_path(result.filesystem_path, *location, result);
+    validate_path(result.filesystem_path, *server, *location, result);
 
     // About CGI: Check if the request path has a CGI extension
     if (result.is_cgi)
@@ -197,7 +197,7 @@ std::string Router::build_filesystem_path(RouteResult &res, const ServerConfig& 
     return result;
 }
 
-bool Router::validate_path(const std::string& path, const LocationConfig& location, RouteResult& result) {
+bool Router::validate_path(const std::string& path, const ServerConfig& server,  const LocationConfig& location, RouteResult& result) {
 
     struct stat file_stat;
 
@@ -220,13 +220,15 @@ bool Router::validate_path(const std::string& path, const LocationConfig& locati
 				result.physicalPath = path;
 
 				std::vector<std::string> index_files = location.index;
+        if (index_files.empty())
+            index_files = server.index;
 
-				for (size_t i = 0; i < index_files.size(); ++i)
-				{
-					std::string index_path = path + "/" + index_files[i];
-					result.filesystem_path = index_path;
-					result.status = 200;
-				}
+        for (size_t i = 0; i < index_files.size(); ++i)
+        {
+            std::string index_path = path + "/" + index_files[i];
+            result.filesystem_path = index_path;
+            result.status = 200;
+        }
         if (location.autoindex) {
             result.is_autoindex = true;
             result.status = 200;
