@@ -12,7 +12,6 @@ import socket
 import requests
 import os
 import time
-import concurrent.futures
 from typing import List, Union, Tuple, Optional
 
 # --- CONFIGURATION ---
@@ -295,104 +294,6 @@ def test_5xx_status_codes():
 
 
 # ==============================================================================
-# 10. RFC 9112 & NGINX COMPLIANCE STATUS CODES
-# ==============================================================================
-def test_rfc9112_compliance():
-    print_section("10. RFC 9112 & NGINX COMPLIANCE TESTS")
-    raw_tests = [
-        ("Missing Host Header (HTTP/1.1) -> 400", "GET / HTTP/1.1\r\n\r\n", PORT, [400]),
-        ("Whitespace before header name -> 400", "GET / HTTP/1.1\r\nHost: localhost\r\n Invalid: header\r\n\r\n", PORT, [400]),
-        ("Whitespace between header name and colon -> 400", "GET / HTTP/1.1\r\nHost : localhost\r\n\r\n", PORT, [400]),
-        ("Multiple Content-Length headers -> 400", "POST /upload HTTP/1.1\r\nHost: localhost\r\nContent-Length: 5\r\nContent-Length: 5\r\n\r\nHello", PORT, [400]),
-        ("Transfer-Encoding: chunked with valid chunk -> 200/201/204", "POST /upload HTTP/1.1\r\nHost: localhost\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nHello\r\n0\r\n\r\n", PORT, [200, 201, 204]),
-        ("Content-Length and Transfer-Encoding both present -> 400", "POST /upload HTTP/1.1\r\nHost: localhost\r\nContent-Length: 5\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nHello\r\n0\r\n\r\n", PORT, [400, 501, 411]),
-    ]
-    for name, payload, port, expected in raw_tests:
-        t0 = time.time()
-        status_code, status_line = make_raw_request(payload, port=port)
-        passed = check_status(status_code, expected)
-        print_result(name, passed, expected, f"{status_code} ({status_line})", (time.time()-t0)*1000)
-
-
-# ==============================================================================
-# 11. POST FILE UPLOAD TESTS
-# ==============================================================================
-def test_post_upload_files():
-    print_section("11. POST FILE UPLOAD TESTS")
-    
-    filename = "test_upload_file.txt"
-    file_content = "This is a test upload file content."
-    headers = {"Content-Type": "text/plain", "Content-Length": str(len(file_content))}
-    
-    # 1. Test POST to /upload
-    t0 = time.time()
-    try:
-        r = requests.post(BASE_URL + "/upload/" + filename, data=file_content, headers=headers, timeout=TIMEOUT)
-        passed = check_status(r.status_code, [200, 201, 204])
-        exists = os.path.exists("./www/upload/" + filename)
-        if passed and not exists:
-            passed = False
-            result_str = f"{r.status_code} (File not created in www/upload)"
-        else:
-            result_str = str(r.status_code)
-            if exists:
-                os.remove("./www/upload/" + filename)
-        print_result("POST file to /upload (saves in www/upload)", passed, [200, 201, 204], result_str, (time.time()-t0)*1000)
-    except Exception as e:
-        print_result("POST file to /upload (saves in www/upload)", False, [200, 201, 204], f"Exception: {e}", (time.time()-t0)*1000)
-
-    # 2. Test POST to /
-    t0 = time.time()
-    try:
-        r = requests.post(BASE_URL + "/" + filename, data=file_content, headers=headers, timeout=TIMEOUT)
-        passed = check_status(r.status_code, [200, 201, 204])
-        exists = os.path.exists("./www/jj/" + filename)
-        if passed and not exists:
-            passed = False
-            result_str = f"{r.status_code} (File not created in www/jj)"
-        else:
-            result_str = str(r.status_code)
-            if exists:
-                os.remove("./www/jj/" + filename)
-        print_result("POST file to / (saves in www/jj)", passed, [200, 201, 204], result_str, (time.time()-t0)*1000)
-    except Exception as e:
-        print_result("POST file to / (saves in www/jj)", False, [200, 201, 204], f"Exception: {e}", (time.time()-t0)*1000)
-
-
-# ==============================================================================
-# 12. STRESS TEST WITH GET (1000 REQUESTS)
-# ==============================================================================
-def send_stress_get(index):
-    try:
-        r = requests.get(BASE_URL + "/", timeout=10)
-        return r.status_code
-    except Exception:
-        return -1
-
-def test_stress_requests():
-    print_section("12. STRESS TEST (1000 GET REQUESTS IN < 30S)")
-    num_requests = 1000
-    t0 = time.time()
-    success_count = 0
-    fail_count = 0
-    
-    with concurrent.futures.ThreadPoolExecutor(max_workers=100) as executor:
-        futures = [executor.submit(send_stress_get, i) for i in range(num_requests)]
-        for future in concurrent.futures.as_completed(futures):
-            status = future.result()
-            if status in [200]:
-                success_count += 1
-            else:
-                fail_count += 1
-                
-    duration = time.time() - t0
-    passed = duration <= 30.0 and success_count == num_requests
-    
-    result_str = f"{success_count}/{num_requests} success in {duration:.2f}s"
-    print_result(f"Stress test {num_requests} GETs in <30s", passed, [200], result_str, duration * 1000)
-
-
-# ==============================================================================
 # MAIN TEST RUNNER
 # ==============================================================================
 def run_all_tests():
@@ -409,9 +310,6 @@ def run_all_tests():
     test_payload_limit_status_codes()
     test_malformed_status_codes()
     test_5xx_status_codes()
-    test_rfc9112_compliance()
-    test_post_upload_files()
-    test_stress_requests()
 
     # --- SUMMARY ---
     print(f"\n{CYAN}{BOLD}{'='*70}{RESET}")

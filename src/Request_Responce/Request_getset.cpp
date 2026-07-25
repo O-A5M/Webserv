@@ -79,15 +79,15 @@ int Request::setHeader(std::string key,std::string value) {
         if (key == "host")
             return -1; 
         if (key == "content-length") {
-            if (this->headers[key] == value) {
-                return 0;
-            }
+            // if (this->headers[key] == value) {
+            //     return 0;
+            // }
             return -2; 
         }
         if (key == "content-type") {
-            if (this->headers[key] == value) {
-                return 0;
-            }
+            // if (this->headers[key] == value) {
+            //     return 0;
+            // }
             return -1;
         }
         this->headers[key] += ", " + value;

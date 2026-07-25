@@ -321,7 +321,6 @@ std::string Response::buildAutoIndex(const std::string &physicalPath, const std:
 
 void Response::handlePost(const Request &req, const RouteResult &context)
 {
-	std::cout << "Handling POST request..." << std::endl;
 	if (context.allow_methods.size() > 0 &&
 		(std::find(context.allow_methods.begin(), context.allow_methods.end(), "POST") == context.allow_methods.end()))
 	{
@@ -330,7 +329,6 @@ void Response::handlePost(const Request &req, const RouteResult &context)
 		return;
 	}
 	std::string upload_dir;
-	std::cout << "upload_store: " << context.matched_location->upload_store << std::endl;
 	if (context.matched_location != NULL && !context.matched_location->upload_store.empty())
 		upload_dir = context.matched_location->upload_store;
 	else

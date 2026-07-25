@@ -239,11 +239,6 @@ int Request::parse_request_headers(const std::string &header)
 		}
 	}
 	}
-	// if (this->getHeaders().find("host") == this->getHeaders().end())
-	// {
-	// 	std::cout << "Host header does not exist" << std::endl;
-	// 	return -3;
-	// }
 	if ((this->getHeaders().find("transfer-encoding") != this->getHeaders().end()))
 	{
 		if (this->getHeaders().find("content-length") != this->getHeaders().end())
@@ -262,7 +257,7 @@ int Request::parse_request_headers(const std::string &header)
 	{
 		return -1;
 	}
-	this->parse_cookies(); // ADD about (Cookie) parsing
+	this->parse_cookies();
 	return 0;
 }
 
