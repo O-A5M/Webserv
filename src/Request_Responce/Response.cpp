@@ -436,7 +436,7 @@ void Response::handlePost(const Request &req, const RouteResult &context)
 									safe_filename += '_';
 							}
 						}
-
+						
 						std::stringstream unique_name;
 						unique_name << std::time(NULL) << "_" << std::rand() << "_" << safe_filename;
 						std::string output_path = upload_dir + "/" + unique_name.str();
@@ -533,11 +533,20 @@ void Response::handlePost(const Request &req, const RouteResult &context)
 			ext = ".png";
 		else if (contentType.find("application/octet-stream") != std::string::npos)
 			ext = ".bin";
-
-		std::stringstream unique_name;
-		unique_name << "upload_" << std::time(NULL) << "_" << std::rand() << ext;
-		std::string output_path = upload_dir + "/" + unique_name.str();
-
+		std::string filename;
+        size_t last_slash = req.getPath().find_last_of('/');
+        if (last_slash != std::string::npos)
+            filename = req.getPath().substr(last_slash + 1);
+        else
+            filename = req.getPath();
+        //Fallback to a generated name if the URL ended with a slash
+        if (filename.empty())
+        {
+            std::stringstream unique_name;
+            unique_name << "upload_" << std::time(NULL) << "_" << std::rand() << ext;
+            filename = unique_name.str();
+        }
+        std::string output_path = upload_dir + "/" + filename;
 		std::ofstream out_file(output_path.c_str(), std::ios::binary);
 		if (!out_file.is_open())
 		{
@@ -753,7 +762,7 @@ void Response::buildFromCgi(const std::string &cgiOutput, const RouteResult &con
 
 	std::string headerBlock;
 	std::string cgiBody;
-	 if (headerEnd == std::string::npos)
+	if (headerEnd == std::string::npos)
     {
         *this = generateErrorResponse(502, context);
         return;

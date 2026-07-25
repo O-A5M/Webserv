@@ -93,6 +93,10 @@ RouteResult Router::route(const Request& req, int incoming_port) {
     result.filesystem_path = build_filesystem_path(result, *server, *location, req.getPath());
 
     validate_path(result.filesystem_path, *server, *location, result);
+    if (req.getMethod() == POST && !location->upload_store.empty() && !result.is_cgi) {
+        result.status = 200;
+        result.reason = "POST upload path allowed";
+    }
 
     // About CGI: Check if the request path has a CGI extension
     if (result.is_cgi)

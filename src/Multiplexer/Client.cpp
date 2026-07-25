@@ -33,18 +33,18 @@ void ClientHandler::OnRead(void)
 
 	if (nread == 0)
 	{
-		// OnClose();
+		OnClose();
 		return;
 	}
 	if (nread == -1)
 	{
-		// OnClose();
+		OnClose();
 		return;
 	}
-	if (this->Connection == 0) {
-		this->readBuf.clear();
-		return;
-	}
+	// if (this->Connection == 0) {
+		// this->readBuf.clear();
+		// return;
+	// }
 	// Touch();
 	readBuf.append(buff, nread);
 
@@ -262,7 +262,6 @@ void ClientHandler::OnRead(void)
             this->readBuf.clear();
 			Response res = Response::generateErrorResponse(this->error_code , this->req.route_result);
 			req.clear();
-			// this->state = STATE_READING_REQUEST_LINE;
 			this->writeBuf = res.getRawResponse();
 			if (!this->writeBuf.empty())
 			{
