@@ -97,6 +97,12 @@ void ClientHandler::OnRead(void)
 				break;
 			}
 			std::string header_data = readBuf.substr(0, pos + 4);
+			if (header_data.size() > MAX_HEADER_SIZE)
+			{
+				this->error_code = 431;
+				this->state = STATE_ERROR;
+				break;
+			}
 			int header_status = this->req.parse_request_headers(header_data);
 
 			if (header_status < 0)
