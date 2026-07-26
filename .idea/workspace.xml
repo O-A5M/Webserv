@@ -29,9 +29,7 @@
     <list default="true" id="2520d05e-25a8-4337-a2b2-e68e37f8dced" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Config/configFile.conf" beforeDir="false" afterPath="$PROJECT_DIR$/Config/configFile.conf" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/inc/AHandler.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/inc/AHandler.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/packages-microsoft-prod.deb" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Multiplexer/Client.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/Multiplexer/Client.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Server/Router.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/Server/Router.cpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

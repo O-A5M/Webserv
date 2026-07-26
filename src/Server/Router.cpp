@@ -1,4 +1,6 @@
 #include "Router.hpp"
+
+#include <string>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -169,35 +171,35 @@ const LocationConfig* Router::match_location(const ServerConfig& server,
     return best_match;
 }
 
+static bool isValidInterpreter(const std::string& interpreterPath) {
+    if (interpreterPath.empty())
+        return false;
+    return access(interpreterPath.c_str(), X_OK) == 0;
+}
+
 std::string Router::build_filesystem_path(RouteResult &res, const ServerConfig& server,
                                          const LocationConfig& location,
                                          const std::string& request_path) {
-
     std::string base_root;
-    std::string filesystem_path;
     if (location.root.empty())
         base_root = server.root + "/";
     else
         base_root = location.root + "/";
 
-    if (extension_request_path(res, request_path))
+    extension_request_path(res, request_path);
+
+    bool wants_cgi = isCgiRequestPath(res.cgi_extension)
+                   && !location.cgi_extension.empty()
+                   && res.cgi_extension == location.cgi_extension
+                   && isValidInterpreter(location.cgi_path);
+
+    if (wants_cgi)
     {
-        if (isCgiRequestPath(res.cgi_extension))
-        {
-            res.is_cgi = true;
-            if (res.cgi_extension == location.cgi_extension)
-                return res.cgi_script_path = base_root + request_path;
-            else
-            {
-                res.status = 404;
-                res.reason = "CGI extension mismatch";
-                return "";
-            }
-        }
+        res.is_cgi = true;
+        return res.cgi_script_path = base_root + request_path;
     }
 
     std::string result = base_root + request_path;
-
     return result;
 }
 
