@@ -40,12 +40,17 @@ int main(int ac, char **av)
 		EventLoop	loop;
 		std::vector<Server>	servers;
 		servers.reserve(serverConf.size());
-		for (int i = 0; i < static_cast<int>(serverConf.size()); i++) {
-			servers.push_back(Server(serverConf[i]));
-			servers[i].initialize_socket();
-			new ServerHandler(servers[i].GetFd(), servers[i].GetConfig(), loop);
+		try {
+			for (int i = 0; i < static_cast<int>(serverConf.size()); i++) {
+				servers.push_back(Server(serverConf[i]));
+				servers[i].initialize_socket();
+				new ServerHandler(servers[i].GetFd(), servers[i].GetConfig(), loop);
+			}
+			loop.Loop();
+		} catch (...) {
+			loop.shutdown();
+			throw;
 		}
-		loop.Loop();
 		loop.shutdown();
 	}
 	catch (const std::exception &e)
