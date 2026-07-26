@@ -13,7 +13,7 @@ ClientHandler::ClientHandler(int fd, ServerConfig &config, EventLoop &loop)
 		, error_code(0)
 {
 	loop.AddHandler(this, EPOLLIN);
-	SetTimeout(60);
+	SetTimeout(TIMEOUT_SECONDS + 10);
 }
 
 ClientHandler::~ClientHandler(void)
