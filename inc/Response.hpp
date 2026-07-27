@@ -61,7 +61,7 @@ public:
 	void build(const Request &req, const RouteResult &context);
 
 	// about cookies
-	void setCookie(const std::string &name, const std::string &value, const std::string &path = "/", bool httpOnly = true);
+	void setCookie(const std::string &name, const std::string &value, bool httpOnly = true);
 	std::vector<std::string> setCookieHeaders; // Add this container
 
 	void	buildFromCgi(const std::string &cgiOutput, const RouteResult &context);

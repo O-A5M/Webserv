@@ -2,19 +2,19 @@
 #define SESSIONTRACKER_HPP
 
 #include <string>
-#include <map>
+#include <set>
 #include <cstdlib> // For rand()
 #include <ctime>   // For time()
 
 class sessionTracker {
     private:
-        std::map<std::string, int> _visits;
+        std::set<std::string> _sessions;
         std::string generateSessionId();
     public:
         sessionTracker();
         ~sessionTracker();
 
-        // Checks if the ID exists in our map
+        // Checks if the ID exists in our session set
         bool isValidSession(const std::string& sessionId);
         // Condition A: New User Logic
         std::string createSession();

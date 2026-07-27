@@ -14,14 +14,12 @@ void Response::manageGlobalSession(const Request &req)
     {
         // new session
         this->currentSessionId = globalTracker.createSession();
-        // send cookies to browser bach l mera jaya ybe9a nefes l ID dima 
-        this->setCookie("session_id", this->currentSessionId, "/", true);
+		this->setCookie("session_id", this->currentSessionId, true);
     }
 }
 
-void Response::setCookie(const std::string &name, const std::string &value, const std::string &path, bool httpOnly) {
+void Response::setCookie(const std::string &name, const std::string &value, bool httpOnly) {
     std::string cookieStr = name + "=" + value;
-    if (!path.empty()) cookieStr += "; Path=" + path;
     if (httpOnly) cookieStr += "; HttpOnly";
     
     setCookieHeaders.push_back(cookieStr);

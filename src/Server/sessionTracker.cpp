@@ -23,7 +23,7 @@ bool sessionTracker::isValidSession(const std::string& sessionId)
 {
     if (sessionId.empty())
         return false;
-    return _visits.find(sessionId) != _visits.end();
+    return _sessions.find(sessionId) != _sessions.end();
 }
 
 std::string sessionTracker::createSession()
@@ -34,12 +34,12 @@ std::string sessionTracker::createSession()
         newId = generateSessionId();
     }
 
-    _visits[newId] = 1;
+    _sessions.insert(newId);
     return newId;
 }
 
 void sessionTracker::destroySession(const std::string& sessionId) {
     if (isValidSession(sessionId)) {
-        _visits.erase(sessionId);
+        _sessions.erase(sessionId);
     }
 }
