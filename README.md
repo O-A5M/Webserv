@@ -213,12 +213,12 @@ siege -b -c 100 -t 10S http://localhost:8080/
 
 ## 👤 Author
 
-**Othman Akhmouch**, student at 1337 (42 Network)
-**Walid El Mjiyad**, student at 1337 (42 Network)
-**Achraf Ben Kardoud**, student at 1337 (42 Network)
+**Othman Akhmouch**, student at 1337 (42 Network)  
+**Walid El Mjiyad**, student at 1337 (42 Network)  
+**Achraf Ben Kardoud**, student at 1337 (42 Network)  
 
-[![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/<your-username>)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/<your-handle>)
+<!-- [![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/<your-username>) -->
+<!-- [![LinkedIn](https://img.shields.io/badge/LinkedIn-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/<your-handle>) -->
 
 ---
 
